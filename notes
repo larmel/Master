@@ -1,0 +1,77 @@
+
+** Talk at Google **
+
+Keywords:
+- Violin Plot
+- P-test
+
+
+** Observer effect **
+Add instrumentation pushes code or data beyond some boundry. Cache blocks, page size, TLB, etc. Boundaries are everywhere.
+
+
+** Measurement bias **
+Do measurements on one particular computer setup can bias results towards that particular computer.
+
+- Link order, change argument list to ld program. ~20%
+- Room temperature (!)
+
+=> Cannot easily suppress bias. Too many sources.
+
+Predictable? No! In O2 vs O3.
+
+Link-order dependent on machine (Pentium 4 vs Core)
+
+Confidence interval over 15 runs. 
+4 different architectures and 2 compilers.
+
+** Incredibly difficult to explain what is happening. *
+-> Deep knowledge of hardware
+-> Collect HW data to test hypothesis
+   But: HW designers does not allow collecting all interesting data.
+
+"Loop stream detectors" (LSD). Intel does not reveal all info. Can't confirm. No metric for measuring LSD during execution. Can guess what is happening, but very hard to pinpoint exact causes.
+
+
+Other papers:
+Simulation -> avoid observer effect. Still suffer for measurement bias (link order).
+
+
+Diverse benchmark suite -> statistically factor out bias? No! SPEC- averaged over 12 benchmarks is not enough to cancel out bias. 
+
+
+Other sciences: 
+- Many different measurement setups. Cancel out bias. Compare using T-test. <- lookup this0
+- Causality analysis. 'Correct data is impossibleto get in general'. 
+
+In CS =>
+
+* Collect data with many setups, ex many different environment sizes. 
+* Causality, hypothesis. "Change env. size" => "Change stack address" => "Change performance". Try to break a link and observe effect. 'Intervention'. Validate hypothesis.
+
+NB: Have solution to varying env. size vs. stack position. 
+
+
+
+
+Q&A:
+Q: How to identify? 
+A: Dunno ... Community over time will discover
+
+Q: Tool for link order, reduce variance?
+A: 
+
+
+Q: More difficult with more complex machines?
+A: Partially true, but old machines also chaotic. 
+
+Q: Shouldn't HW be created to be more predictable?
+A: Naive to expect to eliminate this. Computers are non-linear and chaotic. 
+
+Q: Accessibility of performance counters? Over 300 ...
+A: Bad documentation. Names mean nothing.
+
+
+
+
+
