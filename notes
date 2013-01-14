@@ -1,4 +1,3 @@
-
 ** Talk at Google **
 
 Keywords:
@@ -72,6 +71,12 @@ Q: Accessibility of performance counters? Over 300 ...
 A: Bad documentation. Names mean nothing.
 
 
+
+** ELF **
+http://en.wikipedia.org/wiki/Executable_and_Linkable_Format
+readelf
+
+http://en.wikipedia.org/wiki/X86_assembly_language
 
 
 
