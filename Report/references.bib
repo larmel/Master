@@ -1,0 +1,10 @@
+@ARTICLE{JonesRadclifTabor1995,
+author = {Bradford Jones and Benjamin Radcliffe and Charles Taber and Richard Timpone},
+title = {Condorcet Winners and the Paradox of Voting},
+journal = {American Political Science Review},
+year = {1995},
+volume = {89},
+number = {1},
+pages = {137-144},
+owner = {pauljohn},
+}

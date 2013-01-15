@@ -9,7 +9,7 @@
 \language_package default
 \inputencoding auto
 \fontencoding global
-\font_roman default
+\font_roman lmodern
 \font_sans default
 \font_typewriter default
 \font_default_family default
@@ -61,15 +61,68 @@
 \begin_body
 
 \begin_layout Title
-Performance Effects of Memory Access Patterns and Location
-\begin_inset Newline newline
-\end_inset
-
-(Working Title)
+Analyzing Context Bias of Program Execution on Modern CPUs
 \end_layout
 
 \begin_layout Author
 Lars Kirkholt Melhus
+\end_layout
+
+\begin_layout Standard
+Supervisor: Anne C.
+ Elster
+\end_layout
+
+\begin_layout Standard
+Co-supervisor: Rune E.
+ Jensen
+\end_layout
+
+\begin_layout Abstract
+This is the empty abstract.
+ Fin.
+ Test citation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "JonesRadclifTabor1995"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Problem Description
+\end_layout
+
+\begin_layout Standard
+Variations in execution context has been shown to affect performance of
+ programs on recent CPUs.
+ Previous work has looked at offsetting the stack and changing link order
+ -- biasing performance measurements towards certain configurations.
+ Variables such as the placement of stack, heap and text segments in memory,
+ combined with memory access instructions, can impact program performance
+ quite significantly.
+ 
+\end_layout
+
+\begin_layout Standard
+The goal of this project is to model some of these effects for common use
+ cases, and methods for avoiding them, in order to avoiding bias and achieving
+ peak performance.
+ These effects might be highly platform dependent, so to limit the scope
+ we will focus on a particular architecture, the Intel Core i7 "Ivy Bridge".
+ Case studies will include small isolated programs, and ideally also "real"
+ applications such as FFT algorithms.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Chapter
@@ -113,6 +166,17 @@ Conclusions and Future Work
 
 \begin_layout Standard
 Sure this is an easy section.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "references"
+options "bibtotoc,plain"
+
+\end_inset
+
+
 \end_layout
 
 \end_body
