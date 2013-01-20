@@ -1,0 +1,18 @@
+
+# Awesome introduction to Linux memory layout
+http://www.dirac.org/linux/gdb/02a-Memory_Layout_And_The_Stack.php
+
+# See segment addresses
+> objdump -h mem
+
+
+
+Global address is always 0x 0060 1028 (VM)
+
+Global: 0x0000 0000 0060 1028 <- .data segment + some offset
+Stack:  0x0000 7fff 5202 11ec
+Heap:   0x0000 0000 0088 9010
+
+
+
+

@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <stdio.h>
+
 int g = 22;
 
 #define G(n, i) (unsigned int)((unsigned long long)n >> (i*16)) & 0xffff
@@ -6,7 +9,7 @@ int g = 22;
 int main() 
 {
     int s = 42;
-    int* h = malloc(sizeof(int));
+    int* h = (int*) malloc(sizeof(int));
 
     printf("Global: " ADDRSTR "\n", G(&g, 3), G(&g, 2), G(&g, 1), G(&g, 0));
     printf("Stack:  " ADDRSTR "\n", G(&s, 3), G(&s, 2), G(&s, 1), G(&s, 0));
