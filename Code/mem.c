@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// .data section (initialized)
 int g = 22;
 
 #define G(n, i) (unsigned int)((unsigned long long)n >> (i*16)) & 0xffff
 #define ADDRSTR "0x%04x %04x %04x %04x"
 
+// .text section (code)
 int main() 
 {
     int s = 42;
@@ -17,3 +19,4 @@ int main()
 
     return 0;
 }
+

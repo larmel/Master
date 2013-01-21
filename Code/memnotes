@@ -5,6 +5,11 @@ http://www.dirac.org/linux/gdb/02a-Memory_Layout_And_The_Stack.php
 # See segment addresses
 > objdump -h mem
 
+lars@Barcelona:~/Master/Code$ size mem.o mem
+   text	   data	    bss	    dec	    hex	filename
+    374	      4	      0	    378	    17a	mem.o
+   1545	    516	     16	   2077	    81d	mem
+
 
 
 Global address is always 0x 0060 1028 (VM)
