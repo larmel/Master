@@ -1,13 +1,17 @@
 #!/bin/bash
-# Run a program and store performance counter information
 
-PROG='hello'
-LIMIT=100
-ASLR=0 # 0 => No randomization, 1 => Stack random, 2 => Stack and heap random
+PROG='count'
+OUTP='stat.log'
+STAT='instructions:u'
+
+LIMIT=1000
+ASLR=0
 OLD_ASLR=`cat /proc/sys/kernel/randomize_va_space`
-STAT='cycles'
 
-echo "Old is $OLD_ASLR"
+# Init output file with no content
+cp /dev/null $OUTP
+
+echo "# Address Space Randomization is $OLD_ASLR"
 
 # Disable  address space layout randomization
 if [ $OLD_ASLR != $ASLR ]
@@ -16,16 +20,28 @@ then
     sudo bash -c "echo $ASLR > /proc/sys/kernel/randomize_va_space"
 fi
 
+echo "# Running $LIMIT measurements"
 for N in `seq $LIMIT`
 {
-    # Add environment (TODO)
+    # Change environment (TODO)
 
     # Run program and store results
-    echo `perf stat -e $STAT -x" " --output "stat.$N.txt" ./$PROG` #> /dev/null
+    perf stat -e $STAT -x", " --output $OUTP --append ./$PROG
 }
 
-echo 'Done!'
+echo "# Plotting graph"
 
+# Format output data correctly
+grep $STAT $OUTP > "plot.tmp"
+gnuplot -persist <<- EOF
+    set xlabel "Run #"
+    set ylabel "$STAT"
+    #set term png
+    #set output "plot.png"
+    plot "plot.tmp" with lines title "Cycle count"
+EOF
+
+#rm "plot.tmp"
 
 
 

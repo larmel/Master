@@ -20,7 +20,7 @@ _start:                                 ; procedure start
                                              ; even hardware devices
         mov     ecx, str                 ; move start _address_ of string message to ecx register
         mov     edx, str_len             ; move length of message (in bytes)
-        int     80h                      ; tell kernel to perform the system call we just set up - 
+        ;int     80h                      ; tell kernel to perform the system call we just set up - 
                                              ; in linux services are requested through the kernel
         mov     eax, 1                   ; specify sys_exit function code (from OS vector table)
         mov     ebx, 0                   ; specify return code for OS (0 = everything's fine)
