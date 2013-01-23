@@ -1,18 +1,21 @@
 #!/bin/bash
 # $ ./run.sh count -e cycles:u,instructions:u -n 100
 
-PROG=$1; STAT="cycles:u"; N=100
+prog=$1;
+stat="cycles:u"; n=100
 
-while getopts "e:n:" option
+let OPTIND++; # Ignore first options token in getops
+while getopts ":e:n:" option
 do
     case $option in
-        e) STAT=${OPTARG};;
-        n) N=${OPTARG};;
+        e) stat=$OPTARG ;;
+        n) n=$OPTARG ;;
+        \?) echo "Usage: $ ./run <program> [-e <counters>] [-n <runs>]"; ;;
     esac
 done
 
 # Init output file with no content
-OUTP='stat.dat'; cp /dev/null $OUTP
+output='stat.dat'; cp /dev/null $output
 
 ASLR=`cat /proc/sys/kernel/randomize_va_space`
 if [ $ASLR != 0 ]
@@ -21,17 +24,16 @@ then
     sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"
 fi
 
-echo "Running $N measurements..."
-for N in `seq $N`
+echo "Running $n measurements..."
+for i in `seq $n`
 {
     # Change environment (TODO)
 
     # Run program and store results
-    perf stat -e $STAT -x" " --output $OUTP --append ./$PROG
+    perf stat -e $stat -x" " --output $output --append ./$prog
 }
 
-echo "Plotting graph..."
-./plot.sh $OUTP $STAT
+./plot.sh $output $stat
 
 
 

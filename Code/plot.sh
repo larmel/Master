@@ -22,10 +22,17 @@ paste $counters > "plot.dat"
 rm $counters
 
 # Build plot command
-plot=''; i=1; n=$(echo $counters | wc -w)
+plot=''; axes=''; i=1; n=$(echo $counters | wc -w)
 for c in $counters
 do
-	plot+="'plot.dat' using $i title '$c' with lines"
+	echo $i $c
+	if [ "$i" -eq 2 ]; then
+		echo "wat"
+		axes+="set y${i}tic nomirror tc lt $i"
+		plot+="'plot.dat' using $i linetype $i axes x1y2 title '$c' with lines"
+	else
+		plot+="'plot.dat' using $i linetype $i title '$c' with lines"
+	fi
 	if [ $i != $n ]
 	then
 		plot+=", "
@@ -35,6 +42,9 @@ done
 
 # Generate plot
 gnuplot -persist <<- EOF
+	#set y2tics 10 nomirror tc lt 2
+	#set y2tic nomirror
+	$axes
     plot $plot
 EOF
 
