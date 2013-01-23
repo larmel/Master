@@ -1,48 +1,37 @@
 #!/bin/bash
+# $ ./run.sh count -e cycles:u,instructions:u -n 100
 
-PROG='count'
-OUTP='stat.log'
-STAT='instructions:u'
+PROG=$1; STAT="cycles:u"; N=100
 
-LIMIT=1000
-ASLR=0
-OLD_ASLR=`cat /proc/sys/kernel/randomize_va_space`
+while getopts "e:n:" option
+do
+    case $option in
+        e) STAT=${OPTARG};;
+        n) N=${OPTARG};;
+    esac
+done
 
 # Init output file with no content
-cp /dev/null $OUTP
+OUTP='stat.dat'; cp /dev/null $OUTP
 
-echo "# Address Space Randomization is $OLD_ASLR"
-
-# Disable  address space layout randomization
-if [ $OLD_ASLR != $ASLR ]
+ASLR=`cat /proc/sys/kernel/randomize_va_space`
+if [ $ASLR != 0 ]
 then
-    echo "Changing 'Address space layout randomization' from $OLD_ASLR to $ASLR..."
-    sudo bash -c "echo $ASLR > /proc/sys/kernel/randomize_va_space"
+    echo "Disabling address space layout randomization ..."
+    sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"
 fi
 
-echo "# Running $LIMIT measurements"
-for N in `seq $LIMIT`
+echo "Running $N measurements..."
+for N in `seq $N`
 {
     # Change environment (TODO)
 
     # Run program and store results
-    perf stat -e $STAT -x", " --output $OUTP --append ./$PROG
+    perf stat -e $STAT -x" " --output $OUTP --append ./$PROG
 }
 
-echo "# Plotting graph"
-
-# Format output data correctly
-grep $STAT $OUTP > "plot.tmp"
-gnuplot -persist <<- EOF
-    set xlabel "Run #"
-    set ylabel "$STAT"
-    #set term png
-    #set output "plot.png"
-    plot "plot.tmp" with lines title "Cycle count"
-EOF
-
-#rm "plot.tmp"
-
+echo "Plotting graph..."
+./plot.sh $OUTP $STAT
 
 
 

@@ -1,25 +1,40 @@
 #!/bin/bash
+# ./plot.sh stat.log cycles:u,instructions:u
 
-DATA='stat.log'
+# Modifying the data columns (e.g. plot differences):
+# plot 'force.dat' using 1:($3-$2)
+# plot 'force.dat' using (3*$2):(sin($3+$1))
 
-#cp /dev/null $DATA
+FILE=$1
+LINES=$2
 
-#for F in `ls stat.*`
-# {
-    # Append line with cycles
-#    echo `grep cycles $F | awk '{print $1}'` >> $DATA
-#}
+echo "Plotting data from $FILE with data $LINES"
 
-# Format output data correctly
-grep cycles:u $DATA > "plot.tmp"
+# Retrieve list of performance counters to be plotted
+counters=$(echo $LINES | tr "," "\n")
+for c in $counters
+do
+    grep $c $FILE | awk '{print $1}' > "$c"
+done
 
-# plot
-gnuplot <<- EOF
-    set xlabel "Iteration"
-    set ylabel "Cycles"
-    set term png
-    set output "plot.png"
-    plot "plot.tmp" with lines title "Cycle count"
+# Paste files together to form one column for each data line
+paste $counters > "plot.dat"
+rm $counters
+
+# Build plot command
+plot=''; i=1; n=$(echo $counters | wc -w)
+for c in $counters
+do
+	plot+="'plot.dat' using $i title '$c' with lines"
+	if [ $i != $n ]
+	then
+		plot+=", "
+	fi
+	let i++
+done
+
+# Generate plot
+gnuplot -persist <<- EOF
+    plot $plot
 EOF
 
-rm "plot.tmp"
