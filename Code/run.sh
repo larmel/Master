@@ -1,8 +1,9 @@
 #!/bin/bash
 # $ ./run.sh count -e cycles:u,instructions:u -n 100
+# This command runs a program multiple times, storing output from perf
+# in a file stat.dat. plot.sh can extract a set of counters for plotting
 
-prog=$1;
-stat="cycles:u"; n=100
+prog=$1; stat="cycles:u"; n=100
 
 let OPTIND++; # Ignore first options token in getops
 while getopts ":e:n:" option
