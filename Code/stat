@@ -1,7 +1,8 @@
 #!/bin/bash
-# $ ./run.sh count -e cycles:u,instructions:u -n 100
-# This command runs a program multiple times, storing output from perf
-# in a file stat.dat. plot.sh can extract a set of counters for plotting
+
+# This command runs a program multiple times, pushing output from perf to stdout
+# $ ./stat Empty/a.out -e cycles:u,instructions:u -n 100 > Empty/stat.dat
+# $ ./plot Empty/stat.dat cycles:u | gnuplot -persist
 
 <<COMMENT
 # Hardware events
@@ -60,14 +61,12 @@ do
     esac
 done
 
-# Init output file with no content
-output='stat.dat'; cp /dev/null $output
-
 ASLR=`cat /proc/sys/kernel/randomize_va_space`
 if [ $ASLR != 0 ]
 then
     echo "Disabling address space layout randomization ..."
     sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"
+    exit
 fi
 
 for i in `seq $n`
@@ -75,12 +74,14 @@ for i in `seq $n`
     # Change environment (TODO)
 
     # Run program and store results
-    echo "" >> $output
-    echo "# Run $i" >> $output
-    perf stat -e $stat -x" " --output $output --append ./$prog
+    # perf stat writes output to stderr, redirect to stdout
+    echo ""
+    echo "# Run $i"
+    perf stat -e $stat -x" " $prog 0>&1 
+    #--output $output --append "$prog"
 }
 
-./plot.sh $output $stat
+#./plot.sh $output $stat
 
 
 
