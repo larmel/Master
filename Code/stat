@@ -4,50 +4,16 @@
 # $ ./stat Empty/a.out -e cycles:u,instructions:u -n 100 > Empty/stat.dat
 # $ ./plot Empty/stat.dat cycles:u | gnuplot -persist
 
-<<COMMENT
-# Hardware events
-cycles:u,instructions:u,cache-references:u,cache-misses:u,branches:u,branch-misses:u,bus-cycles:u
-
-# Software events
-cpu-clock:u,task-clock:u,faults:u,minor-faults:u,major-faults:u,cs,migrations,alignment-faults:u
-
-# Cache hardware events
-L1-dcache-loads:u
-L1-dcache-load-misses:u
-L1-dcache-stores:u
-L1-dcache-store-misses:u
-L1-dcache-prefetches:u
-L1-dcache-prefetch-misses:u
-L1-icache-loads:u
-L1-icache-load-misses:u
-L1-icache-prefetches:u
-L1-icache-prefetch-misses:u
-LLC-loads:u
-LLC-load-misses:u
-LLC-stores:u
-LLC-store-misses:u
-LLC-prefetches:u
-LLC-prefetch-misses:u
-dTLB-loads:u
-dTLB-load-misses:u
-dTLB-stores:u
-dTLB-store-misses:u
-dTLB-prefetches:u
-dTLB-prefetch-misses:u
-iTLB-loads:u
-iTLB-load-misses:u
-branch-loads:u
-branch-load-misses:u
-node-loads:u
-node-load-misses:u
-node-stores:u
-node-store-misses:u
-node-prefetches:u
-node-prefetch-misses:u
-COMMENT
-
-stat="instructions:u,cycles:u,cache-references:u,cache-misses:u,branches:u,branch-misses:u,bus-cycles:u,\
-faults:u,minor-faults:u,major-faults:u,cs,migrations,alignment-faults:u";
+stat="\
+instructions:u,\
+cycles:u,\
+cache-references:u,\
+cache-misses:u,\
+branches:u,\
+branch-misses:u,\
+bus-cycles:u,\
+faults:u,\
+cs";
 
 prog=$1; n=100
 
@@ -57,14 +23,14 @@ do
     case $option in
         e) stat=$OPTARG ;;
         n) n=$OPTARG ;;
-        \?) echo "Usage: $ ./run <program> [-e <counters>] [-n <runs>]"; exit ;;
+        \?) echo "Usage: $ ./run <program> [-e <counters>] [-n <runs>]" >&0 ; exit ;;
     esac
 done
 
 ASLR=`cat /proc/sys/kernel/randomize_va_space`
 if [ $ASLR != 0 ]
 then
-    echo "Disabling address space layout randomization ..."
+    echo "Disabling address space layout randomization ..." >&0
     sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"
     exit
 fi
@@ -80,8 +46,4 @@ for i in `seq $n`
     perf stat -e $stat -x" " $prog 0>&1 
     #--output $output --append "$prog"
 }
-
-#./plot.sh $output $stat
-
-
 
