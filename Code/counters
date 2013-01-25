@@ -1,7 +1,7 @@
 
 # Interesting counters
 instructions:u,cycles:u,cache-references:u,cache-misses:u,branches:u,
-branch-misses:u,bus-cycles:u,faults:u
+branch-misses:u,bus-cycles:u,faults:u,cs
 
 
 
