@@ -1,0 +1,1100 @@
+
+# Run 1
+9087278 instructions:u
+6189242 cycles:u
+1607 cache-references:u
+8 cache-misses:u
+2017111 branches:u
+1496 branch-misses:u
+182039 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 2
+9087280 instructions:u
+6189126 cycles:u
+1610 cache-references:u
+20 cache-misses:u
+2017112 branches:u
+1485 branch-misses:u
+182036 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 3
+9087279 instructions:u
+6188320 cycles:u
+1616 cache-references:u
+0 cache-misses:u
+2017111 branches:u
+1496 branch-misses:u
+182012 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 4
+9087280 instructions:u
+6187526 cycles:u
+1642 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1493 branch-misses:u
+181988 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 5
+9087281 instructions:u
+6186645 cycles:u
+1584 cache-references:u
+10 cache-misses:u
+2017112 branches:u
+1165 branch-misses:u
+181964 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 6
+9087279 instructions:u
+6175978 cycles:u
+1533 cache-references:u
+1 cache-misses:u
+2017111 branches:u
+1036 branch-misses:u
+181643 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 7
+9087280 instructions:u
+6175122 cycles:u
+1521 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1003 branch-misses:u
+181625 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 8
+9087282 instructions:u
+6184362 cycles:u
+1680 cache-references:u
+6 cache-misses:u
+2017113 branches:u
+1046 branch-misses:u
+181894 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 9
+9087280 instructions:u
+6178291 cycles:u
+1581 cache-references:u
+9 cache-misses:u
+2017112 branches:u
+1082 branch-misses:u
+181712 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 10
+9087281 instructions:u
+6177948 cycles:u
+1637 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1058 branch-misses:u
+181707 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 11
+9087282 instructions:u
+6177286 cycles:u
+1590 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1043 branch-misses:u
+181693 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 12
+9087284 instructions:u
+6177011 cycles:u
+1576 cache-references:u
+3 cache-misses:u
+2017114 branches:u
+1023 branch-misses:u
+181672 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 13
+9087279 instructions:u
+6188372 cycles:u
+1579 cache-references:u
+3 cache-misses:u
+2017111 branches:u
+1509 branch-misses:u
+182010 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 14
+9087281 instructions:u
+6189273 cycles:u
+1630 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1524 branch-misses:u
+182047 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 15
+9087281 instructions:u
+6177636 cycles:u
+1564 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1041 branch-misses:u
+181688 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 16
+9087278 instructions:u
+6195447 cycles:u
+1696 cache-references:u
+5 cache-misses:u
+2017111 branches:u
+1519 branch-misses:u
+182215 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 17
+9087281 instructions:u
+6178867 cycles:u
+1617 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1083 branch-misses:u
+181733 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 18
+9087283 instructions:u
+6178462 cycles:u
+1637 cache-references:u
+4 cache-misses:u
+2017113 branches:u
+1034 branch-misses:u
+181716 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 19
+9087280 instructions:u
+6175429 cycles:u
+1608 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1028 branch-misses:u
+181632 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 20
+9087280 instructions:u
+6177964 cycles:u
+1586 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1080 branch-misses:u
+181704 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 21
+9087281 instructions:u
+6188916 cycles:u
+1576 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1521 branch-misses:u
+182021 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 22
+9087282 instructions:u
+6177861 cycles:u
+1564 cache-references:u
+2 cache-misses:u
+2017113 branches:u
+1070 branch-misses:u
+181699 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 23
+9087280 instructions:u
+6174895 cycles:u
+1557 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+995 branch-misses:u
+181620 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 24
+9087282 instructions:u
+6190382 cycles:u
+1553 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1533 branch-misses:u
+182064 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 25
+9087281 instructions:u
+6189252 cycles:u
+1614 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1523 branch-misses:u
+182037 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 26
+9087279 instructions:u
+6188422 cycles:u
+1628 cache-references:u
+0 cache-misses:u
+2017111 branches:u
+1504 branch-misses:u
+182010 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 27
+9087281 instructions:u
+6188916 cycles:u
+1604 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1501 branch-misses:u
+182024 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 28
+9087279 instructions:u
+6178675 cycles:u
+1554 cache-references:u
+9 cache-misses:u
+2017111 branches:u
+1089 branch-misses:u
+181731 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 29
+9087281 instructions:u
+6178697 cycles:u
+1579 cache-references:u
+6 cache-misses:u
+2017112 branches:u
+1062 branch-misses:u
+181723 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 30
+9087284 instructions:u
+6179721 cycles:u
+1604 cache-references:u
+5 cache-misses:u
+2017114 branches:u
+1060 branch-misses:u
+181756 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 31
+9087279 instructions:u
+6175051 cycles:u
+1549 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1019 branch-misses:u
+181610 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 32
+9087283 instructions:u
+6179956 cycles:u
+1623 cache-references:u
+0 cache-misses:u
+2017113 branches:u
+1150 branch-misses:u
+181770 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 33
+9087281 instructions:u
+6189691 cycles:u
+1613 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1510 branch-misses:u
+182046 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 34
+9087281 instructions:u
+6177715 cycles:u
+1567 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1069 branch-misses:u
+181704 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 35
+9087278 instructions:u
+6194434 cycles:u
+1719 cache-references:u
+16 cache-misses:u
+2017111 branches:u
+1454 branch-misses:u
+182189 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 36
+9087280 instructions:u
+6176653 cycles:u
+1597 cache-references:u
+8 cache-misses:u
+2017112 branches:u
+970 branch-misses:u
+181664 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 37
+9087280 instructions:u
+6191091 cycles:u
+1547 cache-references:u
+6 cache-misses:u
+2017112 branches:u
+1474 branch-misses:u
+182089 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 38
+9087280 instructions:u
+6176005 cycles:u
+1587 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1013 branch-misses:u
+181637 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 39
+9087282 instructions:u
+6178233 cycles:u
+1607 cache-references:u
+3 cache-misses:u
+2017113 branches:u
+1072 branch-misses:u
+181712 bus-cycles:u
+111 faults:u
+1 cs
+
+# Run 40
+9087283 instructions:u
+6177898 cycles:u
+1642 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1030 branch-misses:u
+181702 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 41
+9087280 instructions:u
+6188622 cycles:u
+1618 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1508 branch-misses:u
+182022 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 42
+9087283 instructions:u
+6176417 cycles:u
+1580 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1018 branch-misses:u
+181656 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 43
+9087281 instructions:u
+6177991 cycles:u
+1628 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1063 branch-misses:u
+181710 bus-cycles:u
+111 faults:u
+1 cs
+
+# Run 44
+9087282 instructions:u
+6178761 cycles:u
+1503 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1135 branch-misses:u
+181728 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 45
+9087281 instructions:u
+6189911 cycles:u
+1590 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1527 branch-misses:u
+182056 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 46
+9087281 instructions:u
+6178304 cycles:u
+1593 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1072 branch-misses:u
+181705 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 47
+9087279 instructions:u
+6178327 cycles:u
+1612 cache-references:u
+12 cache-misses:u
+2017111 branches:u
+1065 branch-misses:u
+181711 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 48
+9087279 instructions:u
+6177684 cycles:u
+1569 cache-references:u
+2 cache-misses:u
+2017111 branches:u
+1103 branch-misses:u
+181697 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 49
+9087281 instructions:u
+6190352 cycles:u
+1628 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1526 branch-misses:u
+182064 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 50
+9087279 instructions:u
+6175100 cycles:u
+1561 cache-references:u
+1 cache-misses:u
+2017111 branches:u
+1013 branch-misses:u
+181612 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 51
+9087281 instructions:u
+6182983 cycles:u
+1715 cache-references:u
+0 cache-misses:u
+2017113 branches:u
+1010 branch-misses:u
+181861 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 52
+9087282 instructions:u
+6177771 cycles:u
+1562 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1072 branch-misses:u
+181697 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 53
+9087279 instructions:u
+6177363 cycles:u
+1550 cache-references:u
+2 cache-misses:u
+2017111 branches:u
+1075 branch-misses:u
+181687 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 54
+9087282 instructions:u
+6177435 cycles:u
+1602 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1026 branch-misses:u
+181690 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 55
+9087281 instructions:u
+6189813 cycles:u
+1638 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1516 branch-misses:u
+182061 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 56
+9087279 instructions:u
+6177689 cycles:u
+1636 cache-references:u
+1 cache-misses:u
+2017111 branches:u
+1039 branch-misses:u
+181697 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 57
+9087279 instructions:u
+6187811 cycles:u
+1613 cache-references:u
+0 cache-misses:u
+2017111 branches:u
+1514 branch-misses:u
+182000 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 58
+9087282 instructions:u
+6189227 cycles:u
+1606 cache-references:u
+2 cache-misses:u
+2017113 branches:u
+1521 branch-misses:u
+182036 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 59
+9087282 instructions:u
+6177744 cycles:u
+1547 cache-references:u
+2 cache-misses:u
+2017113 branches:u
+1075 branch-misses:u
+181701 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 60
+9087281 instructions:u
+6189547 cycles:u
+1578 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1516 branch-misses:u
+182044 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 61
+9087281 instructions:u
+6189043 cycles:u
+1620 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1501 branch-misses:u
+182034 bus-cycles:u
+111 faults:u
+1 cs
+
+# Run 62
+9087283 instructions:u
+6178242 cycles:u
+1641 cache-references:u
+0 cache-misses:u
+2017113 branches:u
+1068 branch-misses:u
+181711 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 63
+9087280 instructions:u
+6187229 cycles:u
+1573 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1494 branch-misses:u
+181979 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 64
+9087282 instructions:u
+6190292 cycles:u
+1661 cache-references:u
+3 cache-misses:u
+2017113 branches:u
+1530 branch-misses:u
+182065 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 65
+9087281 instructions:u
+6178336 cycles:u
+1609 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1110 branch-misses:u
+181710 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 66
+9087279 instructions:u
+6189234 cycles:u
+1583 cache-references:u
+5 cache-misses:u
+2017111 branches:u
+1517 branch-misses:u
+182040 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 67
+9087282 instructions:u
+6178745 cycles:u
+1590 cache-references:u
+6 cache-misses:u
+2017113 branches:u
+1077 branch-misses:u
+181728 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 68
+9087279 instructions:u
+6178249 cycles:u
+1573 cache-references:u
+2 cache-misses:u
+2017113 branches:u
+1077 branch-misses:u
+181710 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 69
+9087281 instructions:u
+6189149 cycles:u
+1625 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1494 branch-misses:u
+182034 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 70
+9087283 instructions:u
+6179209 cycles:u
+1659 cache-references:u
+0 cache-misses:u
+2017113 branches:u
+1072 branch-misses:u
+181747 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 71
+9087281 instructions:u
+6177846 cycles:u
+1514 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1114 branch-misses:u
+181704 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 72
+9087282 instructions:u
+6178287 cycles:u
+1540 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1144 branch-misses:u
+181713 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 73
+9087283 instructions:u
+6194819 cycles:u
+1710 cache-references:u
+8 cache-misses:u
+2017113 branches:u
+1481 branch-misses:u
+182203 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 74
+9087281 instructions:u
+6175044 cycles:u
+1594 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+927 branch-misses:u
+181619 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 75
+9087280 instructions:u
+6175921 cycles:u
+1561 cache-references:u
+3 cache-misses:u
+2017112 branches:u
+1011 branch-misses:u
+181641 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 76
+9087281 instructions:u
+6178909 cycles:u
+1548 cache-references:u
+6 cache-misses:u
+2017113 branches:u
+1133 branch-misses:u
+181734 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 77
+9087281 instructions:u
+6178263 cycles:u
+1592 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1077 branch-misses:u
+181714 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 78
+9087279 instructions:u
+6189449 cycles:u
+1656 cache-references:u
+0 cache-misses:u
+2017111 branches:u
+1536 branch-misses:u
+182042 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 79
+9087279 instructions:u
+6188369 cycles:u
+1604 cache-references:u
+7 cache-misses:u
+2017111 branches:u
+1470 branch-misses:u
+182010 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 80
+9087284 instructions:u
+6190050 cycles:u
+1545 cache-references:u
+1 cache-misses:u
+2017114 branches:u
+1506 branch-misses:u
+182061 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 81
+9087280 instructions:u
+6175838 cycles:u
+1580 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1020 branch-misses:u
+181636 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 82
+9087281 instructions:u
+6177661 cycles:u
+1612 cache-references:u
+2 cache-misses:u
+2017112 branches:u
+1063 branch-misses:u
+181696 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 83
+9087281 instructions:u
+6178264 cycles:u
+1560 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1091 branch-misses:u
+181718 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 84
+9087283 instructions:u
+6191015 cycles:u
+1612 cache-references:u
+1 cache-misses:u
+2017113 branches:u
+1537 branch-misses:u
+182091 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 85
+9087280 instructions:u
+6183323 cycles:u
+1616 cache-references:u
+7 cache-misses:u
+2017112 branches:u
+1026 branch-misses:u
+181859 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 86
+9087283 instructions:u
+6178450 cycles:u
+1622 cache-references:u
+7 cache-misses:u
+2017114 branches:u
+1051 branch-misses:u
+181725 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 87
+9087279 instructions:u
+6175731 cycles:u
+1510 cache-references:u
+6 cache-misses:u
+2017111 branches:u
+1037 branch-misses:u
+181635 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 88
+9087281 instructions:u
+6188830 cycles:u
+1590 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1509 branch-misses:u
+182022 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 89
+9087282 instructions:u
+6183419 cycles:u
+1613 cache-references:u
+3 cache-misses:u
+2017113 branches:u
+1056 branch-misses:u
+181869 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 90
+9087279 instructions:u
+6188625 cycles:u
+1571 cache-references:u
+2 cache-misses:u
+2017111 branches:u
+1511 branch-misses:u
+182019 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 91
+9087280 instructions:u
+6175733 cycles:u
+1566 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1000 branch-misses:u
+181642 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 92
+9087281 instructions:u
+6176090 cycles:u
+1602 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1003 branch-misses:u
+181656 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 93
+9087282 instructions:u
+6179012 cycles:u
+1624 cache-references:u
+0 cache-misses:u
+2017113 branches:u
+1128 branch-misses:u
+181727 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 94
+9087282 instructions:u
+6178229 cycles:u
+1537 cache-references:u
+2 cache-misses:u
+2017113 branches:u
+1088 branch-misses:u
+181716 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 95
+9087281 instructions:u
+6188221 cycles:u
+1609 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1491 branch-misses:u
+182009 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 96
+9087283 instructions:u
+6178761 cycles:u
+1569 cache-references:u
+3 cache-misses:u
+2017114 branches:u
+1089 branch-misses:u
+181735 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 97
+9087279 instructions:u
+6188550 cycles:u
+1601 cache-references:u
+1 cache-misses:u
+2017111 branches:u
+1497 branch-misses:u
+182021 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 98
+9087284 instructions:u
+6189632 cycles:u
+1642 cache-references:u
+2 cache-misses:u
+2017114 branches:u
+1511 branch-misses:u
+182054 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 99
+9087281 instructions:u
+6177857 cycles:u
+1586 cache-references:u
+1 cache-misses:u
+2017112 branches:u
+1097 branch-misses:u
+181704 bus-cycles:u
+111 faults:u
+0 cs
+
+# Run 100
+9087281 instructions:u
+6189190 cycles:u
+1628 cache-references:u
+0 cache-misses:u
+2017112 branches:u
+1514 branch-misses:u
+182028 bus-cycles:u
+111 faults:u
+0 cs
