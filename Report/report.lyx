@@ -84,7 +84,7 @@ This is the empty abstract.
  Test citation 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "JonesRadclifTabor1995"
+key "ProdWrongData,PCDeterministic"
 
 \end_inset
 
