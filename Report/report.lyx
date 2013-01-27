@@ -130,7 +130,54 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Some introduction
+Catchy introduction about the blissful ignorance currently employed by the
+ scientific comunity.
+ 
+\end_layout
+
+\begin_layout Section
+Measurement Bias
+\end_layout
+
+\begin_layout Standard
+Papers exploring measurement bias.
+ Fancy graphic of memory layout.
+ Conclusion that this is an unsolved problem.
+ 
+\end_layout
+
+\begin_layout Section
+Outline
+\end_layout
+
+\begin_layout Standard
+The purpose of this report is to explore ways to tackle the effects of measureme
+nt bias.
+ Previous work has focused mostly on ways to eliminate the effects in order
+ to produce reliable measurements -- working towards a more statistically
+ valid methodology employed in the computer science community.
+ Our approach is slightly different.
+ If bias could be controlled in certain situations, we could change program
+ or environment to enhance performance -- essentially control the bias to
+ work in our favor.
+ 
+\end_layout
+
+\begin_layout Description
+Chapter
+\begin_inset space ~
+\end_inset
+
+2 begins by looking at some of the previous work done.
+ Most of this is documenting measurement bias.
+\end_layout
+
+\begin_layout Description
+Chapter
+\begin_inset space ~
+\end_inset
+
+3 hopefully contains some actual smart stuff, we'll see :)
 \end_layout
 
 \begin_layout Chapter
@@ -139,6 +186,40 @@ Background and Related Work
 
 \begin_layout Standard
 Background from papers
+\end_layout
+
+\begin_layout Section
+Performance Counters
+\end_layout
+
+\begin_layout Standard
+The most powerful tools available for assessing performance on real hardware
+ is hardware performance coutners.
+\end_layout
+
+\begin_layout Subsection
+Accuracy of Performance Counters
+\end_layout
+
+\begin_layout Standard
+Unfortunately, performance counters are not necessarily accurate or predictable.
+ Several papers have looked at the relationship between measured counts
+ and the 
+\begin_inset Quotes eld
+\end_inset
+
+right answer
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For certain metrics it is quite easy to verify wether the reported counts
+ are accurate.
+ One example is the number of retired instructions, for the perf utility
+ reported as instructions:u.
+ At least for small programs, we can easily count the number of dynamic
+ intructions and compare to reported counts.
+ 
 \end_layout
 
 \begin_layout Chapter
