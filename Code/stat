@@ -13,6 +13,7 @@ branches:u,\
 branch-misses:u,\
 bus-cycles:u,\
 faults:u,\
+r203,\
 cs";
 
 prog=$1; n=100
@@ -35,9 +36,13 @@ then
     exit
 fi
 
+ENV=''
+
 for i in `seq $n`
 {
     # Change environment (TODO)
+    ENV=$ENV'0'
+    export ENV
 
     # Run program and store results
     # perf stat writes output to stderr, redirect to stdout
