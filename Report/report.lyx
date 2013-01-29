@@ -222,6 +222,277 @@ right answer
  
 \end_layout
 
+\begin_layout Section
+Details from Intel Manual
+\end_layout
+
+\begin_layout Standard
+The current generations of Intel microarchitectures are called, from earliest
+ to newest, Sandy Bridge, Ivy Bridge and Haswell.
+ In the official documentation on hardware performance monitoring, Ivy Bridge
+ is 
+\begin_inset Quotes eld
+\end_inset
+
+generally the same
+\begin_inset Quotes erd
+\end_inset
+
+ as described for Sandy Bridge.
+ Ref 18.9 in Part 3B.
+ 
+\end_layout
+
+\begin_layout Standard
+Another note: Ivy Bridge is 
+\begin_inset Quotes eld
+\end_inset
+
+3rd generation Core
+\begin_inset Quotes erd
+\end_inset
+
+, while Haswell is 
+\begin_inset Quotes eld
+\end_inset
+
+Next generation
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="2">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sandy/Ivy Bridge
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of fixed counters per thread
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of general-purpose counters per core
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of programmable counters per thread
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4 (8 if a core is not shared by two threads)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+PMU (Performance Monitoring Unit) capabilities for 2nd and 3rd generation
+ Intel Core microarchitectures (Sandy Bridge and Ivy Bridge).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Fixed counters
+\end_layout
+
+\begin_layout Standard
+Can only count one event (?)
+\end_layout
+
+\begin_layout Paragraph*
+Generic counters
+\end_layout
+
+\begin_layout Standard
+Can count any event
+\end_layout
+
+\begin_layout Standard
+In case there are more events than counters, OS will multiplex and perf
+ do scaling (inaccurate).
+\end_layout
+
+\begin_layout Paragraph
+Software events
+\end_layout
+
+\begin_layout Standard
+Things like context switches.
+ (How is this counted?)
+\end_layout
+
+\begin_layout Paragraph
+Hardware events
+\end_layout
+
+\begin_layout Standard
+Cycles
+\end_layout
+
+\begin_layout Subsection
+Precise Event Based Sampling (PEBS) 
+\end_layout
+
+\begin_layout Standard
+Same support as Sandy Bridge, with events listed in Table 18-21.
+\end_layout
+
+\begin_layout Standard
+Allows PMU to collect architectural state and Instruction Pointer (IP) 
+\emph on
+after
+\emph default
+ instruction that caused event is completed.
+ Only 
+\begin_inset Quotes eld
+\end_inset
+
+at-retirement
+\begin_inset Quotes erd
+\end_inset
+
+ events.
+ PEBS buffer can contain all general purpose registers + IP for analyzing
+ later.
+ Used in V-tune.
+\end_layout
+
+\begin_layout Standard
+Supported in perfmon2 for some version number > x.
+ 
+\end_layout
+
+\begin_layout Standard
+Quote from forum post: http://software.intel.com/en-us/forums/topic/277553
+\end_layout
+
+\begin_layout Quote
+PEBS (Precise Event Based Sampling) is a feature available to a subset of
+ events which allows the hardware to collect additionalinformation very
+ close to the exact time the configured event overflowed.
+ This presents theanalysis tools whith susbstantially more accurate information
+ since the alternative is to wait for a software interrupt to collect this
+ information, typically hundreds of cycles later.The additional collected
+ information are stored in a special PEBS buffer and retrieved by the tool
+ (in this case perf_events) later.
+\end_layout
+
+\begin_layout Standard
+For use in perf: append :pp to event.
+ Needs to be used with perf record.
+\end_layout
+
 \begin_layout Chapter
 Methods and Implementation
 \end_layout
