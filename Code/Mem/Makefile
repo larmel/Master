@@ -1,0 +1,4 @@
+
+
+mem:
+	cc mem.c
