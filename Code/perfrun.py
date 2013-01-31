@@ -16,6 +16,11 @@ general_purpose_counters = 8
 def disable_layout_randomization():
     subprocess.call('sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"', shell=True)
 
+def export_csv(result, filename):
+    with open(filename, 'w') as f:
+        for line in result:
+            f.write(','.join([line['event']] + map(str, line['count'])))
+            f.write('\n')
 
 def execute():
     disable_layout_randomization()
@@ -29,28 +34,38 @@ def execute():
     
     args = parser.parse_args()
 
-    # Get list of performance counters from file
-    pc = []
+    n = int(args.num)
+
+    # Store result, total events for each performance counter
+    events, res = [], []
     for line in open(args.event_file):
         code, name = line.strip().split('\t')
-        pc.append( (code, name) )
+        code = ''.join(['r', code, ':u'])
+        events.append(code)
+        res.append({'event': code, 'mnemonic': name, 'count': [0]*n, 'diff': [0]*n})
 
-    # Clear output file
-    subprocess.call('cp /dev/null '+args.output, shell=True)
+    for run in range(n):
 
-    for run in range(0, int(args.num)):
+        # Clear temporary storage for perf output
+        fn = ''.join(['stat.', str(run), '.dat'])
+        subprocess.call('cp /dev/null '+fn, shell=True)
 
-        with open(args.output, 'a') as out:
-            out.write(' '.join(['# Run', str(run), '\n']))
-
-        for i in range(0, len(pc), general_purpose_counters):
-            events = pc[i:i+general_purpose_counters]
-            events_string = ','.join(map(lambda (c, n) : 'r'+c+':u', events))
-            command = ' '.join(['perf stat -r', str(args.repeat), '-x" "', '-e', events_string, args.program, '0>>', args.output])
+        # Sample events in batches of 8
+        for i in range(0, len(events), general_purpose_counters):
+            events_string = ','.join(events[i:i+general_purpose_counters])
+            command = ' '.join(['perf stat -r', str(args.repeat), '-x","', '-e', events_string, args.program, '0>>', fn])
             subprocess.call(command, shell=True)
 
-        with open(args.output, 'a') as out:
-            out.write('\n')
+        # Update results
+        with open(fn, 'r') as f:
+            for i in range(len(res)):
+                line = f.readline()
+                if (line.find("<not counted>") == -1):
+                    count, _, diff = line.strip().split(',')
+                    res[i]['count'][run] = int(count)
+                    res[i]['diff'][run] = float(diff[:-1])
+
+    export_csv(res, args.output)
 
 if __name__ == '__main__':
     execute()
