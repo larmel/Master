@@ -17,7 +17,7 @@ def read_file(events, filename):
     with open(filename) as f:
         for line in f:
             e = line.strip().split(',')
-            if events == 'all' or e[1].lower() in events:
+            if events == ['all'] or e[1].lower() in events:
                 lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(int, e[2:-1])})
     return lines
 

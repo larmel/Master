@@ -34,7 +34,7 @@ def execute():
 
     parser = argparse.ArgumentParser(description='Automated perf runner')
     parser.add_argument('program', help='program to be run')
-    parser.add_argument('-e', '--event_file', default='pc')
+    parser.add_argument('-e', '--event_file', default='counters')
     parser.add_argument('-o', '--output', default='stat.csv')
     parser.add_argument('-n', '--num', default=2)
     parser.add_argument('-r', '--repeat', default=5)
@@ -51,7 +51,7 @@ def execute():
         events.append(code)
         res.append({'event': code, 'perf': perfmn, 'mnemonic': name, 'count': [0]*n, 'diff': [0]*n})
 
-    environment = {'FOO':'0'*3100}
+    environment = {'FOO':'0'*3230}
 
     for run in range(n):
 
