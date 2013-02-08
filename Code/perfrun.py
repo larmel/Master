@@ -17,8 +17,12 @@ general_purpose_counters = 8
 def disable_layout_randomization():
     subprocess.call('sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"', shell=True)
 
-def correlation(result):
+def correlation(result, event):
     reference = result[0]
+    for i in range(1, len(result)):
+        if result[i]['event'] == event or result[i]['perf'] == event:
+            reference = result[i]
+            break
     for event in result:
         event['pearson'], _ = stats.pearsonr(reference['count'], event['count'])
 
@@ -38,6 +42,7 @@ def execute():
     parser.add_argument('-o', '--output', default='stat.csv')
     parser.add_argument('-n', '--num', default=2)
     parser.add_argument('-r', '--repeat', default=5)
+    parser.add_argument('-c', '--correlate', default='cycles:u')
     
     args = parser.parse_args()
 
@@ -51,7 +56,7 @@ def execute():
         events.append(code)
         res.append({'event': code, 'perf': perfmn, 'mnemonic': name, 'count': [0]*n, 'diff': [0]*n})
 
-    environment = {'FOO':'0'*3230}
+    environment = {'FOO':'0'*3240}
 
     for run in range(n):
 
@@ -79,7 +84,7 @@ def execute():
                     res[i]['count'][run] = int(count)
                     res[i]['diff'][run] = float(diff[:-1])
 
-    correlation(res)
+    correlation(res, args.correlate)
     export_csv(res, args.output)
 
 if __name__ == '__main__':

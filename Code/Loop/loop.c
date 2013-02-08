@@ -8,15 +8,16 @@
  *
  */
 
-static int i = 0, j = 0, k = 0;
+static int i = 0, j = 0, k = 0, l = 0;
 
 int main() {
 	int g = 0, inc = 1;
-	//printf("Address of stack: %p\n", &g);
-	for (; g < 65536; g++) {
+	for (; g < 65536; g++) { // 65536
 		i += inc;
-		j += inc;
-		k += inc;
+		i += inc;
+		//j += inc;
+		//k += inc;
+		//l += inc;
 	}
 	return 0;
 }
