@@ -20,17 +20,15 @@ def disable_layout_randomization():
 # Reads a file containing event info, and filters out the events specified
 # in eventarg. If eventarg is empty, all events are counted.
 def filter_events(filename, eventarg):
-    include = eventarg.split(',')
+    include = eventarg.strip().lower().split(',')
     events = []
     for line in open(filename):
         code, perfmn, name = line.strip().split('\t')
-        code = ''.join(['r', code, ':u']) if perfmn == '' else perfmn+':u'
-        if eventarg == '' or code in include or perfmn in include:
+        code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
+        if eventarg == '' or code in include:
             events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
         if code in include:
             include.remove(code)
-        if perfmn in include:
-            include.remove(perfmn)
     if len(include) > 0:
         print "Adding unknown event(s)", ', '.join(include)
         for e in include:

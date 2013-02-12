@@ -18,14 +18,15 @@ def read_file(events, filename):
         for line in f:
             e = line.strip().split(',')
             if events == ['all'] or e[1].lower() in events:
-                lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(int, e[2:-1])})
+                lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(int, e[3:])})
     return lines
 
 def plot_lines(data):
     plt.figure(1, facecolor='white', edgecolor='white')
     plt.subplot(111)
     for line in data:
-        plt.plot(line['count'], label=line['mnemonic'])
+        label = line['event'] if line['mnemonic'] == '' else line['mnemonic']
+        plt.plot(line['count'], label=label)
     plt.grid(True)
     plt.legend()
     plt.show()
