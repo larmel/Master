@@ -7,6 +7,7 @@
  * cycles:u,r0107:u,r003c:u,r013c:u,r025c:u,r01a2:u,r02a3:u
  *
  */
+#include <stdio.h>
 
 static int i = 0, j = 0, k = 0;
 
@@ -17,5 +18,6 @@ int main() {
 		j += inc;
 		k += inc;
 	}
+	printf("%p %p\n", &g, &inc);
 	return 0;
 }

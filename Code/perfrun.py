@@ -40,11 +40,11 @@ def benchmark(events, runs, repeat, program, increment):
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
-    environment = {'FOO':'0'*3240}
+    environment = {'FOO':'0'*3230}
 
     for run in range(runs):
         subprocess.call('cp /dev/null stat.tmp.dat', shell=True)
-        environment['FOO'] += '0'*int(increment)
+        environment['FOO'] += '0'*increment
 
         # Sample events in batches of 8
         for i in range(0, len(events), general_purpose_counters):
@@ -99,7 +99,7 @@ def execute():
     events = filter_events(args.event_file, args.events)
 
     # Run benchmarks
-    events = benchmark(events, int(args.num), int(args.repeat), args.program, args.increment)
+    events = benchmark(events, int(args.num), int(args.repeat), args.program, int(args.increment))
 
     # Export result
     correlation(events, args.correlate)
