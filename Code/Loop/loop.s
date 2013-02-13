@@ -34,72 +34,52 @@ main:
 	cmpl	$65535, -8(%rbp)
 	jle	.L3
 
-	# http://www.baptiste-wicht.com/2011/11/print-strings-integers-intel-assembly/
+	leaq	-4(%rbp), %rax 	# Address of g
+	call write_address
 
-	# Print address
-	#leaq	-4(%rbp), %rax 	# Address of g
-	#xorq	%rsi, %rsi 		# Count characters
+	leaq	-8(%rbp), %rax 	# Address of inc
+	call write_address
 
-	push    $97
-	mov     $1, %rsi
-	jmp .Lprint
-
-	# Extract new character
-.Lextract:
-	cmpq    $0, %rax 		# Is address 0?
-	jz .Lprint
-	movq    %rax, %rbx 		# Copy of address
-	andq	$15, %rbx 		# mod 16
-	shrq	$4, %rax 		# divide by 16
-	incq 	%rsi 			# i++
-
-	# Push character code on stack
-	cmpq	$10, %rbx 		# >= 10?. 'a' = 97. Add 87
-	jl	.Lint
-	addq    $87, %rbx
-	pushq   %rbx
-	jmp .Lextract
-.Lint:
-	addq    $48, %rbx 		# '0' = 48
-	pushq   %rbx
-	cmpq	$0, -16(%rbp)
-	jne	.Lextract
-
-	# Pop and print each character
-.Lprint:
-	#cmpq 	$0, %rsi
-	#jz .Lexit
-	#decq 	%rsi
-	mov 	$4, %eax 		# Syscall sys_write
-	mov 	$1, %ebx 		# File descriptor stdout
-	#movq 	%rsp, %rcx      # Pointer to first char
-	sub     $4, %esp
-	mov     %esp, %ecx 
-	mov 	$16, %edx 		# Message length
-	int  	$0x80 			# OS interrupt
-	#addq 	$8, %rsp        # Point to next character (64 bit, 8 byte)
-	#jmp .Lprint
-
-.Lexit:
-
-	mov	$1, %eax	#system call number (sys_exit)
-	int	$0x80		#call kernel
-
-/*
-	movl	$.LC0, %eax
-	leaq	-4(%rbp), %rdx
-	leaq	-8(%rbp), %rcx
-	movq	%rcx, %rsi
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf
-	movl	$0, %eax*/
 	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LOL:
-	.string "GCC: (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3"
+
+	# Writes address in rax in human readable format
+	# http://stackoverflow.com/questions/10105871/why-cant-i-sys-write-from-a-register
+write_address:
+	mov     $0, %rbx		# Count characters on stack
+	pushq	$0x0a			# Line feed
+.push:
+	cmpq    $0, %rax
+	jz .print
+	movq    %rax, %rcx 		# Copy of address
+	andq	$15, %rcx 		# Char
+	shrq	$4, %rax 		# Shift
+	incq 	%rbx 			# i++
+	cmpq	$10, %rcx 		# Compare to 10
+	jl	.int
+	addq    $87, %rcx 		# a-f
+	pushq   %rcx
+	jmp .push
+.int:
+	addq    $48, %rcx 		# 0-9
+	pushq   %rcx
+	jmp	.push
+.print:
+	cmpq 	$0, %rbx
+	jl .exit
+	decq 	%rbx
+	movq	$1, %rdx		# String length
+	leaq	(%rsp), %rsi	# Start address
+	movq	$1, %rax
+	movq 	$1, %rdi
+	syscall
+	addq	$8, %rsp
+	jmp .print
+.exit:
+	ret
+
 .LFE0:
 	.size	main, .-main
 	.ident	"GCC: (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3"
