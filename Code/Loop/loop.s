@@ -34,22 +34,28 @@ main:
 	cmpl	$65535, -8(%rbp)
 	jle	.L3
 
+	movq 	(0x60102c), %rax
+	call write_address
+
 	leaq	-4(%rbp), %rax 	# Address of g
 	call write_address
 
 	leaq	-8(%rbp), %rax 	# Address of inc
 	call write_address
 
+	movq	$0xa, %rax 		# Newline
+	call write_char
+
 	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
 
-	# Writes address in rax in human readable format
+	# Writes contents of rax in human readable format
 	# http://stackoverflow.com/questions/10105871/why-cant-i-sys-write-from-a-register
 write_address:
 	mov     $0, %rbx		# Count characters on stack
-	pushq	$0x0a			# Line feed
+	pushq	$0x20			# Space
 .push:
 	cmpq    $0, %rax
 	jz .print
@@ -78,6 +84,15 @@ write_address:
 	addq	$8, %rsp
 	jmp .print
 .exit:
+	ret
+write_char:
+	pushq	%rax
+	movq	$1, %rdx		# String length
+	leaq	(%rsp), %rsi	# Start address
+	movq	$1, %rax
+	movq 	$1, %rdi
+	syscall
+	addq	$8, %rsp
 	ret
 
 .LFE0:
