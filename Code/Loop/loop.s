@@ -34,9 +34,6 @@ main:
 	cmpl	$65535, -8(%rbp)
 	jle	.L3
 
-	movq 	(0x60102c), %rax
-	call write_address
-
 	leaq	-4(%rbp), %rax 	# Address of g
 	call write_address
 

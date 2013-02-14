@@ -40,7 +40,7 @@ def benchmark(events, runs, repeat, program, increment):
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
-    environment = {'FOO':'0'*3245}
+    environment = {'FOO':'0'*3220}
 
     for run in range(runs):
         subprocess.call('cp /dev/null stat.tmp.dat', shell=True)
