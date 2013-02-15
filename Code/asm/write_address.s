@@ -1,8 +1,8 @@
-	# Writes address in rax in human readable format
+	# Writes contents of rax in human readable format
 	# http://stackoverflow.com/questions/10105871/why-cant-i-sys-write-from-a-register
 write_address:
 	mov     $0, %rbx		# Count characters on stack
-	pushq	$0x0a			# Line feed
+	pushq	$0x20			# Space
 .push:
 	cmpq    $0, %rax
 	jz .print
@@ -31,4 +31,13 @@ write_address:
 	addq	$8, %rsp
 	jmp .print
 .exit:
+	ret
+write_char:
+	pushq	%rax
+	movq	$1, %rdx		# String length
+	leaq	(%rsp), %rsi	# Start address
+	movq	$1, %rax
+	movq 	$1, %rdi
+	syscall
+	addq	$8, %rsp
 	ret
