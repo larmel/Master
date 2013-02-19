@@ -497,6 +497,40 @@ For use in perf: append :pp to event.
  Needs to be used with perf record.
 \end_layout
 
+\begin_layout Section
+Memory in Linux
+\end_layout
+
+\begin_layout Standard
+ELF format
+\end_layout
+
+\begin_layout Standard
+Memory map, addresses, layout.
+ Stack placement.
+ How processes are loaded.
+ 
+\end_layout
+
+\begin_layout Standard
+Segments: Look up memory maps of running processes by reading file /proc/<id>/ma
+ps.
+\end_layout
+
+\begin_layout Description
+Text Starts at ox40000 ? Lower addresses not used.
+ Address 0 needs to be invalid, or there might be confusion with null pointers
+ and such.
+\end_layout
+
+\begin_layout Description
+Data Initialized data
+\end_layout
+
+\begin_layout Description
+BSS Uninitialized data.
+\end_layout
+
 \begin_layout Chapter
 Exploration
 \end_layout
