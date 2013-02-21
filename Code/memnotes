@@ -20,4 +20,22 @@ Heap:   0x0000 0000 0088 9010
 
 
 
+lars@Barcelona:~$ cat /proc/3881/maps
+00400000-00401000 r-xp 00000000 08:06 7736326                            /home/lars/Master/Code/Env/a.out
+00600000-00601000 r--p 00000000 08:06 7736326                            /home/lars/Master/Code/Env/a.out
+00601000-00602000 rw-p 00001000 08:06 7736326                            /home/lars/Master/Code/Env/a.out
+00602000-00623000 rw-p 00000000 00:00 0                                  [heap]
+7ffff7a1b000-7ffff7bd0000 r-xp 00000000 08:06 16253049                   /lib/x86_64-linux-gnu/libc-2.15.so
+7ffff7bd0000-7ffff7dcf000 ---p 001b5000 08:06 16253049                   /lib/x86_64-linux-gnu/libc-2.15.so
+7ffff7dcf000-7ffff7dd3000 r--p 001b4000 08:06 16253049                   /lib/x86_64-linux-gnu/libc-2.15.so
+7ffff7dd3000-7ffff7dd5000 rw-p 001b8000 08:06 16253049                   /lib/x86_64-linux-gnu/libc-2.15.so
+7ffff7dd5000-7ffff7dda000 rw-p 00000000 00:00 0 
+7ffff7dda000-7ffff7dfc000 r-xp 00000000 08:06 16253063                   /lib/x86_64-linux-gnu/ld-2.15.so
+7ffff7fe0000-7ffff7fe3000 rw-p 00000000 00:00 0 
+7ffff7ff8000-7ffff7ffb000 rw-p 00000000 00:00 0 
+7ffff7ffb000-7ffff7ffc000 r-xp 00000000 00:00 0                          [vdso]
+7ffff7ffc000-7ffff7ffd000 r--p 00022000 08:06 16253063                   /lib/x86_64-linux-gnu/ld-2.15.so
+7ffff7ffd000-7ffff7fff000 rw-p 00023000 08:06 16253063                   /lib/x86_64-linux-gnu/ld-2.15.so
+7ffffffde000-7ffffffff000 rw-p 00000000 00:00 0                          [stack]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
 

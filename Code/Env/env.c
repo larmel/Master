@@ -22,6 +22,9 @@ int main(void)
 	fprintf(f, "Stack address:       %p\n", &i);
 
 	fclose(f);
+
+	printf("/proc/%d/maps\n", getpid());
+	sleep(20);
 	return 0;
 }
 
