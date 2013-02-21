@@ -150,6 +150,22 @@ Papers exploring measurement bias.
  
 \end_layout
 
+\begin_layout Standard
+Execution environment
+\end_layout
+
+\begin_layout Itemize
+Environment variables
+\end_layout
+
+\begin_layout Itemize
+Link order (affecting static area layout and address of global variables)
+\end_layout
+
+\begin_layout Itemize
+Page sizeof system
+\end_layout
+
 \begin_layout Section
 Outline
 \end_layout
