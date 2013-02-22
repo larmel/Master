@@ -11,6 +11,11 @@ from scipy import stats
 # Rules seems complicated. Strategy: run 8 counters at a time, hopefully no multiplexing.
 # Need to verify that this is done correctly
 # Note: On > 8, some counters are 0. Seems like they are multiplexed and missed or something
+#
+# In Linux, a fixed number of kernel space pages are allocated for command line arguments (32)
+# Get OS Error 7 in Popen for very long envoronment variables. 
+#
+# strace ./a.out // Very cool! Trace system calls made by command
 fixed_counters = 3
 general_purpose_counters = 8
 
