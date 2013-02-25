@@ -65,6 +65,8 @@ def benchmark(events, runs, repeat, program, increment):
                 events[i]['count'][run] = int(line[0])
                 if repeat > 1:
                     events[i]['variance'] = float(line[2][:-1])
+
+    subprocess.call('rm stat.tmp.dat', shell=True)
     return events
 
 def correlation(events, reference_event):
