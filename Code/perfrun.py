@@ -23,21 +23,19 @@ def disable_layout_randomization():
     subprocess.call('sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"', shell=True)
 
 # Reads a file containing event info, and filters out the events specified
-# in eventarg. If eventarg is empty, all events are counted.
-def filter_events(filename, eventarg):
-    include = eventarg.strip().lower().split(',')
+# in include. If include is empty, all events are counted.
+def filter_events(filename, include):
     events = []
     for line in open(filename):
         code, perfmn, name = line.strip().split('\t')
         code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
-        if eventarg == '' or code in include:
+        if include == [] or code in include:
             events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
         if code in include:
             include.remove(code)
-    if len(include) > 0:
-        print "Adding unknown event(s)", ', '.join(include)
-        for e in include:
-            events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
+    for e in include:
+        print "Adding unknown event", e
+        events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
     return events
 
 def benchmark(events, runs, repeat, program, increment):
@@ -88,7 +86,7 @@ def export_csv(events, filename):
 def execute():
     parser = argparse.ArgumentParser(description='Automated perf runner')
     parser.add_argument('program', help='program to be run')
-    parser.add_argument('-e', '--events', default='')
+    parser.add_argument('-e', '--events')
     parser.add_argument('-f', '--event_file', default='../counters')
     parser.add_argument('-o', '--output', default='stat.csv')
     parser.add_argument('-n', '--num', default=2)
@@ -101,7 +99,7 @@ def execute():
     disable_layout_randomization()
 
     # List of event properties [[code, perfmnemonic, description]]
-    events = filter_events(args.event_file, args.events)
+    events = filter_events(args.event_file, [] if args.events == None else args.events.strip().lower().split(','))
 
     # Run benchmarks
     events = benchmark(events, int(args.num), int(args.repeat), args.program, int(args.increment))
