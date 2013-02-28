@@ -19,8 +19,9 @@ int main()
 	{
 		S
 		S1
-		S1
-		S1 // Triggers LSD_OVERFLOW
+		S1 // Lots of cycles with LSD
+		//S1 // Low LSD, but no OVERFLOW
+		//S1 // Triggers LSD_OVERFLOW
 	}
 	return 0;
 }

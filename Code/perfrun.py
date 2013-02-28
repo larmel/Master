@@ -25,11 +25,12 @@ def disable_layout_randomization():
 # Reads a file containing event info, and filters out the events specified
 # in include. If include is empty, all events are counted.
 def filter_events(filename, include):
+    add_all = include == []
     events = []
     for line in open(filename):
         code, perfmn, name = line.strip().split('\t')
         code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
-        if include == [] or code in include:
+        if add_all or code in include:
             events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
         if code in include:
             include.remove(code)
