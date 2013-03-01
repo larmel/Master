@@ -1,3 +1,11 @@
+	cpu-clock	
+	task-clock	
+	page-faults	
+	minor-faults	
+	context-switches	
+	cpu-migrations	
+	alignment-faults	
+	emulation-faults	
 003C	cycles	UnHalted Core Cycles 
 013C	bus-cycles	UnHalted Reference Cycles 
 00C0	instructions	Instruction Retired 

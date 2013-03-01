@@ -28,7 +28,7 @@ def filter_events(filename, include):
     add_all = include == []
     events = []
     for line in open(filename):
-        code, perfmn, name = line.strip().split('\t')
+        code, perfmn, name = map(lambda s : s.strip(), line.split('\t'))
         code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
         if add_all or code in include:
             events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
@@ -44,7 +44,7 @@ def benchmark(events, runs, repeat, program, increment):
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
-    environment = {'FOO':'0'*3220}
+    environment = {'FOO':'0'} # 3220
 
     for run in range(runs):
         subprocess.call('cp /dev/null stat.tmp.dat', shell=True)
