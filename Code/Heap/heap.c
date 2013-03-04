@@ -1,36 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define N 8
+#define N 65536
 
-int a[N][N];
-int r[N][N];
-
-int main()
+int main(int argc, char **argv)
 {
-	int** heap = malloc(sizeof(int*)*N);
-	int i, j, k, s;
-	for (i = 0; i < N; ++i)
-		heap[i] = malloc(sizeof(int)*N);
+	int offset = atoi(argv[1]), i; 
+	printf("Offset: %d\n", offset);
+	int *a = malloc(N*sizeof(int));
+	int *b = malloc(2*N*sizeof(int));
 
-	for (i = 0; i < N; ++i)
+	for (i = 0; i < N; ++i, ++offset)
 	{
-		for (j = 0; j < N; ++j)
-		{
-			s = 0;
-			for (k = 0; k < N; ++k)
-				s += heap[k][j] * a[i][k];
-			r[i][j] = s;
-		}
+		a[i] += 1;
+		b[offset] += 1;
 	}
 
-	/*for (i = 0; i < N; ++i) {
-		heap[i] = 0;
-		stack[i] = 0;
-	}*/
-
-	//printf("Stack location: %p\n", stack);
-	printf("Heap location:  %p : %p, %p, %p, %p\n", heap, heap[0], heap[1], heap[2], heap[3]);
+	printf("Heap location: %p, %p\n", a, b);
 
 	return 0;
 }
