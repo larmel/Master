@@ -16,13 +16,13 @@ def read_file(events, filename):
     lines = []
     with open(filename) as f:
         for line in f:
-            e = line.strip().split(',')
+            e = map(lambda s : s.strip(), line.split(','))
             if events == ['all'] or e[1].lower() in events:
-                lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(int, e[3:])})
+                lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(float, e[3:])})
     return lines
 
-def plot_lines(data):
-    plt.figure(1, facecolor='white', edgecolor='white')
+def plot_lines(title, data):
+    plt.figure(title, facecolor='white', edgecolor='white')
     plt.subplot(111)
     for line in data:
         label = line['event'] if line['mnemonic'] == '' else line['mnemonic']
@@ -34,7 +34,8 @@ def plot_lines(data):
 def run():
     events, filename = parse_arguments()
     lines = read_file(events, filename)
-    plot_lines(lines) 
+    title = filename;
+    plot_lines(title, lines) 
 
 if __name__ == '__main__':
     run()

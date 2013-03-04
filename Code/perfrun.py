@@ -39,21 +39,23 @@ def filter_events(filename, include):
         events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
     return events
 
-def benchmark(events, runs, repeat, program, increment):
+def benchmark(events, runs, repeat, program, stack_incr, arg_increment):
     for e in events:
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
     environment = {'FOO':'0'} # 3220
+    argument = 0;
 
     for run in range(runs):
         subprocess.call('cp /dev/null stat.tmp.dat', shell=True)
-        environment['FOO'] += '0'*increment
+        environment['FOO'] += '0'*stack_incr
+        argument += arg_increment;
 
         # Sample events in batches of 8
         for i in range(0, len(events), general_purpose_counters):
             e = ','.join(map(lambda x: x['code'], events[i:i+general_purpose_counters]))
-            c = ' '.join(['perf stat -r', str(repeat), '-x","', '-e', e, program, '0>> stat.tmp.dat'])
+            c = ' '.join(['perf stat -r', str(repeat), '-x","', '-e', e, program, str(argument), '0>> stat.tmp.dat'])
             p = subprocess.Popen(c, env=environment, shell=True)
             p.wait()
 
@@ -63,7 +65,7 @@ def benchmark(events, runs, repeat, program, increment):
                 line = f.readline().strip().split(',')
                 if (line[0] == "<not counted>"):
                     continue
-                events[i]['count'][run] = int(line[0])
+                events[i]['count'][run] = float(line[0])
                 if repeat > 1:
                     events[i]['variance'] = float(line[2][:-1])
 
@@ -95,7 +97,8 @@ def execute():
     parser.add_argument('-n', '--num', default=2)
     parser.add_argument('-r', '--repeat', default=1)
     parser.add_argument('-c', '--correlate', default='cycles:u')
-    parser.add_argument('-i', '--increment', default=1)
+    parser.add_argument('-i', '--stack', default=1)
+    parser.add_argument('-a', '--arg', default=0)
     args = parser.parse_args()
 
     # Make memory layout deterministic    
@@ -105,7 +108,7 @@ def execute():
     events = filter_events(args.event_file, [] if args.events == None else args.events.strip().lower().split(','))
 
     # Run benchmarks
-    events = benchmark(events, int(args.num), int(args.repeat), args.program, int(args.increment))
+    events = benchmark(events, int(args.num), int(args.repeat), args.program, int(args.stack), int(args.arg))
 
     # Export result
     correlation(events, args.correlate)
