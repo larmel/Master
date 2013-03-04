@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 import argparse
 from string import lower
 
@@ -22,13 +23,18 @@ def read_file(events, filename):
     return lines
 
 def plot_lines(title, data):
-    plt.figure(title, facecolor='white', edgecolor='white')
-    plt.subplot(111)
+    fontP = FontProperties()
+    fontP.set_size('small')
+    plt.figure(title, figsize=(13,5), facecolor='white', edgecolor='white')
+    ax = plt.subplot(111)
     for line in data:
         label = line['event'] if line['mnemonic'] == '' else line['mnemonic']
         plt.plot(line['count'], label=label)
     plt.grid(True)
-    plt.legend()
+    # Shink current axis by 20%
+    box = ax.get_position()
+    legend = plt.legend(loc="upper left", bbox_to_anchor=(1.01,1.0), borderaxespad=0., prop=fontP)
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     plt.show()
 
 def run():

@@ -39,17 +39,19 @@ def filter_events(filename, include):
         events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
     return events
 
-def benchmark(events, runs, repeat, program, stack_incr, arg_increment):
+def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
     for e in events:
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
+    print "Stack increment:   ", stack_increment
+    print "Argument increment:", arg_increment
     environment = {'FOO':'0'} # 3220
     argument = 0;
 
     for run in range(runs):
         subprocess.call('cp /dev/null stat.tmp.dat', shell=True)
-        environment['FOO'] += '0'*stack_incr
+        environment['FOO'] += '0'*stack_increment
         argument += arg_increment;
 
         # Sample events in batches of 8
