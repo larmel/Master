@@ -16,36 +16,77 @@ from scipy import stats
 # Get OS Error 7 in Popen for very long envoronment variables. 
 #
 # strace ./a.out // Very cool! Trace system calls made by command
-fixed_counters = 3
-general_purpose_counters = 8
+n_fixed_counters = 3
+n_general_purpose_counters = 8
+
+fixed_counters = ['cycles:u']
 
 def disable_layout_randomization():
     subprocess.call('sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"', shell=True)
 
+def read_file_events(filename):
+    events = []
+    with open(filename) as f:
+        for line in f:
+            code, perfmn, name = map(lambda s : s.strip(), line.split('\t'))
+            code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
+            events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
+    return events
+
 # Reads a file containing event info, and filters out the events specified
 # in include. If include is empty, all events are counted.
+# Want to preserve the order in specified counters, and counters can
+# be duplicated. Need to lookup in file data for each counter
 def filter_events(filename, include):
-    add_all = include == []
+    file_events = read_file_events(filename)
+    if include == []:
+        return file_events
     events = []
-    for line in open(filename):
-        code, perfmn, name = map(lambda s : s.strip(), line.split('\t'))
-        code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
-        if add_all or code in include:
-            events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
-        if code in include:
-            include.remove(code)
     for e in include:
-        print "Adding unknown event", e
-        events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
+        found = False
+        for s in file_events:
+            if s['code'] == e or s['mnemonic'] == e:
+                found = True
+                events.append(s)
+        if not found:
+            print "Adding unknown event", e
+            events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
     return events
+
+    #events = []
+    #for line in open(filename):
+    #    code, perfmn, name = map(lambda s : s.strip(), line.split('\t'))
+    #    code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else perfmn+':u'
+    #    if add_all or code in include:
+    #        events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
+    #    if code in include:
+    #        include.remove(code)
+    #for e in include:
+    #    print "Adding unknown event", e
+    #    events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
+    return events
+
+# Convert list of counters into lists of lists of [[general] + [fixed]]
+# Can run 8 general counters + 3 fixed ones each time
+def split_counters(counters):
+    general, fixed = [], []
+    for next in counters:
+        if (len(general) == n_general_purpose_counters):
+            yield general + fixed
+            general, fixed = [], []
+        if next['code'] in fixed_counters and len(fixed) < n_fixed_counters:
+            fixed.append(next)
+        else:
+            general.append(next)
+    yield general + fixed
 
 def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
     for e in events:
         e['count'] = [0]*runs
         e['variance'] = [0]*runs
 
-    print "Stack increment:   ", stack_increment
-    print "Argument increment:", arg_increment
+    #print "Stack increment:   ", stack_increment
+    #print "Argument increment:", arg_increment
     environment = {'FOO':'0'} # 3220
     argument = 0;
 
@@ -55,8 +96,10 @@ def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
         argument += arg_increment;
 
         # Sample events in batches of 8
-        for i in range(0, len(events), general_purpose_counters):
-            e = ','.join(map(lambda x: x['code'], events[i:i+general_purpose_counters]))
+        #for i in range(0, len(events), n_general_purpose_counters):
+        #    e = ','.join(map(lambda x: x['code'], events[i:i+n_general_purpose_counters]))
+        for batch in split_counters(events):
+            e = ','.join(map(lambda x: x['code'], batch))
             c = ' '.join(['perf stat -r', str(repeat), '-x","', '-e', e, program, str(argument), '0>> stat.tmp.dat'])
             p = subprocess.Popen(c, env=environment, shell=True)
             p.wait()
@@ -76,7 +119,7 @@ def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
 
 def correlation(events, reference_event):
     reference = events[0]
-    for i in range(1, len(events)):
+    for i in range(0, len(events)):
         if events[i]['code'] == reference_event or events[i]['perfmn'] == reference_event:
             reference = events[i]
             break

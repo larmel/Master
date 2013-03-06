@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+import subprocess
+
+def run():
+	with open("../counters") as f:
+		for line in f:
+			code, mnemonic, _ = line.split('\t')
+			code = mnemonic + ':u' if code == '' else 'r' + code + ':u'
+			counters = ','.join([code]*8 + ['cycles:u'])
+			command  = ''.join(["../perfrun.py -o stat.", code, ".csv -e ", counters, " -n 100 -r 1 -i 0 -a 0 ./a.out"])
+			print command
+			p = subprocess.Popen(command, shell=True)
+			p.wait()
+
+if __name__ == '__main__':
+	run()
+
