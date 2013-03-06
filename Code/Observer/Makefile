@@ -18,3 +18,10 @@ graph:
 	../plot.py -f stat.7.csv -e $(SEVEN) &
 	../plot.py -f stat.8.csv -e $(SEVEN) &
 	../plot.py -f stat.all.csv -e $(SEVEN) &
+
+
+wat:
+	cc heap.c
+	#../perfrun.py -o stat.test.csv -e r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,cycles:u -n 500 -r 4 -i 0 -a 0 ./a.out > /dev/null
+	../perfrun.py -o stat.test.csv -e cycles:u,cycles:u,cycles:u,cycles:u,cycles:u,cycles:u,cycles:u,cycles:u,cycles:u -n 500 -r 1 -i 0 -a 0 ./a.out > /dev/null
+	../plot.py -f stat.test.csv

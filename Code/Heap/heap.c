@@ -4,9 +4,9 @@
 
 // make clean; make a.out; ./a.out 1
 
-#define N 65536 // 65536
+#define N 0x7ffa // 65536 = 0x10000
 
-static int inc = 0;
+volatile static int inc = 0;
 
 int main(int argc, char **argv)
 {
@@ -19,9 +19,12 @@ int main(int argc, char **argv)
 	//while (i % 2 == 0 && (long)b & 0xfff != (long)a & 0xfff)
 	//	b++;
 
+	volatile int one = 1;
+
 	int *a = malloc(N*sizeof(int));
 	int *fill = malloc(offset*sizeof(int));
 	int *b = malloc(N*sizeof(int));
+	//printf("%d\n", N);
 
 	// Lowest start address of heap: 0x00602000
 	//int *addr = (int*)a + 2*N*sizeof(int) + 0x2000 + offset;
@@ -33,13 +36,15 @@ int main(int argc, char **argv)
 	//	return 0;
 	//}
 
-	//printf("Address a: %p\n", a);
-	//printf("Address b: %p\n", b);
+	//printf("Address a:    %p\n", a);
+	//printf("Address fill: %p\n", fill);
+	//printf("Address b:    %p\n", b);
 
 	for (i = 0; i < N; ++i)
 	{
-		*inc_ptr += 1;
-		alpha += inc;
+		//*inc_ptr += 1;
+		//alpha += inc;
+		//int foo = inc;
 		a[i] += inc;
 		b[i] += inc;
 		a[i] += inc;
@@ -56,6 +61,6 @@ int main(int argc, char **argv)
 */
 	//printf("Heap location: %p, %p\n", a, b);
 
-	return 0;
+	return a[one] + b[one];
 }
 
