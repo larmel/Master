@@ -1,0 +1,9 @@
+
+
+What appears to be observer effect when counting the same counter > 4 times is just a restriction on what counters can be used for specific counters. The manual (3B) specifies that only PCM0-4 can be used for r0203:CYCLE_ACTIVITY.CYCLES_LDM_PENDING.
+
+This complicates the testing framework somewhat -- need to make special rules about what counters can be used. Ideally want to use all 8 general purpose counters, but a safe fix might be to limit to 4 counters at a time. 
+It seems like the order counters are fed to perf is significant, i.e. the first argument corresponds to PCM0 etc. 
+
+perf stat -e r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,r02a3:u,instructions:u,cycles:u ./a.out 1
+
