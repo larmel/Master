@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include "immintrin.h"
 
 // make clean; make a.out; ./a.out 1
 
 #define N 0x7ffa // 65536 = 0x10000
+#define ALIAS(a, b) (((long)a & 0xfff) == ((long)b & 0xfff))
 
 volatile static int inc = 0;
 
@@ -24,6 +26,12 @@ int main(int argc, char **argv)
 	int *a = malloc(N*sizeof(int));
 	int *fill = malloc(offset*sizeof(int));
 	int *b = malloc(N*sizeof(int));
+	int *fill2 = malloc(offset*sizeof(int));
+	int *c = malloc(N*sizeof(int));
+	int *fill3 = malloc(offset*sizeof(int));
+	int *d = malloc(N*sizeof(int));
+	int *fill4 = malloc(offset*sizeof(int));
+	int *e = malloc(N*sizeof(int));
 	//printf("%d\n", N);
 
 	// Lowest start address of heap: 0x00602000
@@ -40,15 +48,23 @@ int main(int argc, char **argv)
 	//printf("Address fill: %p\n", fill);
 	//printf("Address b:    %p\n", b);
 
-	for (i = 0; i < N; ++i)
+	int t0 = 0, t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+	if (ALIAS(a, b) && ALIAS(b, c) && ALIAS(c, d) && ALIAS(d, e))
+		printf("Address alias on offset %d\n", offset);
+	__m256* tmp = (__m256*)&a[0];
+	*tmp = _mm256_rsqrt_ps(*tmp);
+
+	for (i = 16; i < N-16; ++i)
 	{
 		//*inc_ptr += 1;
 		//alpha += inc;
 		//int foo = inc;
-		a[i] += inc;
-		b[i] += inc;
-		a[i] += inc;
-		b[i] += inc;
+		//__m256* tmp = (__m256*)&a[i];
+		//*tmp = _mm256_rsqrt_ps(*tmp);
+		/*b[i] += inc;
+		c[i] += inc;
+		d[i] += inc;
+		e[i] += inc;*/
 	}
 
 /*

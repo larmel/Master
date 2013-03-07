@@ -102,10 +102,6 @@ def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
                 if repeat > 1:
                     events[i]['variance'] = float(line[2][:-1])
         subprocess.call('rm '+tempfile, shell=True)
-
-    for e in events:
-        print e['code'], e['count']
-
     return events
 
 def correlation(events, reference_event):

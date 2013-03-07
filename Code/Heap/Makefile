@@ -6,10 +6,10 @@ prog:
 	cc heap.c -S
 
 a.out:
-	cc heap.c -O1
+	cc -mavx heap.c
 
 stat.csv:
-	../perfrun.py -e cycles:u,r0107:u,r01a2:u,cache-references:u,cache-misses:u -n 500 -r 4 -c cycles:u -i 0 -a 16 ./a.out
+	../perfrun.py -e cycles:u,r0107:u,r01a2:u,cache-references:u,cache-misses:u -n 200 -r 4 -c cycles:u -i 0 -a 16 ./a.out
 	#../perfrun.py -n 500 -r 4 -c cycles:u -i 16 -a 16 ./a.out
 
 graph:
