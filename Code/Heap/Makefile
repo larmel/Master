@@ -6,7 +6,7 @@ prog:
 	cc heap.c -S
 
 a.out:
-	cc -mavx heap.c
+	cc -mmmx heap.c
 
 stat.csv:
 	../perfrun.py -e cycles:u,r0107:u,r01a2:u,cache-references:u,cache-misses:u -n 200 -r 4 -c cycles:u -i 0 -a 16 ./a.out
