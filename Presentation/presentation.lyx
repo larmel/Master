@@ -81,7 +81,7 @@ Measurement Bias
 \end_layout
 
 \begin_layout Itemize
-Performance variations due to differences in execution environment.
+Performance variations due to differences in execution environment:
 \end_layout
 
 \begin_deeper
@@ -91,6 +91,10 @@ Memory layout
 
 \begin_layout Itemize
 Link order
+\end_layout
+
+\begin_layout Itemize
+Other processes running
 \end_layout
 
 \begin_layout Itemize
@@ -108,7 +112,7 @@ Shown to be significant enough to care about -- but often ignored in academic
 \end_layout
 
 \begin_layout Itemize
-Goal: Figure out why and how performance varies, and what could be done
+Problem: Figure out why and how performance varies, and what could be done
  to ensure good performance.
 \end_layout
 
@@ -140,12 +144,12 @@ frametitle{Example of Measurement Bias}
 \end_layout
 
 \begin_layout Itemize
-Up to 30 % increased cycle count when changing start address of stack.
+Up to XX % increased cycle count when changing start address of stack.
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
-Example from paper 
+Example code from 
 \begin_inset Quotes eld
 \end_inset
 
@@ -282,7 +286,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Cycle count
+Cycle count per stack position
 \end_layout
 
 \end_inset
@@ -332,14 +336,14 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "49col%"
+width "65col%"
 special "none"
 height "1in"
 height_special "totalheight"
 status open
 
 \begin_layout Itemize
-Increasing environment pushes stack start address.
+Unix environment variables offset stack address.
 \end_layout
 
 \begin_layout Itemize
@@ -348,14 +352,14 @@ Eventually the last 12 bits of automatic variables g and inc collides with
 \end_layout
 
 \begin_layout Itemize
-LD_BLOCKS_PARTIAL.
- ADDRESS_ALIAS.
+Speculative execution of loads/stores in MOB (Memory Order Buffer) is re-execute
+d because of potential conflict detected.
+ Only the last 12 bits checked.
 \end_layout
 
 \begin_layout Itemize
-Speculative execution of loads/stores in MOB (Memory Order Buffer) is re-execute
-d.
- 
+LD_BLOCKS_PARTIAL.
+ ADDRESS_ALIAS.
 \end_layout
 
 \end_inset
@@ -372,7 +376,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "49col%"
+width "33col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -388,7 +392,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/path5403.png
-	scale 40
+	scale 45
 
 \end_inset
 
@@ -399,7 +403,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Virtual Address Space (simplified)
+Virtual Address Space
 \end_layout
 
 \end_inset
@@ -521,7 +525,7 @@ if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) {
 
 \begin_layout Itemize
 Issues: Difficult to detect code with potential alias.
- Lots of other causes of bias as well.
+ Does only handle one particular effect.
 \end_layout
 
 \begin_layout Standard
