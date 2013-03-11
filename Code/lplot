@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import argparse
 from string import lower
+import ast
+
+# -e cycles:u,instructions:u,e[0]/e[1]
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot perf data')
@@ -10,6 +13,9 @@ def parse_arguments():
     parser.add_argument('-f', '--file', default='stat.csv', help='csv data to plot from')
     args = parser.parse_args()
     e = map(lower, args.event_list.strip().split(','))
+
+    # Separate equations
+
     f = args.file
     return e, f
 
