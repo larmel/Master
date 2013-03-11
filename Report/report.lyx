@@ -792,6 +792,216 @@ C code for micro-kernel
 
 \end_layout
 
+\begin_layout Section
+Heap address conflicts
+\end_layout
+
+\begin_layout Standard
+Dynamic memory allocation can also trigger alias effects.
+ Observations:
+\end_layout
+
+\begin_layout Standard
+Malloc appears to be deterministic, once the ASLR has placed heap start
+ address somewhere.
+ On x86_64, the heap is typically located around virtual address 0x600000,
+ right above program text and data segments (see illustration).
+ Some metadata for each allocated area is used to handle free requests etc.
+ The pointer returned from malloc seems to be aligned to a single byte,
+ meaning returned addresses always end with 0x0.
+\end_layout
+
+\begin_layout Standard
+For slightly larger requests, malloc uses mmap, which aligns to page size;
+ i.e.
+ 0x1000.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#define N 0x7ffa // 65536 = 0x10000
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+static int inc = 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main(int argc, char **argv)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int offset  = atoi(argv[1]), i;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *a    = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *fill = malloc(offset*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *b    = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i = 0; i < N; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i] += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        a[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Micro-kernel with a simple loop reading and writing to arrays a and b.
+ With the correct input argument, a and b will alias and the cycle count
+ noticeably spikes.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Img/heap-step.svg
+	scale 30
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Adding a single float causes mmap to be called after a certain amount of
+ offset.
+ Very weird.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Results
 \end_layout
