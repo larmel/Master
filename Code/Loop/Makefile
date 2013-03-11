@@ -15,3 +15,9 @@ graph:
 clean:
 	rm -f a.out
 	rm -f
+
+demo:
+	#cc loop.c
+	#../perfrun.py -e cycles:u,r02a3:u,r0107:u,r40a1:u,r04a2:u,r01a1:u,r01a2:u,r80a1:u -n 200 -r 10 -c r0107:u -i 1 ./a.out
+	../plot.py -e cycles:u,r0107:u &
+

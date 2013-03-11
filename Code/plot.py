@@ -25,7 +25,7 @@ def read_file(events, filename):
 def plot_lines(title, data):
     fontP = FontProperties()
     fontP.set_size('small')
-    plt.figure(title, figsize=(13,5), facecolor='white', edgecolor='white')
+    plt.figure(title, figsize=(14,5), facecolor='white', edgecolor='white')
     ax = plt.subplot(111)
     for line in data:
         label = line['event'] if line['mnemonic'] == '' else line['mnemonic']

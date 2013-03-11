@@ -4,15 +4,18 @@ import subprocess
 
 def run():
 	#with open("../counters") as f:
-	f = ["02A3		CYCLE_ACTIVITY.CYCLES_LDM_PENDING", "0120		LSD_OVERFLOW"]
+	#f = open("../counters", "r")
+	#f = ["02A3		CYCLE_ACTIVITY.CYCLES_LDM_PENDING", "0120		LSD_OVERFLOW"]
+	f = ["01c4		BR_INST_RETIRED.CONDITIONAL"]
 	for line in f:
 		code, mnemonic, _ = line.split('\t')
 		code = mnemonic + ':u' if code == '' else 'r' + code + ':u'
-		counters = ','.join([code]*16 + ['cycles:u'])
-		command  = ''.join(["../perfrun.py -o stat.", code, ".csv -e ", counters, " -n 5 -r 1 -i 0 -a 0 -c ", code ," ./a.out"])
+		counters = ','.join([code]*8 + ['cycles:u'])
+		command  = ''.join(["../perfrun.py -o Stat/", code, ".csv -e ", counters, " -n 5 -r 1 -i 0 -a 0 -c ", code ," ./a.out"])
 		print command
 		p = subprocess.Popen(command, shell=True)
 		p.wait()
+	#f.close()
 
 if __name__ == '__main__':
 	run()

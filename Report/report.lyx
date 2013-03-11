@@ -422,6 +422,19 @@ PMU (Performance Monitoring Unit) capabilities for 2nd and 3rd generation
 
 \end_layout
 
+\begin_layout Standard
+Quote from 18.11.5.2
+\end_layout
+
+\begin_layout Quote
+The performance-monitoring events listed in Chapter 19, “Performance-Monitoring
+ Events,” are intended to be used as guides for performance tuning.
+ The counter values reported are not guaranteed to be absolutely accurate
+ and should be used as a relative guide for tuning.
+ Known discrepancies are documented where applicable.
+ 
+\end_layout
+
 \begin_layout Paragraph
 Fixed counters
 \end_layout
@@ -458,6 +471,31 @@ Hardware events
 
 \begin_layout Standard
 Cycles
+\end_layout
+
+\begin_layout Paragraph
+PMI
+\end_layout
+
+\begin_layout Standard
+Performance Monitor Interrupt
+\end_layout
+
+\begin_layout Paragraph
+At Retirement Events
+\end_layout
+
+\begin_layout Standard
+At-retirement counting provides a means counting only events that represent
+ work committed to architectural state and ignoring work that was performed
+ speculatively and later discarded.
+ (Quote from 18.11.6)
+\end_layout
+
+\begin_layout Standard
+Tagging of micro-operations enables counting at retirement.
+ Ex from manual: A micro-op can have several cache-misses during execution.
+ Tag to get counted only once.
 \end_layout
 
 \begin_layout Subsection
