@@ -7,11 +7,21 @@ import ast
 
 # -e cycles:u,instructions:u,e[0]/e[1]
 
+def is_expression(s):
+    return s.find("/") != -1 or s.find("*") != -1 or s.find("+") != -1 or s.find("-") != -1
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot perf data')
     parser.add_argument('-e', '--event_list', default='all')
     parser.add_argument('-f', '--file', default='stat.csv', help='csv data to plot from')
     args = parser.parse_args()
+
+    lines = map(lower, args.event_list.strip().split(','))
+    counters = filter(lambda s : not is_expression(s), lines)
+    expressions = filter(is_expression, lines)
+
+    print "Counter:", counters
+    print "Expressions:", expressions
     e = map(lower, args.event_list.strip().split(','))
 
     # Separate equations
@@ -27,6 +37,11 @@ def read_file(events, filename):
             if events == ['all'] or e[1].lower() in events:
                 lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(float, e[3:])})
     return lines
+
+def calculate(events, expressions):
+    lines = []
+    # todo
+
 
 def plot_lines(title, data):
     fontP = FontProperties()
