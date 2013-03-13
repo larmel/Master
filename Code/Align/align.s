@@ -19,38 +19,69 @@ main:
 	.cfi_offset 12, -40
 	.cfi_offset 13, -32
 	.cfi_offset 14, -24
+	movl	$1, %r13d
 	movl	$1, %r12d
-	movl	$1, %ebx
-	movl	$42, %r13d
-	addl	%ebx, %r13d
-	jmp	.L7
-.L10:
+	movl	$42, %ebx
+	addl	%r12d, %ebx
+	jmp	.L8
+.L9:
 	nop
-.L7:
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+.L8:
+	addl	$1, %r13d
 	addl	$1, %r12d
+	cmpl	%r12d, %r13d
+	jne	.L2
+	addl	$1, %r13d
+	addl	$1, %r12d
+	subl	$42, %ebx
 	addl	$1, %ebx
-	cmpl	%ebx, %r12d
-	jne	.L8
 .L2:
-	cmpl	%r13d, %ebx
-	je	.L9
+	cmpl	%r12d, %r13d
+	jne	.L3
+	addl	$1, %r13d
+	addl	$1, %r12d
+.L3:
+	cmpl	%r12d, %r13d
+	je	.L4
+	addl	$1, %ebx
+	addl	$1, %ebx
 .L4:
 	cmpl	$-1, %r14d
 	je	.L5
 	addl	$1, %r14d
-	addl	$1, %r12d
-	addl	$1, %ebx
-	addl	$42, %r13d
+	addl	$42, %ebx
+	addl	%ebx, %r13d
+	addl	%ebx, %r12d
 .L5:
 	cmpl	$305419896, %r14d
-	jne	.L10
-	jmp	.L3
-.L8:
+	jne	.L9
 	nop
-	jmp	.L3
-.L9:
-	nop
-.L3:
 	movl	$0, %eax
 	popq	%rbx
 	popq	%r12

@@ -8,18 +8,29 @@ int main()
 	{
 		a++;
 		b++;
-		if (a != b)
-			break;
+		if (a == b)
+		{
+			a++, b++;
+			c -= 42;
+			c++;
+		}
 
-		if (b == c)
-			break;
+		if (a == b)
+			a++, b++;
+
+		// Size of dead code does not matter
+		if (a != b)
+		{
+			c++;
+			c++;
+		}
 
 		if (i != -1)
 		{
 			i++;
-			a++;
-			b++;
 			c += 42;
+			a += c;
+			b += c;
 		}
 		if (i == 0x12345678)
 			break;

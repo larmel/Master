@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     float *a = malloc(N*sizeof(float));
     float *fill = malloc(offset*sizeof(float));
-    float *b = malloc((N+0)*sizeof(float)); // Adding one messes up
+    float *b = malloc((N+1)*sizeof(float)); // Adding one messes up
 
     /*int *fill2 = malloc(offset*sizeof(int));
     int *c = malloc(N*sizeof(int));
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     if (ALIAS(a, b) && ALIAS(b, c) && ALIAS(c, d) && ALIAS(d, e))
         printf("Address alias on offset %d\n", offset);*/
 
-    //b++; // Offset to avoid conflict (?)
+    //b = &b[16]; // Offset to avoid conflict
 
     if (ALIAS(a, b))
     {
