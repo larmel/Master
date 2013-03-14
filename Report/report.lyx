@@ -1002,6 +1002,265 @@ Adding a single float causes mmap to be called after a certain amount of
 
 \end_layout
 
+\begin_layout Section
+Loop Stream Detector
+\end_layout
+
+\begin_layout Standard
+The Loop Stream Detector (LSD) is a front-end hardware optimization introduced
+ in the intel Core microarchitecture.
+ Measuring the utilization of LSD is supported by the LSD.UOPS performance
+ counter.
+ Note that this counter is not listed in Table 19-5.
+\end_layout
+
+\begin_layout Standard
+The requirements for a loop to fit into the LSD cache is stated in the manual
+ as the following:
+\end_layout
+
+\begin_layout Itemize
+Up to eight chunk fetches of 32 (0x20) instruction-bytes (0x100).
+ Online docs for 32 nm i7 states four 16-byte fetches.
+\end_layout
+
+\begin_layout Itemize
+Up to 28 micro-ops (~28 instructions).
+ For Ivy Bridge with HT disabled, each core gets 56 entries in micro-op
+ queue.
+ 
+\end_layout
+
+\begin_layout Itemize
+All micro-ops are also resident in the Decoded ICache.
+\end_layout
+
+\begin_layout Itemize
+Can contain no more than eight taken branches and none of them can be a
+ CALL or RET.
+ Online docs for 32 nm i7 states 4 branches.
+\end_layout
+
+\begin_layout Itemize
+Cannot have mismatched stack operations.
+ For example, more PUSH than POP instructions.
+ 
+\end_layout
+
+\begin_layout Itemize
+Loops should have at least 64 iterations.
+\end_layout
+
+\begin_layout Subsection
+Experiments
+\end_layout
+
+\begin_layout Standard
+Creating simple loops and compiling with gcc.
+ Binary is inspected to check what instructions are executed, and their
+ address layout.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="left" valignment="top" width="60text%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Comment
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Chunk fetches
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Micro-ops
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+56
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Overflows after 52 addl 0x1 instructions.
+ 4 extra instructions for text/compare as well, before the jump instruction.
+ 56 entries seems to be correct for Ivy Bridge as well as Sandy Bridge.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Taken branches
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17 (+1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Handles up to 17 branches (+1 for loop) with a single statement 
+\begin_inset Quotes eld
+\end_inset
+
+a++, b++
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Triggers LSD_OVERFLOW event.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Experimental LSD properties of i7 Ivy Bridge (HT off)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Results
 \end_layout
