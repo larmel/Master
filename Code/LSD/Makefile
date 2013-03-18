@@ -16,8 +16,8 @@ b.out:
 	cc lsd.c loop.c fact.c -o b.out
 
 test: a.out b.out
-	perf stat -e cycles:u,r0120:u,r01a8:u ./a.out
-	perf stat -e cycles:u,r0120:u,r01a8:u ./b.out
+	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./a.out
+	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./b.out
 
 clean:
 	rm -f static
