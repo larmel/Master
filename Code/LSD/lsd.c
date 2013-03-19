@@ -3,12 +3,12 @@
 // make clean; clear; make test
 int main()
 {
-	int i = loop();
-	int f = fact(10);
+    int i = loop(10);
+    int f = fact(10);
 
-	printf("Loop: %d\n", i);
-	printf("Fact: %d\n", f);
+    printf("Loop: %d\n", i);
+    printf("Fact: %d\n", f);
 
-	return 0;
+    return 0;
 }
 

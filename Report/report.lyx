@@ -1573,6 +1573,385 @@ To further strengthen the hypothesis that twelve 32B chunks is the limit,
  
 \end_layout
 
+\begin_layout Subsection
+Optimization
+\end_layout
+
+\begin_layout Standard
+\begin_inset Quotes eld
+\end_inset
+
+These results are irrelevant, any sensible compiler will fix it when using
+ optimizations
+\begin_inset Quotes erd
+\end_inset
+
+, you might say.
+ Interestingly, this is not the case -- with a few modifications we can
+ produce the exact same effects on gcc with -O3.
+\end_layout
+
+\begin_layout Standard
+align-loops option in gcc (which is enabled by default in O2 and O3) does
+ in fact align loops -- by inserting 
+\begin_inset Quotes eld
+\end_inset
+
+.palign x,y,z
+\begin_inset Quotes erd
+\end_inset
+
+ directives into the assembly.
+ In front of the first loop instruction, the following assembly directives
+ are printed.
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+.p2align 4,,10
+\end_layout
+
+\begin_layout Plain Layout
+
+.p2align 3
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first directive tries to align to four bits, inserting at most 10 bytes
+ for padding.
+ If that does not work, the next directive forces loops to be aligned to
+ three bytes -- meaning addresses ends in 0x0 or 0x8.
+ Within a 32B instruction block, the first loop instruction can end up having
+ one of the four suffixes 0x00, 0x08, 0x10 or 0x18.
+ Using this knowledge, we can construct another example that overflows the
+ 12 blocks for certain alignment.
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "33col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+lsd.c
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\tiny\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#include <stdio.h>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main()
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int i = loop(10);
+\end_layout
+
+\begin_layout Plain Layout
+
+    int f = fact(10);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    printf("Loop: %d
+\backslash
+n", i);
+\end_layout
+
+\begin_layout Plain Layout
+
+    printf("Fact: %d
+\backslash
+n", f);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "33col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+loop.c
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\tiny\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#define B22(n) b += i*i*a + 1
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+volatile int i = 42;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int loop(int a)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    register int b = i == 42 ? 1 : 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    do {
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(1);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(2);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(3);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(4);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(5);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(6);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(7);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(8);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(9);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(10);
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) B22(11);
+\end_layout
+
+\begin_layout Plain Layout
+
+   } while (i++ < 0x12345678);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return b;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "33col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+fact.c
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\tiny\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int fact(int n)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int a = 1;
+\end_layout
+
+\begin_layout Plain Layout
+
+    return a;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Compiling these using two different link orders yields the same speedup
+ of 2x for the one with fact.c linked before loop.c.
+ 
+\end_layout
+
 \begin_layout Chapter
 Results
 \end_layout

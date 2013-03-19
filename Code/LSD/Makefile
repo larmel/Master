@@ -15,12 +15,24 @@ a.out:
 b.out:
 	cc lsd.c loop.c fact.c -o b.out
 
+c.out:
+	cc -O3 lsd.c loop-optimized.c fact-optimized.c -o c.out
+
+d.out:
+	cc -O3 lsd.c fact-optimized.c loop-optimized.c -o d.out
+
 test: a.out b.out
 	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./a.out
 	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./b.out
+
+test-optimized: c.out d.out
+	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./c.out
+	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./d.out
 
 clean:
 	rm -f static
 	rm -f dynamic
 	rm -f a.out
 	rm -f b.out
+	rm -f c.out
+	rm -f d.out
