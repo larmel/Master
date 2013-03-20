@@ -965,6 +965,17 @@ Micro-kernel with a simple loop reading and writing to arrays a and b.
 
 \end_layout
 
+\begin_layout Subsection
+Internals of malloc
+\end_layout
+
+\begin_layout Standard
+For the previous example, adding a single byte to the b array, suddently
+ malloc will begin using mmap instead of brk after some amount of offset
+ (fill array).
+ 
+\end_layout
+
 \begin_layout Standard
 \begin_inset Float figure
 placement H
@@ -1000,6 +1011,13 @@ Adding a single float causes mmap to be called after a certain amount of
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+mmap is a posix system call for mapping a file to contiguous memory.
+ Using the ANONYMOUS parameter, memory can be mapped without a backing file.
+ malloc uses mmap instead of brk for large allocations -- although the rules
+ seems kind of complicated.
 \end_layout
 
 \begin_layout Section
