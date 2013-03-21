@@ -1970,6 +1970,230 @@ Compiling these using two different link orders yields the same speedup
  
 \end_layout
 
+\begin_layout Section
+Bias effects from trivial source code changes
+\end_layout
+
+\begin_layout Standard
+If we consider link order to be a possible source of bias, then what about
+ other seemingly trivial changes to the program source itself? Keeping in
+ mind that alignment and memory address of instructions can have huge impacts
+ on performance -- in what ways can this be altered?
+\end_layout
+
+\begin_layout Standard
+Useful commands for analysing binary files: 
+\end_layout
+
+\begin_layout Standard
+nm a.out : List symbols
+\end_layout
+
+\begin_layout Standard
+readelf -a a.out : List ELF info
+\end_layout
+
+\begin_layout Standard
+objdump -D a.out : Disassemble
+\end_layout
+
+\begin_layout Standard
+strip a.out : Removes .symtab and .strtab
+\end_layout
+
+\begin_layout Paragraph
+The order of functions within a source file
+\end_layout
+
+\begin_layout Standard
+Given a program with functions foo and bar, listing foo before bar and vice
+ versa generates two 
+\begin_inset Quotes eld
+\end_inset
+
+different
+\begin_inset Quotes erd
+\end_inset
+
+ programs given that equality is based on absolute memory layout.
+ Gcc prints functions to the text segment in the order they appear in the
+ source code.
+\end_layout
+
+\begin_layout Paragraph*
+Long function names
+\end_layout
+
+\begin_layout Standard
+Function names are placed in the .strtab section in the ELF file.
+ When running readelf or objdump, the names are used to print nice output.
+ The question is: Does .strtab, or any other section, affect program layout
+ at execution time?
+\end_layout
+
+\begin_layout Description
+.interp Interpreter.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+/lib64/ld-linux-x86-64.so.2
+\begin_inset Quotes erd
+\end_inset
+
+ This might vary I guess...
+\end_layout
+
+\begin_layout Description
+.note.ABI-tag
+\end_layout
+
+\begin_layout Description
+.note.gnu.build-i
+\end_layout
+
+\begin_layout Description
+.gnu.hash
+\end_layout
+
+\begin_layout Description
+.dynsym
+\end_layout
+
+\begin_layout Description
+.dynstr
+\end_layout
+
+\begin_layout Description
+.gnu.version
+\end_layout
+
+\begin_layout Description
+.gnu.version_r
+\end_layout
+
+\begin_layout Description
+.rela.dyn
+\end_layout
+
+\begin_layout Description
+.rela.plt
+\end_layout
+
+\begin_layout Description
+.init
+\end_layout
+
+\begin_layout Description
+.plt
+\end_layout
+
+\begin_layout Description
+.text
+\end_layout
+
+\begin_layout Description
+.fini
+\end_layout
+
+\begin_layout Description
+.rodata Read-only data ?
+\end_layout
+
+\begin_layout Description
+.eh_frame_hdr
+\end_layout
+
+\begin_layout Description
+.eh_frame
+\end_layout
+
+\begin_layout Description
+.ctors
+\end_layout
+
+\begin_layout Description
+.dtors
+\end_layout
+
+\begin_layout Description
+.jcr
+\end_layout
+
+\begin_layout Description
+.dynamic
+\end_layout
+
+\begin_layout Description
+.got
+\end_layout
+
+\begin_layout Description
+.got.plt ?
+\end_layout
+
+\begin_layout Description
+.data 
+\end_layout
+
+\begin_layout Description
+.bss Uninitialized data.
+ Will be initialized to zero once program is loaded.
+ Occupies no space in ELF file.
+\end_layout
+
+\begin_layout Description
+.comment 
+\begin_inset Quotes eld
+\end_inset
+
+Version control information
+\begin_inset Quotes erd
+\end_inset
+
+ from the documentation.
+ Contains the compiler version used: 
+\begin_inset Quotes eld
+\end_inset
+
+GCC: (Ubuntu Linaro 4.6.3-1ubuntu5) 4.6.3
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+.shstrtab Section names, such as 
+\begin_inset Quotes eld
+\end_inset
+
+.text
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+.dtors
+\begin_inset Quotes erd
+\end_inset
+
+ etc.
+ Each section listed in the ELF file contains an index to its name in this
+ section.
+\end_layout
+
+\begin_layout Description
+.symtab ?
+\end_layout
+
+\begin_layout Description
+.strtab Symbol names used in the source file.
+ Function names are placed here.
+\end_layout
+
 \begin_layout Chapter
 Results
 \end_layout
