@@ -1090,8 +1090,9 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="5" columns="3">
+<lyxtabular version="3" rows="5" columns="4">
 <features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="left" valignment="top" width="60text%">
@@ -1109,7 +1110,16 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
+HT off
+\end_layout
 
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+HT on
 \end_layout
 
 \end_inset
@@ -1130,6 +1140,15 @@ Comment
 
 \begin_layout Plain Layout
 Chunk fetches
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12
 \end_layout
 
 \end_inset
@@ -1174,6 +1193,15 @@ Micro-ops
 
 \end_inset
 </cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28
+\end_layout
+
+\end_inset
+</cell>
 <cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
@@ -1181,6 +1209,12 @@ Micro-ops
 Overflows after 52 addl 0x1 instructions.
  4 extra instructions for text/compare as well, before the jump instruction.
  56 entries seems to be correct for Ivy Bridge as well as Sandy Bridge.
+\end_layout
+
+\begin_layout Plain Layout
+With HT on, the LSD_OVERFLOW counter becomes non-zero on 27 instructions,
+ then zero on 28, and nonzero from there.
+ 28 is probably the right value -- half of 56.
 \end_layout
 
 \end_inset
@@ -1205,6 +1239,15 @@ Taken branches
 
 \end_inset
 </cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12
+\end_layout
+
+\end_inset
+</cell>
 <cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
@@ -1221,10 +1264,24 @@ a++, b++
  Triggers LSD_OVERFLOW event.
 \end_layout
 
+\begin_layout Plain Layout
+Some weird things with HT on, but it seems like 12 is right.
+ Might be too many instructions though..
+\end_layout
+
 \end_inset
 </cell>
 </row>
 <row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
@@ -1264,15 +1321,11 @@ a++, b++
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Experimental LSD properties of i7 Ivy Bridge (HT off)
+Experimental LSD properties of i7 Ivy Bridge
 \end_layout
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1589,6 +1642,16 @@ To further strengthen the hypothesis that twelve 32B chunks is the limit,
  With 11 extra bytes -- spilling instructions over to the next chunk --
  LSD_UOPS is back at 11k.
  
+\end_layout
+
+\begin_layout Paragraph
+Hyper-threading
+\end_layout
+
+\begin_layout Standard
+Experiments were repeated with hyperthreading turned on -- and we got the
+ same results.
+ It seems like HT does not affect the chunk fetch limit of the LSD.
 \end_layout
 
 \begin_layout Subsection

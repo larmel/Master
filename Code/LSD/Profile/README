@@ -1,0 +1,24 @@
+Small test cases for finding out the properties of the LSD on a given machine
+Note that this is nowhere near robust -- just meant to record what was done
+on my particular machine. 
+
+* Number of chunk fetches (32B)
+  TODO: Might consider 16B? Docs say 32B, so not likely.
+
+* Micro-ops
+  Buffer can only hold a finite amount of instructions per loop.
+  Implicitly decides size of micro-op queue.
+
+* Taken branches
+  Limit to number of taken branches.
+
+These properties are assumed to be correct, and not tested.
+
+- Mismatched stack operations
+
+- All micro-ops resident in Decoded ICache
+
+- At least 64 iterations
+
+
+
