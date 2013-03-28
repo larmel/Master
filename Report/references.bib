@@ -1,96 +1,142 @@
-#
-# Intel manuals, presentations and white papers
-#
+
+# Intel Manuals, Presentations and White-Papers ###################################################
+
 @string { IntelCore = "{Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark}}" }
 
 @manual { Intel:2013:Volume3B,
-	title = {Intel\textsuperscript{\textregistered} 64 and IA-32 Architectures Software Developer's Manual, Volume 3B: System Programming Guide, Part 2},
-	month = {January},
-	year = {2013},
-	organization = {Intel Corporation},
-	number = {253669-045US}
+    title        = {Intel\textsuperscript{\textregistered} 64 and IA-32 Architectures 
+                    Software Developer's Manual, Volume 3B: System Programming Guide, Part 2},
+    month        = {January},
+    year         = {2013},
+    organization = {Intel Corporation},
+    number       = {253669-045US}
 }
 
 @article { Intel:2006:SNSEEP,
-	title = "Inside " # IntelCore # " Microarchitecture: Setting New Standards for Energy-Efficient Performance",
-	author = {Ofri Wechsler},
-	journal = {Technology@Intel Magazine},
-	year = {2006}
+    title        = "Inside " # IntelCore # " Microarchitecture: Setting New Standards for 
+                    Energy-Efficient Performance",
+    author       = {Ofri Wechsler},
+    journal      = {Technology@Intel Magazine},
+    year         = {2006}
 }
 
 @misc { Intel:2006:M&SMA,
-	title = "Inside " # IntelCore # " Microarchitecture and Smart Memory Access: An In-Depth Look at {Intel} Innovations for Accelerating Execution of Memory-Related Instructions",
-	author = {Jack Doweck},
-	year = {2006},
-	organization = {Intel Corporation}
+    title        = "Inside " # IntelCore # " Microarchitecture and Smart Memory Access: 
+                   An In-Depth Look at {Intel} Innovations for Accelerating Execution of 
+                   Memory-Related Instructions",
+    author       = {Jack Doweck},
+    year         = {2006},
+    organization = {Intel Corporation}
 }
 
+# TODO: Presentations
 
-#
-# Performance counters
-#
 
-# TODO
-@article { PCDeterministic,
-	author = {Vincent M. Weaver and Jack Dongarra},
-	title = {Can Hardware Performance Counters Produce Expected, Deterministic Results?},
+# Performance Counters ############################################################################
+
+@inproceedings { Weaver:2010:PCExpected,
+    author       = {Vincent M. Weaver and Jack Dongarra},
+    title        = {Can Hardware Performance Counters Produce Expected, Deterministic Results?},
+    booktitle    = {3rd Workshop on Functionality of Hardware Performance Monitoring},
+    year         = {2010},
+    month        = {December}
 }
 
-#
-# From Todd Mytkowitcz et al.
-#
-
-@misc{Mytkowicz:2008:ObserverEffect,
-    author = {Todd Mytkowicz and Peter F. Sweeney and Matthias Hauswirth and Amer Diwan},
-    title = {Observer Effect and Measurement Bias in Performance Analysis},
-    year = {2008}
+@inproceedings { Zaparanuks:2009:PCAccuracy,
+    author       = {Dmitrijs Zaparanuks and Milan Jovic and Matthias Hauswirth},
+    title        = {Accuracy of Performance Counter Measurements},
+    booktitle    = {IEEE International Symposium on Performance Analysis of Systems and Software},
+    series       = {ISPASS},
+    year         = {2009},
+    month        = {April},
+    pages        = {23--32},
+    publisher    = {IEEE},
+    address      = {Boston, Massachusetts, USA}
 }
 
-@inproceedings{Mytkowicz:2008:WeHaveItEasyButDoWeHaveItRight,
-    author = {Todd Mytkowicz and Amer Diwan and Matthias Hauswirth and Peter Sweeney},
-    title = {We have it easy, but do we have it right},
-    booktitle = {In NSF Next Generation Systems Workshop},
-    year = {2008},
-    pages = {1--5}
+@inproceedings{ Weaver:2008:PCTrusted,
+    author       = {Vincent M. Weaver and Sally A. Mckee},
+    title        = {{Can Hardware Performance Counters be Trusted?}},
+    booktitle    = {IEEE International Symposium on Workload Characterization},
+    year         = {2008},
+    pages        = {141--150},
+    doi          = {10.1109/IISWC.2008.4636099},
+    masid        = {4334229}
 }
 
-@inproceedings{Knights:2009:BlindOptimization,
-	author = {Knights, Dan and Mytkowicz, Todd and Sweeney, Peter F. and Mozer, Michael C. and Diwan, Amer},
-	title = {Blind Optimization for Exploiting Hardware Features},
-	booktitle = {Proceedings of the 18th International Conference on Compiler Construction: Held as Part of the Joint European Conferences on Theory and Practice of Software, ETAPS 2009},
-	series = {CC '09},
-	year = {2009},
-	isbn = {978-3-642-00721-7},
-	location = {York, UK},
-	pages = {251--265},
-	numpages = {15},
-	url = {http://dx.doi.org/10.1007/978-3-642-00722-4_18},
-	doi = {10.1007/978-3-642-00722-4_18},
-	acmid = {1532846},
-	publisher = {Springer-Verlag},
-	address = {Berlin, Heidelberg},
+# From Todd Mytkowitcz et al. #####################################################################
+
+@misc { Mytkowicz:2008:OE&MB,
+    author       = {Todd Mytkowicz and Peter F. Sweeney and Matthias Hauswirth and Amer Diwan},
+    title        = {Observer Effect and Measurement Bias in Performance Analysis},
+    year         = {2008}
+}
+
+@inproceedings { Mytkowicz:2008:Easy,
+    author       = {Todd Mytkowicz and Amer Diwan and Matthias Hauswirth and Peter Sweeney},
+    title        = {We have it easy, but do we have it right},
+    booktitle    = {In NSF Next Generation Systems Workshop},
+    year         = {2008},
+    pages        = {1--5}
+}
+
+@inproceedings { Knights:2009:BlindOpt,
+    author       = {Knights, Dan and Mytkowicz, Todd and Sweeney, Peter F. 
+                    and Mozer, Michael C. and Diwan, Amer},
+    title        = {Blind Optimization for Exploiting Hardware Features},
+    booktitle    = {Proceedings of the 18th International Conference on Compiler Construction: 
+                    Held as Part of the Joint European Conferences on Theory and Practice of Software, 
+                    ETAPS 2009},
+    series       = {CC '09},
+    year         = {2009},
+    isbn         = {978-3-642-00721-7},
+    location     = {York, UK},
+    pages        = {251--265},
+    numpages     = {15},
+    url          = {http://dx.doi.org/10.1007/978-3-642-00722-4_18},
+    doi          = {10.1007/978-3-642-00722-4_18},
+    acmid        = {1532846},
+    publisher    = {Springer-Verlag},
+    address      = {Berlin, Heidelberg},
 } 
 
-@inproceedings{Mytkowicz:2009:ProducingWrongData,
-	author = {Mytkowicz, Todd and Diwan, Amer and Hauswirth, Matthias and Sweeney, Peter F.},
-	title = {Producing wrong data without doing anything obviously wrong!},
-	booktitle = {Proceedings of the 14th international conference on Architectural support for programming languages and operating systems},
-	series = {ASPLOS XIV},
-	year = {2009},
-	isbn = {978-1-60558-406-5},
-	location = {Washington, DC, USA},
-	pages = {265--276},
-	numpages = {12},
-	url = {http://doi.acm.org/10.1145/1508244.1508275},
-	doi = {10.1145/1508244.1508275},
-	acmid = {1508275},
-	publisher = {ACM},
-	address = {New York, NY, USA},
-	keywords = {bias, measurement, performance},
+@inproceedings { Mytkowicz:2009:WrongData,
+    author       = {Mytkowicz, Todd and Diwan, Amer and Hauswirth, Matthias and Sweeney, Peter F.},
+    title        = {Producing wrong data without doing anything obviously wrong!},
+    booktitle    = {Proceedings of the 14th international conference on Architectural support for 
+                    programming languages and operating systems},
+    series       = {ASPLOS XIV},
+    year         = {2009},
+    isbn         = {978-1-60558-406-5},
+    location     = {Washington, DC, USA},
+    pages        = {265--276},
+    numpages     = {12},
+    url          = {http://doi.acm.org/10.1145/1508244.1508275},
+    doi          = {10.1145/1508244.1508275},
+    acmid        = {1508275},
+    publisher    = {ACM},
+    address      = {New York, NY, USA},
+    keywords     = {bias, measurement, performance},
 }
 
-#
-# Misc
-#
+# Misc ############################################################################################
 
+# Google says 8th annual IEEE, ACM says 9th
+# http://research.google.com/pubs/pub37077.html
+# http://dl.acm.org/citation.cfm?id=2190077
+@inproceedings { Hundt:2011:MAO,
+    author       = {Robert Hundt and Easwaran Raman and Martin Thuresson and Neil Vachharajani},
+    title        = {MAO -- an Extensible Micro-Architectural Optimizer},
+    booktitle    = {Proceedings of the 9th Annual IEEE/ACM International Symposium on 
+                    Code Generation and Optimization},
+    series       = {CGO '11},
+    year         = {2011},
+    isbn         = {978-1-61284-356-8},
+    pages        = {1--10},
+    numpages     = {10},
+    url          = {http://dl.acm.org/citation.cfm?id=2190025.2190077},
+    acmid        = {2190077},
+    publisher    = {IEEE Computer Society},
+    address      = {Washington, DC, USA},
+} 
 
