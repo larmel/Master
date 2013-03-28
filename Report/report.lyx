@@ -68,12 +68,12 @@ Analyzing Context Bias of Program Execution on Modern CPUs
 Lars Kirkholt Melhus
 \end_layout
 
-\begin_layout Standard
+\begin_layout Author
 Supervisor: Anne C.
  Elster
 \end_layout
 
-\begin_layout Standard
+\begin_layout Author
 Co-supervisor: Rune E.
  Jensen
 \end_layout
@@ -84,7 +84,7 @@ This is the empty abstract.
  Test citation 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "ProdWrongData,PCDeterministic"
+key "Intel:2013:Volume3B"
 
 \end_inset
 
@@ -2258,7 +2258,7 @@ GCC: (Ubuntu Linaro 4.6.3-1ubuntu5) 4.6.3
 \end_layout
 
 \begin_layout Chapter
-Results
+Case Studies
 \end_layout
 
 \begin_layout Standard
