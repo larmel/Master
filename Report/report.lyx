@@ -68,12 +68,12 @@ Analyzing Context Bias of Program Execution on Modern CPUs
 Lars Kirkholt Melhus
 \end_layout
 
-\begin_layout Author
+\begin_layout Date
 Supervisor: Anne C.
  Elster
-\end_layout
+\begin_inset Newline newline
+\end_inset
 
-\begin_layout Author
 Co-supervisor: Rune E.
  Jensen
 \end_layout
@@ -133,6 +133,55 @@ Introduction
 Catchy introduction about the blissful ignorance currently employed by the
  scientific comunity.
  
+\begin_inset Quotes eld
+\end_inset
+
+We have it easy, but do we have it right?
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/demo.svg
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Cycle count from running the same program with different Unix environment
+ size.
+ Horizontal axis shows number of bytes added to an empty environment.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This thesis will focus on 
 \end_layout
 
 \begin_layout Section
@@ -205,7 +254,16 @@ Background and Related Work
 \end_layout
 
 \begin_layout Standard
-Background from papers
+In this section we discuss previous work done on measurement bias in computer
+ software.
+ We will see that the current status for predicting and/or avoiding bias
+ effects are to run multiple tests in many different configurations.
+ Contributions from T.
+ Mytkovicz et al.
+ on bias effects for link order and stack address will be discussed, as
+ well as other papers with similar observations.
+ A paper from Google introduces a framework for assembly-level optimization,
+ which tries to avoid some effects that might arise from link order variations.
 \end_layout
 
 \begin_layout Section
@@ -213,8 +271,25 @@ Performance Counters
 \end_layout
 
 \begin_layout Standard
-The most powerful tools available for assessing performance on real hardware
- is hardware performance coutners.
+To be able to tell anything about bias effects we need to have a reliable
+ way to gather various metrics.
+ There are many different approaches for measuring performance of software;
+ debuggers, profilers and the likes are widely used in both industry and
+ academia.
+ Unfortunately, measurement techniques relying on intervention from software
+ are prone to observer effect.
+ In addition, any measurement instrumentation that alters the executed program
+ per definition measures a 
+\emph on
+different
+\emph default
+ program -- making it difficult to accurately identify bias effects.
+\end_layout
+
+\begin_layout Standard
+Luckily, modern processors have support in hardware for measuring a plethora
+ of different metrics, called performance counters.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -240,6 +315,52 @@ right answer
  At least for small programs, we can easily count the number of dynamic
  intructions and compare to reported counts.
  
+\end_layout
+
+\begin_layout Subsubsection*
+Accuracy vs.
+ Precision
+\end_layout
+
+\begin_layout Standard
+For clarity, it is worth pointing out the difference between accuracy and
+ precision.
+ A series of measurements can be accurate, but not precise, and vice-versa.
+ Consider a bow-and-arrow contest after a series of arrows are fired at
+ the same target.
+ The archer is 
+\emph on
+accurate
+\emph default
+ if the arrows land close to the target, and 
+\emph on
+precise
+\emph default
+ if the arrows lands close together.
+ Note that accuracy does not entail precision, and vice-versa.
+\end_layout
+
+\begin_layout Standard
+For performance measurements, these are properties of the performance counters.
+ Ideally we want counters to be both precise and accurate.
+ Many papers have looked at the properties of performance counters, and
+ unfortunately very few seems to have the desired properties.
+ A counter that appears to be both accurate and precise is INSTR_RETIRED
+ -- which can be pretty easily verified by inspecting the source code.
+ Measuring the number of cucles accurately seems to be more of a challenge.
+ There will always be some overhead in setting up the counters and reading
+ the values after the program has run.
+ We can try to create an empty program -- but the cycle count reported by
+ perf will not be anywhere near zero.
+ Trying to measure the 
+\begin_inset Quotes eld
+\end_inset
+
+empty
+\begin_inset Quotes erd
+\end_inset
+
+ program yields about 2000 cycles in our setup.
 \end_layout
 
 \begin_layout Subsection
@@ -672,6 +793,16 @@ BSS Uninitialized data.
 \begin_layout Standard
 The stack starts at the high end of addresses, and grows downwards.
  
+\end_layout
+
+\begin_layout Section
+Measurement Bias
+\end_layout
+
+\begin_layout Standard
+Much of the previous work on measurement bias seems to stem from Todd Mytkovicz
+ et al.
+ In 
 \end_layout
 
 \begin_layout Chapter
@@ -2265,6 +2396,11 @@ Case Studies
 Graphs illustrating the effect in generated or constructed examples.
  Effects of applying heuristics.
  Ideally some results from applying this to FFT.
+\end_layout
+
+\begin_layout Standard
+Idea: Try compiling fftw with align-loops=32 perhaps.
+ Might not work on generated codelets.
 \end_layout
 
 \begin_layout Chapter
