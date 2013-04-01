@@ -774,10 +774,75 @@ Store Forwarding
 \end_layout
 
 \begin_layout Section
-Memory in Linux
+Linux
 \end_layout
 
 \begin_layout Standard
+The operating system might be cosidered a vital part of the execution environmen
+t.
+ Running tests on a particular operating system might very well result in
+ big performance differences.
+ Because of time limitations we have not considered bias effects due to
+ specific variations in OS-es (true?).
+ For all our results, we have used the latest stable release of Ubuntu,
+ version 12.04, updated with the latest kernel updates.
+\end_layout
+
+\begin_layout Standard
+To understand why some of the bias effects occur, it is necessary to understand
+ some of the low-level aspects of how processes are managed by the Linux
+ kernel -- most importantly how memory layout for code and data are handled.
+ 
+\end_layout
+
+\begin_layout Subsection
+Process Memory Layout
+\end_layout
+
+\begin_layout Standard
+A process in Linux consists of a set of segments.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/lars/inkscape-test.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Process layout in memory
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Address Space Layout Randomization (ASLR)
+\end_layout
+
+\begin_layout Subsection
 ELF format
 \end_layout
 
@@ -882,12 +947,14 @@ Producing Wrong Data Without Doing Anything Obviously Wrong!
 
 \begin_layout Standard
 \begin_inset Float algorithm
+placement H
 wide false
 sideways false
 status open
 
 \begin_layout Plain Layout
 \begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
 inline false
 status open
 
@@ -967,7 +1034,61 @@ C code for micro-kernel
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
+Analysis of Alias Effects
+\end_layout
+
+\begin_layout Standard
+How we found out what caused the strange behaviour.
+\end_layout
+
+\begin_layout Itemize
+Used already provided kernel from paper -- no detailed explanation provided,
+ other than a reference to certain counters.
+\end_layout
+
+\begin_layout Itemize
+Developed script to run a large numbe of performance counters on the same
+ program under controlled environment.
+ With varying stack offset.
+\end_layout
+
+\begin_layout Itemize
+Calculated correlation between cycle count and all counters to find a subset
+ that stood out.
+ Observe that schedule pipe0-4 are utilized differently.
+ Lots of interesting stuff.
+ => Read various intel docs.
+\end_layout
+
+\begin_layout Itemize
+Hypothesis: address alias is the cause.
+ Test by observing address.
+\end_layout
+
+\begin_layout Standard
+Detailed analysis with a clever drawing showing where the collision is.
+ 
+\end_layout
+
+\begin_layout Subsection
+Run-time Solutions to Address Aliasing
+\end_layout
+
+\begin_layout Standard
+In general, the address of stack variables cannot be determined statically.
+ It seems like there are two ways to approack the problem of mitigating
+ or avoiding aliasing in practice.
+ One approach could be to amploy some clever compile-time heuristics to
+ pad variables in some way -- hopefully reducing conflicts without hurting
+ performance.
+ Another approach would be to do some run-time analysis of the variables
+ addresses, and execute alternative code paths once a conflict is found.
+ This is in principle a feasible solution.
+ In the previous example, we can 
+\end_layout
+
+\begin_layout Subsection
 Heap address conflicts
 \end_layout
 
@@ -1001,6 +1122,7 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
 inline false
 status open
 
@@ -1140,7 +1262,7 @@ Micro-kernel with a simple loop reading and writing to arrays a and b.
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection*
 Internals of malloc
 \end_layout
 
@@ -1265,12 +1387,12 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="5" columns="4">
+<lyxtabular version="3" rows="4" columns="4">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
-<column alignment="left" valignment="top" width="60text%">
+<column alignment="left" valignment="top" width="50text%">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -1396,7 +1518,7 @@ With HT on, the LSD_OVERFLOW counter becomes non-zero on 27 instructions,
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1405,7 +1527,7 @@ Taken branches
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1414,7 +1536,7 @@ Taken branches
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1423,7 +1545,7 @@ Taken branches
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1442,44 +1564,6 @@ a++, b++
 \begin_layout Plain Layout
 Some weird things with HT on, but it seems like 12 is right.
  Might be too many instructions though..
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
 \end_layout
 
 \end_inset
@@ -1527,6 +1611,7 @@ The stated limit of 8*32B of instructions is way too much for consecutive
 \end_layout
 
 \begin_layout Standard
+\noindent
 \begin_inset Float algorithm
 placement H
 wide false
@@ -1535,20 +1620,13 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily},showstringspaces=false"
+lstparams "basicstyle={\footnotesize\ttfamily},showstringspaces=false"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-#define B27 a = b, a = b, a = b, a = b, 
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-     a = b, a = b, a = b, a = b, a = b
+#define B27 a=b,a=b,a=b,a=b,a=b,a=b,a=b,a=b,a=b
 \end_layout
 
 \begin_layout Plain Layout
@@ -1557,12 +1635,7 @@ status open
 
 \begin_layout Plain Layout
 
-int loop()
-\end_layout
-
-\begin_layout Plain Layout
-
-{
+int loop() {
 \end_layout
 
 \begin_layout Plain Layout
@@ -1572,12 +1645,7 @@ int loop()
 
 \begin_layout Plain Layout
 
-    while (i++ < 0x12345678)
-\end_layout
-
-\begin_layout Plain Layout
-
-    {
+    while (i++ < 0x12345678) {
 \end_layout
 
 \begin_layout Plain Layout
@@ -1656,12 +1724,7 @@ int loop()
 
 \begin_layout Plain Layout
 
-int main()
-\end_layout
-
-\begin_layout Plain Layout
-
-{
+int main() {
 \end_layout
 
 \begin_layout Plain Layout
@@ -1915,11 +1978,51 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "33col%"
+width "49col%"
 special "none"
 height "1in"
 height_special "totalheight"
 status open
+
+\begin_layout Plain Layout
+fact.c
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\scriptsize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int fact(int n)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int a = 1;
+\end_layout
+
+\begin_layout Plain Layout
+
+    return a;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 lsd.c
@@ -1927,7 +2030,7 @@ lsd.c
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\tiny\ttfamily}"
+lstparams "basicstyle={\scriptsize\ttfamily}"
 inline false
 status open
 
@@ -2007,7 +2110,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "33col%"
+width "50col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -2019,7 +2122,7 @@ loop.c
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\tiny\ttfamily}"
+lstparams "basicstyle={\scriptsize\ttfamily}"
 inline false
 status open
 
@@ -2124,62 +2227,6 @@ int loop(int a)
 \begin_layout Plain Layout
 
     return b;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\begin_inset Box Frameless
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "33col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
-
-\begin_layout Plain Layout
-fact.c
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset listings
-lstparams "basicstyle={\tiny\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-int fact(int n)
-\end_layout
-
-\begin_layout Plain Layout
-
-{
-\end_layout
-
-\begin_layout Plain Layout
-
-    int a = 1;
-\end_layout
-
-\begin_layout Plain Layout
-
-    return a;
 \end_layout
 
 \begin_layout Plain Layout
