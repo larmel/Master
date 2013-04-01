@@ -249,6 +249,50 @@ Chapter
 3 hopefully contains some actual smart stuff, we'll see :)
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/lars/Master/Code/Loop/loop-demo.eps
+	scale 83
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+wat.
+ UnHalted Core Cycles.
+\begin_inset Newline newline
+\end_inset
+
+CYCLE_ACTIVITY.CYCLES_LDM_PENDING
+\begin_inset Newline newline
+\end_inset
+
+Note: Postscript files should be scaled by 75%.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Background and Related Work
 \end_layout

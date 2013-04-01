@@ -1,68 +1,47 @@
 #!/usr/bin/env python
 import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
-import argparse
-from string import lower
-import ast
-
-# -e cycles:u,instructions:u,e[0]/e[1]
-
-def is_expression(s):
-    return s.find("/") != -1 or s.find("*") != -1 or s.find("+") != -1 or s.find("-") != -1
+import argparse, string
+from matplotlib import rc
+from matplotlib.ticker import FuncFormatter
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Plot perf data')
-    parser.add_argument('-e', '--event_list', default='all')
-    parser.add_argument('-f', '--file', default='stat.csv', help='csv data to plot from')
+    parser = argparse.ArgumentParser(description='Plot lperf data')
+    parser.add_argument('file', default='stat.csv')
+    parser.add_argument('-e', '--events', default='all')
+    parser.add_argument('-t', '--title',)
+    parser.add_argument('-x', '--xlabel', default='')
+    parser.add_argument('-y', '--ylabel', default='')
+    parser.add_argument('-l', '--legend')
     args = parser.parse_args()
+    args.events = map(string.lower, args.events.strip().split(','))
+    return args
 
-    lines = map(lower, args.event_list.strip().split(','))
-    counters = filter(lambda s : not is_expression(s), lines)
-    expressions = filter(is_expression, lines)
-
-    print "Counter:", counters
-    print "Expressions:", expressions
-    e = map(lower, args.event_list.strip().split(','))
-
-    # Separate equations
-
-    f = args.file
-    return e, f
-
-def read_file(events, filename):
+def read_file(events, csv):
     lines = []
-    with open(filename) as f:
+    with open(csv) as f:
         for line in f:
             e = map(lambda s : s.strip(), line.split(','))
             if events == ['all'] or e[1].lower() in events:
                 lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(float, e[3:])})
     return lines
 
-def calculate(events, expressions):
-    lines = []
-    # todo
-
-
-def plot_lines(title, data):
-    fontP = FontProperties()
-    fontP.set_size('small')
-    plt.figure(title, figsize=(14,5), facecolor='white', edgecolor='white')
-    ax = plt.subplot(111)
+def plot_lines(data, args):
+    rc('text', usetex=True)
+    rc('font', family='serif', serif='Computer Modern Roman', size=10)
+    plt.figure(args.title, facecolor='white', edgecolor='white')
+    plt.xlabel(args.xlabel)
+    plt.ylabel(args.ylabel)
+    plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: '{:0,d}'.format(int(x))))
     for line in data:
         label = line['event'] if line['mnemonic'] == '' else line['mnemonic']
-        plt.plot(line['count'], label=label)
+        plt.plot(line['count'], label='{{{e}}}'.format(e=label.replace('_', '\_')))
     plt.grid(True)
-    # Shink current axis by 20%
-    box = ax.get_position()
-    legend = plt.legend(loc="upper left", bbox_to_anchor=(1.01,1.0), borderaxespad=0., prop=fontP)
-    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    if args.legend != None:
+        plt.legend(loc=args.legend, frameon=True, prop={'size':10}).draggable()
+    plt.tight_layout()
     plt.show()
 
-def run():
-    events, filename = parse_arguments()
-    lines = read_file(events, filename)
-    title = filename;
-    plot_lines(title, lines) 
-
 if __name__ == '__main__':
-    run()
+    args  = parse_arguments()
+    lines = read_file(args.events, args.file)
+    plot_lines(lines, args)
