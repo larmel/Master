@@ -28,7 +28,7 @@
 \spacing single
 \use_hyperref false
 \papersize default
-\use_geometry false
+\use_geometry true
 \use_amsmath 1
 \use_esint 1
 \use_mhchem 1
@@ -50,7 +50,7 @@
 \quotes_language english
 \papercolumns 1
 \papersides 2
-\paperpagestyle default
+\paperpagestyle headings
 \tracking_changes false
 \output_changes false
 \html_math_output 0
@@ -61,7 +61,7 @@
 \begin_body
 
 \begin_layout Title
-Analyzing Context Bias of Program Execution on Modern CPUs
+Analyzing Context Bias on Modern Architectures
 \end_layout
 
 \begin_layout Author
@@ -79,16 +79,37 @@ Co-supervisor: Rune E.
 \end_layout
 
 \begin_layout Abstract
-This is the empty abstract.
- Fin.
- Test citation 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
+Carefully controlling observer effect and measurement bias when conducting
+ experiments, is taken very seriously in other scientific fields such as
+ medical research.
+ These issues are also relevant when doing performance analysis, for instance
+ when evaluating the efficiency of some new algorithm or compiler optimization.
+ A computer program does not necessarily have the same performance across
+ all machines.
+ Running the same program multiple times does not always yield the same
+ performance either.
+ For accurate analysis of performance, it is important to sample a representativ
+e set of tests -- this is true also in computer science.
+ Seemingly trivial properties of the environment can bias programs towards
+ certain configurations -- memory layout being the primary source of variation,
+ but other sources such as room temperature and time of day could also be
+ considered in the broadest sense.
+\end_layout
 
-\end_inset
+\begin_layout Abstract
+In this thesis we will study a small set of very distinct bias effects,
+ that can be experienced by innocuous changes to the Unix environment, or
+ changing the link order of a program.
+ Through experimentation and careful measurement using hardware performance
+ counters, we locate the source of what causes performance deviations.
+ With accurate models of intricate hardware details, measures can be made
+ to try to avoid problems caused by bias.
+\end_layout
 
-
+\begin_layout Abstract
+Lastly we provide a brief case study on FFTW, and how exploiting knowledge
+ of the i7 Ivy Bridge can help bias performance in our favor to yield an
+ actual speedup for the oh so important fourier transform (hopefully :)
 \end_layout
 
 \begin_layout Section*
@@ -99,7 +120,14 @@ Problem Description
 Variations in execution context has been shown to affect performance of
  programs on recent CPUs.
  Previous work has looked at offsetting the stack and changing link order
- -- biasing performance measurements towards certain configurations.
+ -- biasing performance measurements towards certain configurations 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
  Variables such as the placement of stack, heap and text segments in memory,
  combined with memory access instructions, can impact program performance
  quite significantly.
@@ -814,7 +842,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/lars/inkscape-test.eps
+	filename Img/unix-vm.eps
 
 \end_inset
 
