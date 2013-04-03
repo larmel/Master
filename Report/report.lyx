@@ -158,17 +158,99 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Catchy introduction about the blissful ignorance currently employed by the
- scientific comunity.
- 
+Optimizing for performance generally consist of trying to strive for things
+ like reduced cycle count, eliminate branch misses and reduce the number
+ of cache misses.
+ In disciplines other than computer science, such as medicine, the notions
+ of measurement bias and observer effect is more often considered.
+ The notions of observation effect and measurement bias can be described
+ as follows.
+\end_layout
+
+\begin_layout Description
+Observer
+\begin_inset space ~
+\end_inset
+
+effect occurs when the phenomena being measured is changed by observing
+ it.
+\end_layout
+
+\begin_layout Description
+Measurement
+\begin_inset space ~
+\end_inset
+
+bias refers to the potential for 
+\emph on
+external
+\emph default
+ variables to skew the measurements of some phenomena away from the 
 \begin_inset Quotes eld
 \end_inset
 
-We have it easy, but do we have it right?
+true
 \begin_inset Quotes erd
 \end_inset
 
+ result.
+ 
+\end_layout
 
+\begin_layout Section
+Observer Effect and Measurement Bias
+\end_layout
+
+\begin_layout Standard
+In an analysis of 70? papers from X conference, almost none took into account
+ the effects of observer effects or environment bias, which has been been
+ shown to potentially skew the results of benchmarks by very significant
+ amounts 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Seemingly innocious properties such as the length of your Unix user name
+ can bias performance measurements.
+ In the paper appropriately named 
+\begin_inset Quotes eld
+\end_inset
+
+Producing the wrong data without doing anything obviously wrong
+\begin_inset Quotes erd
+\end_inset
+
+, the authors show how simple changes to the execution environment can heavily
+ impact performance of SPEC 2006 benchmark.
+ There are many potential sources of bias that could come from the environment.
+ In the widest sense, properties like the time of day, or temperature of
+ the room should be considered relevant variables of the execution environment.
+ This is actually not as far fetched as it may sound -- electronic circuits
+ might very well operate more efficiently in lower temperatures, and programs
+ we benchmark might use some API to ask for the time of day and execuet
+ different code paths dependent on that information.
+\end_layout
+
+\begin_layout Standard
+Other potential sources of bias include memory layout in virtual address
+ space, and the link order of object files.
+ These variables have been studied to some extent in previous work, which
+ we will revisit in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Background"
+
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -212,12 +294,16 @@ Cycle count from running the same program with different Unix environment
 This thesis will focus on 
 \end_layout
 
-\begin_layout Section
-Observation Effect
+\begin_layout Standard
+Producing bad data
 \end_layout
 
-\begin_layout Section
-Measurement Bias
+\begin_layout Standard
+Methodolology
+\end_layout
+
+\begin_layout Standard
+Observer effect and measurement bias is known, but not handled in papers.
 \end_layout
 
 \begin_layout Standard
@@ -277,55 +363,17 @@ Chapter
 3 hopefully contains some actual smart stuff, we'll see :)
 \end_layout
 
-\begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename /home/lars/Master/Code/Loop/loop-demo.eps
-	scale 83
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-wat.
- UnHalted Core Cycles.
-\begin_inset Newline newline
-\end_inset
-
-CYCLE_ACTIVITY.CYCLES_LDM_PENDING
-\begin_inset Newline newline
-\end_inset
-
-Note: Postscript files should be scaled by 75%.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Chapter
 Background and Related Work
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:Background"
+
+\end_inset
+
 In this section we discuss previous work done on measurement bias in computer
  software.
  We will see that the current status for predicting and/or avoiding bias
@@ -1068,6 +1116,50 @@ Analysis of Alias Effects
 
 \begin_layout Standard
 How we found out what caused the strange behaviour.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/lars/Master/Code/Loop/loop-demo.eps
+	scale 83
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+wat.
+ UnHalted Core Cycles.
+\begin_inset Newline newline
+\end_inset
+
+CYCLE_ACTIVITY.CYCLES_LDM_PENDING
+\begin_inset Newline newline
+\end_inset
+
+Note: Postscript files should be scaled by 75%.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
