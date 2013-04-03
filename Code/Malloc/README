@@ -1,0 +1,5 @@
+
+
+Idea: Two threads allocate memory in parallel, with some lock on malloc perhaps
+One of the threads allocate something that just fits inside malloc boundary for low addresses. 
+The other will shift allocations if run first -- causing lots of alias events.
