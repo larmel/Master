@@ -1525,12 +1525,185 @@ Example: Convolution
 
 \begin_layout Standard
 To illustrate possible performance problems caused by address aliasing,
- consider a simple 1D convolution function.
- With large allocations, the input and output arrays will be aligned to
- 12 bits, with potential for alias on sequential access.
- There is a tradeoff here; with optimization on, alignment is generally
- good because of vector instructions such as mmx and avx.
- Offseting one of the array indices can have significant performance impacts.
+ consider the following simple 1D convolution function.
+ This function computes the convolution between an input array and a fixed
+ kernel, disregarding endpoints for simplicity.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static float kernel[] = {0.1, 0.25, 0.3, 0.25, 0.1};
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+void convolve(float *input, float *output, int size) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    int i; for (i = 2; i < size - 2; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        output[i] = input[i-2]*kernel[0];
+\end_layout
+
+\begin_layout Plain Layout
+
+        output[i] += input[i-1]*kernel[1];
+\end_layout
+
+\begin_layout Plain Layout
+
+        output[i] += input[i]*kernel[2];
+\end_layout
+
+\begin_layout Plain Layout
+
+        output[i] += input[i+1]*kernel[3];
+\end_layout
+
+\begin_layout Plain Layout
+
+        output[i] += input[i+2]*kernel[4];
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We use malloc to allocate two reasonably sized arrays (N = 0xffff), skipping
+ initialization to save some cycles.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int main(void) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *input  = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *result = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    convolve(input, result, N);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We use the perf utility to measure number of cycles, PARTIAL_ADDRESS_ALIAS
+ and RESOURCE_STALLS.ALL.
+ The program was compiled with GCC and all optimizations enabled -- resulting
+ in vectorized code.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+           909,447 cycles:u                  #    0.000 GHz
+\end_layout
+
+\begin_layout Plain Layout
+
+           455,534 r0107:u                                 
+\end_layout
+
+\begin_layout Plain Layout
+
+           313,138 r01a2:u                                 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.000588725 seconds time elapsed                    
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As suspected, the code generates a huge number of address alias conflicts
+ and resource stalls.
+ For moderately large allocations, the input and output arrays will 
+\emph on
+always
+\emph default
+ be aligned to 12 bits.
+ The likely cause of alias problems here is a conflict between input[i]
+ and output[i].
+ Although distinct memory locations, the out of order memory system detects
+ conflicts.
+ The hypothesis can be tested by offseting one of the arrays before calling
+ convolve.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1558,7 +1731,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+x
 \end_layout
 
 \end_inset
@@ -1567,7 +1740,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+0
+0x0
 \end_layout
 
 \end_inset
@@ -1576,7 +1749,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+1
+0x01
 \end_layout
 
 \end_inset
@@ -1585,7 +1758,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+2
+0x04
 \end_layout
 
 \end_inset
@@ -1594,7 +1767,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+3
+0x08
 \end_layout
 
 \end_inset
@@ -1603,7 +1776,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+4
+0x0c
 \end_layout
 
 \end_inset
@@ -1612,7 +1785,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+5
+0x10
 \end_layout
 
 \end_inset
@@ -1621,7 +1794,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-+6
+0x14
 \end_layout
 
 \end_inset
@@ -1934,7 +2107,34 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Cycles, alias count, speedup, for convolution with offset input arrays
+Performance statistics for 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily},language=C"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+convolve(input, (result + x), N)
+\end_layout
+
+\end_inset
+
+, with varying offset x, and array size N of 0xffff.
+ Measured using 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily},language=C"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+perf stat -e r0107:u -r 10
+\end_layout
+
+\end_inset
+
+, counting number of partial address alias events averaged over 10 runs.
 \end_layout
 
 \end_inset
@@ -1948,31 +2148,31 @@ Cycles, alias count, speedup, for convolution with offset input arrays
 \end_layout
 
 \begin_layout Standard
-For O3 with aligned arrays.
+The best parameter is found to be at a 16 element difference in alignment
+ between input and output.
+ Adding 0x10 to the output pointer (allocating some extra space to compensate),
+ we get much faster code.
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\tiny}"
+lstparams "basicstyle={\small}"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-           909,447 cycles:u                  #    0.000 GHz             
-         ( +-  0.40% )
+           632,496 cycles:u                  #    0.000 GHz
 \end_layout
 
 \begin_layout Plain Layout
 
-           455,534 r0107:u                                             
-          ( +-  0.01% )
+               244 r0107:u                                 
 \end_layout
 
 \begin_layout Plain Layout
 
-           313,138 r01a2:u                                             
-          ( +-  0.13% )
+            31,944 r01a2:u                                 
 \end_layout
 
 \begin_layout Plain Layout
@@ -1981,8 +2181,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.000588725 seconds time elapsed                                 
-         ( +-  2.34% )
+       0.000494835 seconds time elapsed                    
 \end_layout
 
 \end_inset
@@ -1991,47 +2190,138 @@ status open
 \end_layout
 
 \begin_layout Standard
-For O3 with offset output array by 0x10.
+Note that the number of alias conflicts reduces with increasing offset.
+ This is likely because adjacent indeces are accessed in the loop.
+ If output is offset by 0x01, then output[i] is aliased with input[i-1].
+ Intuitively, one could suspect that an offset of 3 floats would be enough
+ to eliminate alias, as the maximum difference is 2.
+ (Is this true for low optimization?) We find that as many as 16 is needed
+ on the highest level of optimization, illustrating the depth of speculative
+ execution of memory operations.
+ (TODO: Try rewriting as nicely as possible, with for-loops instead of manual
+ unrolling.
+ Check with Rune for best example to document).
+\end_layout
+
+\begin_layout Standard
+Interestingly, neither O1, O2 or O3 was able to do anything about this --
+ yet a very simple change with no obvious significance gave a speedup of
+ over 1.4x.
  
 \end_layout
 
+\begin_layout Subsection
+Libraries as Environment Bias
+\end_layout
+
 \begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\tiny}"
-inline false
+The previous example does not show measurement bias per se, but rather an
+ artifact of the particular implementation of malloc.
+ Although not (yet?) tested, it is not too unlikely that some other implementati
+on behaves differently.
+ A perfectly legal implementation of malloc could insert offsets on every
+ other large request.
+ Bottom line is: dynamically linked libraries are part of the execution
+ environment.
+ In the case of memory allocators alone, there are several options: The
+ one used in GNU's libc is 
+\series bold
+ptmalloc
+\series default
+
+\begin_inset Foot
 status open
 
 \begin_layout Plain Layout
-
-           632,496 cycles:u                  #    0.000 GHz             
-         ( +-  0.37% )
-\end_layout
-
-\begin_layout Plain Layout
-
-               244 r0107:u                                             
-          ( +- 25.15% )
-\end_layout
-
-\begin_layout Plain Layout
-
-            31,944 r01a2:u                                             
-          ( +-  1.80% )
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.000494835 seconds time elapsed                                 
-         ( +-  1.89% )
-\end_layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.malloc.de/en/"
+target "http://www.malloc.de/en/"
 
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+, which is based on Doug Lea's malloc
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://g.oswego.edu/dl/html/malloc.html"
+target "http://g.oswego.edu/dl/html/malloc.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, Hoard
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.hoard.org/"
+target "http://www.hoard.org/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ and nedmalloc 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.nedprod.com/programs/portable/nedmalloc/"
+target "http://www.nedprod.com/programs/portable/nedmalloc/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ Many allocators try to battle lock contention for multithreaded programs,
+ where each thread share a common heap space.
+ Allocating and freeing dynamic memory from a shared pool must be synchronized
+ in some way.
+ Testing multiple allocators might be worthwile, particularly for multithreaded
+ applications.
+ A potential cause of producing 
+\begin_inset Quotes eld
+\end_inset
+
+bad data
+\begin_inset Quotes erd
+\end_inset
+
+ is optimizing around a bad allocator, or one that perform sub-optimally
+ on a particular usage pattern.
+\end_layout
+
+\begin_layout Standard
+Need some measurements to support this claim ...
+ Pretty easy to test malloc replacements, just change LD_PRELOAD apparently.
+ Question: Does any of the implementations of malloc optimize for parallell
+ sequential array access, reducing alias effects? Probably not, which is
+ cool! Could suggest fix.
+ (Heuristic, or static analysis, etc).
 \end_layout
 
 \begin_layout Section
