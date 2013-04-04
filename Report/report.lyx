@@ -1228,8 +1228,8 @@ Malloc appears to be deterministic, once the ASLR has placed heap start
 \end_layout
 
 \begin_layout Standard
-For slightly larger requests, malloc uses mmap, which aligns to page size;
- i.e.
+For slightly larger requests (how large?), malloc uses mmap, which aligns
+ to page size; i.e.
  0x1000.
 \end_layout
 
@@ -1394,6 +1394,30 @@ For the previous example, adding a single byte to the b array, suddently
 \end_layout
 
 \begin_layout Standard
+brk is a strange system call: It increases the boundary of the data segment,
+ by simply pushing the 
+\begin_inset Quotes eld
+\end_inset
+
+break
+\begin_inset Quotes erd
+\end_inset
+
+ address upwards.
+ Break marks the end of the 
+\begin_inset Quotes eld
+\end_inset
+
+bss
+\begin_inset Quotes erd
+\end_inset
+
+ segment -- uninitialized data.
+ See man page.
+ Is it actually used in malloc? Called only once perhaps?
+\end_layout
+
+\begin_layout Standard
 \begin_inset Float figure
 placement H
 wide false
@@ -1435,6 +1459,64 @@ mmap is a posix system call for mapping a file to contiguous memory.
  Using the ANONYMOUS parameter, memory can be mapped without a backing file.
  malloc uses mmap instead of brk for large allocations -- although the rules
  seems kind of complicated.
+\end_layout
+
+\begin_layout Subsection
+Malloc with Pthreads
+\end_layout
+
+\begin_layout Standard
+Knowign about the possibility of aliasing with aligned array, we can try
+ to come up with plausible scenarios where bias can occur.
+ An idea for provoking malloc alignment could be to use threading.
+\end_layout
+
+\begin_layout Standard
+Pthread malloc is probably another implementation, which does not use the
+ low-address heap space.
+ The high-addresses, apparantly up to 0x7fff'f0000000, are used in the pthread
+ implementation.
+ Two threads are allocated with heaps 0x7fff'
+\series bold
+e8
+\series default
+000000 and 0x7fff'
+\series bold
+f0
+\series default
+000000.
+\end_layout
+
+\begin_layout Standard
+Plan 2: Allocate enough space on each thread-specific are to fill them,
+ causing subsequent calls to allocate on shared area.
+ Now, allocate (_, 1, 2) + (_, 3) arrays, with arrays 1 and 2 colliding
+ if the allocations happen 1, 3, 2 -- alternatively 1, 2, 3.
+ The _ allocation is for eating up 
+\begin_inset Quotes eld
+\end_inset
+
+local
+\begin_inset Quotes erd
+\end_inset
+
+ heap.
+ The size of the local segment is ? 
+\end_layout
+
+\begin_layout Standard
+Does not work.
+ Multiple threads have their own 
+\begin_inset Quotes eld
+\end_inset
+
+start
+\begin_inset Quotes erd
+\end_inset
+
+ heap area -- when it overflows, mmap is used which aligns to 12 bit.
+ Multiple threads do allocate different areas dependent on ordering, but
+ with mmap alignment, there is not much to about it.
 \end_layout
 
 \begin_layout Section
