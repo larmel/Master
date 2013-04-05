@@ -1662,17 +1662,26 @@ status open
 
 \begin_layout Plain Layout
 
-           909,447 cycles:u                  #    0.000 GHz
+        12,391,475 cycles:u                  #    0.000 GHz             
+         ( +-  1.06% )
 \end_layout
 
 \begin_layout Plain Layout
 
-           455,534 r0107:u                                 
+         9,039,041 r0107:u                                             
+          ( +-  0.79% )
 \end_layout
 
 \begin_layout Plain Layout
 
-           313,138 r01a2:u                                 
+         7,931,308 r01a2:u                                             
+          ( +-  0.17% )
+\end_layout
+
+\begin_layout Plain Layout
+
+        11,163,873 instructions:u            #    0.90  insns per cycle 
+         ( +-  0.00% )
 \end_layout
 
 \begin_layout Plain Layout
@@ -1681,7 +1690,12 @@ status open
 
 \begin_layout Plain Layout
 
-       0.000588725 seconds time elapsed                    
+       0.004906424 seconds time elapsed                                 
+         ( +-  1.33% )
+\end_layout
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2148,6 +2162,11 @@ perf stat -e r0107:u -r 10
 \end_layout
 
 \begin_layout Standard
+TODO: Might want graph to visualize number of address alias per offset and/or
+ cycles.
+\end_layout
+
+\begin_layout Standard
 The best parameter is found to be at a 16 element difference in alignment
  between input and output.
  Adding 0x10 to the output pointer (allocating some extra space to compensate),
@@ -2162,17 +2181,26 @@ status open
 
 \begin_layout Plain Layout
 
-           632,496 cycles:u                  #    0.000 GHz
+         5,719,361 cycles:u                  #    0.000 GHz             
+         ( +-  1.30% )
 \end_layout
 
 \begin_layout Plain Layout
 
-               244 r0107:u                                 
+             1,094 r0107:u                                             
+          ( +-  2.19% )
 \end_layout
 
 \begin_layout Plain Layout
 
-            31,944 r01a2:u                                 
+         1,351,256 r01a2:u                                             
+          ( +-  1.43% )
+\end_layout
+
+\begin_layout Plain Layout
+
+        11,163,873 instructions:u            #    1.95  insns per cycle 
+         ( +-  0.00% )
 \end_layout
 
 \begin_layout Plain Layout
@@ -2181,7 +2209,8 @@ status open
 
 \begin_layout Plain Layout
 
-       0.000494835 seconds time elapsed                    
+       0.002919409 seconds time elapsed                                 
+         ( +-  1.03% )
 \end_layout
 
 \end_inset
@@ -2210,6 +2239,55 @@ Interestingly, neither O1, O2 or O3 was able to do anything about this --
  
 \end_layout
 
+\begin_layout Paragraph
+Architectural Optimization Flags
+\end_layout
+
+\begin_layout Standard
+Because address aliasing is an artifact of intricacies in the Intel Core
+ architecture, we could hope that GCC will help when provided this information.
+ In the documentation
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html"
+target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html#i386-and-x86_002d64-Options"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ we find four possible architecture specifications; 
+\emph on
+native
+\emph default
+, 
+\emph on
+core2
+\emph default
+, 
+\emph on
+corei7
+\emph default
+ and 
+\emph on
+corei7-avx
+\emph default
+.
+ Native seems to produce code equivalent to corei7-avx.
+ Using the -march=native flag does indeed prodice better code, but not as
+ efficient as offseting arrays manually and not specifying any particular
+ architecture.
+ Note that code compiled with these flags are not guaranteed to work on
+ other architectures, reducing portability.
+\end_layout
+
 \begin_layout Subsection
 Libraries as Environment Bias
 \end_layout
@@ -2217,14 +2295,16 @@ Libraries as Environment Bias
 \begin_layout Standard
 The previous example does not show measurement bias per se, but rather an
  artifact of the particular implementation of malloc.
- Although not (yet?) tested, it is not too unlikely that some other implementati
-on behaves differently.
  A perfectly legal implementation of malloc could insert offsets on every
  other large request.
  Bottom line is: dynamically linked libraries are part of the execution
  environment.
- In the case of memory allocators alone, there are several options: The
- one used in GNU's libc is 
+ 
+\end_layout
+
+\begin_layout Standard
+In the case of memory allocators alone, there are several options: The one
+ used in GNU's libc is 
 \series bold
 ptmalloc
 \series default
@@ -2279,7 +2359,7 @@ target "http://www.hoard.org/"
 
 \end_inset
 
- and nedmalloc 
+, nedmalloc 
 \begin_inset Foot
 status open
 
@@ -2288,6 +2368,23 @@ status open
 LatexCommand href
 name "http://www.nedprod.com/programs/portable/nedmalloc/"
 target "http://www.nedprod.com/programs/portable/nedmalloc/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ and tcmalloc
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
+target "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
 
 \end_inset
 
@@ -2322,6 +2419,478 @@ Need some measurements to support this claim ...
  sequential array access, reducing alias effects? Probably not, which is
  cool! Could suggest fix.
  (Heuristic, or static analysis, etc).
+\end_layout
+
+\begin_layout Description
+Hoard Same behaviour on large allocations.
+ Returned addresses always ends in 0x070.
+ Significantly larger cycle count, but same number of address alias events.
+ Could not compile from source, linked with dynamic library.
+\end_layout
+
+\begin_layout Description
+nedmalloc Did not compile -- no prebuilt binary.
+\end_layout
+
+\begin_layout Description
+tcmalloc Aligns at page boundary, ending in 0x000.
+ Uses low addresses, 0xa49000 etc.
+ Returns page-aligned areas for smaller allocations as well -- possible
+ environment bias.
+\end_layout
+
+\begin_layout Standard
+We did some testing with three of the libraries, allocating two arrays of
+ equal length for different sizes.
+ The libraries produce very different results.
+ The default implementation alternates between using the brk segment (low
+ addresses and non-aligned, and mmap on higher segments.
+ Tcmalloc tends to put variables on page boundaries, also for small sizes,
+ returning addresses ending in 0x000.
+ Hoard tends to align on page boundaries for larger requests, with addresses
+ ending in 0x070.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="9" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Size
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Default (libc)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+tcmalloc
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Hoard
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xf00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x603010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x695
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac000070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x606c20
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x699
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac004000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x1234
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x603010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x69d
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac010070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6078f0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6a2
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac014d38
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xffff
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaaaad1
+\series bold
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6a7
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac020
+\series bold
+070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaaab12
+\series bold
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6e7
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac070
+\series bold
+070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x10000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x603010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6a7
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac020
+\series bold
+070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x643020
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6e7
+\series bold
+000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac070
+\series bold
+070
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:malloc-impl-tuples"
+
+\end_inset
+
+Addresses returned when allocating two float arrays of the same size, examples
+ of possible sources for alias conflicts.
+ Tests were run with ASLR disabled for reproducible results, but we get
+ similar results with randomization enabled.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:malloc-impl-tuples"
+
+\end_inset
+
+ shows that potential for address alias conflicts depends on the particular
+ implementation of malloc used.
+ We see several examples of cases where switching library can eliminate
+ alias by changing suffix on pointers.
+ Note that tcmalloc aligns to page boundary in all cases.
+ 
+\end_layout
+
+\begin_layout Standard
+Most allocators focus on efficiency in a multithreaded environment, and
+ we find that none of the alternatives tested attempts to solve the aliasing
+ problem for aligned arrays.
 \end_layout
 
 \begin_layout Section
