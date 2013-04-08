@@ -7,7 +7,7 @@
 // Best result with -O3 -std=c99 -march=native and no offset
 // -- Then we can save 250k alias and 300k RS with +0x30. Exact same instruction count (but sometimes slightly higher?)
 
-#define N 0x1000000
+#define N 0x100000
 static float kernel[5] = {0.1, 0.25, 0.3, 0.25, 0.1};
 
 void convolve(int size, float * restrict input, float * restrict output)
