@@ -991,7 +991,7 @@ Much of the previous work on measurement bias seems to stem from Todd Mytkovicz
 \end_layout
 
 \begin_layout Chapter
-Exploration
+Sources of Measurement Bias
 \end_layout
 
 \begin_layout Standard
@@ -2227,9 +2227,7 @@ Note that the number of alias conflicts reduces with increasing offset.
  (Is this true for low optimization?) We find that as many as 16 is needed
  on the highest level of optimization, illustrating the depth of speculative
  execution of memory operations.
- (TODO: Try rewriting as nicely as possible, with for-loops instead of manual
- unrolling.
- Check with Rune for best example to document).
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2286,6 +2284,156 @@ corei7-avx
  architecture.
  Note that code compiled with these flags are not guaranteed to work on
  other architectures, reducing portability.
+\end_layout
+
+\begin_layout Paragraph
+Use of restrict
+\end_layout
+
+\begin_layout Standard
+We can provide additional information to the compiler's optimizer by using
+ the restrict keyword for the input and output arrays.
+ This keyword was added in the C99 standard.
+ It functions as a type qualifier for pointers, specifying that no pointer
+ aliases exists.
+ By marking input and output as restrict, we guarantee they are the only
+ pointers to their respective memory areas, and not accesses through any
+ other (aliased) pointers.
+ This results in much more efficient code.
+ We find that the following compile parameters for cc provide the best code.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+cc -O3 -std=c99 -march=native
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We see that the cycle count is drastically reduced, down to about 3.5 million.
+ However, we still have over 1 million resource stalls, and 250 thousand
+ alias events, which might indicate that even providing restrict is not
+ enough.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+         3,565,704 cycles:u                  #    0.000 GHz             
+         ( +-  0.20% )
+\end_layout
+
+\begin_layout Plain Layout
+
+           258,469 r0107:u                                             
+          ( +-  0.05% )
+\end_layout
+
+\begin_layout Plain Layout
+
+         1,065,207 r01a2:u                                             
+          ( +-  0.59% )
+\end_layout
+
+\begin_layout Plain Layout
+
+         3,299,634 instructions:u            #    0.93  insns per cycle 
+         ( +-  0.00% )
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.002281839 seconds time elapsed                                 
+         ( +-  0.76% )
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Again, we test the hypothesis by incrementing an offset to the ouput pointer
+ before calling convolve.
+ At 0x30, we find the optimal configuration.
+ We reduce the number of alias effects to a neglegtible amount, and numberof
+ resource stalls is cut in half.
+ Even with every opportunity for optimization given to the compiler, we
+ are still able to squeeze out a speedup of 1.16x just by changing memory
+ addresses.
+ This speedup is consistent through input sizes, similar for 0x1000000.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+         3,070,418 cycles:u                  #    0.000 GHz             
+         ( +-  0.32% )
+\end_layout
+
+\begin_layout Plain Layout
+
+               206 r0107:u                                             
+          ( +- 27.26% )
+\end_layout
+
+\begin_layout Plain Layout
+
+           580,203 r01a2:u                                             
+          ( +-  1.82% )
+\end_layout
+
+\begin_layout Plain Layout
+
+         3,299,634 instructions:u            #    1.07  insns per cycle 
+         ( +-  0.00% )
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.002118936 seconds time elapsed                                 
+         ( +-  0.67% )
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that the resulting binaries, providing no offset and offset of 0x30,
+ were checked with 'diff'.
+ They only differ in two lines in main, where a leaq is used instead of
+ move (for addition), and different register for another movq instruction.
 \end_layout
 
 \begin_layout Subsection
