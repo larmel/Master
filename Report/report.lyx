@@ -2436,6 +2436,36 @@ Note that the resulting binaries, providing no offset and offset of 0x30,
  move (for addition), and different register for another movq instruction.
 \end_layout
 
+\begin_layout Paragraph
+Other Compilers
+\end_layout
+
+\begin_layout Standard
+The alias effects on this particular example is most prominent on GNU's
+ cc.
+ We have tested on clang and icc as well -- with varying results.
+ 
+\end_layout
+
+\begin_layout Description
+clang behaves similar to cc with respect to offsets to minimize alias.
+ However, we only need to add 0x10 to get rid of aliasing.
+ The change in cycle count is not as clear (Need more controlled benchmark).
+ A lot less efficient code is generated, almost ten times as many dynamic
+ instructions executed.
+\end_layout
+
+\begin_layout Description
+icc produces code that performs reasonably well with respect to alias count
+ on no additional offset.
+ Interestingly, a very similar count of address alias events are recorded
+ for code compiled with cc, about 260,000 for N = 0x100000.
+ Alias can be eliminated almost completely, but that requires an offset
+ of 0xa0.
+ Performance actually worsenes with smaller offsets, increasing alias count
+ significantly.
+\end_layout
+
 \begin_layout Subsection
 Libraries as Environment Bias
 \end_layout

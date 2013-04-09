@@ -10,7 +10,7 @@
 #define N 0x100000
 static float kernel[5] = {0.1, 0.25, 0.3, 0.25, 0.1};
 
-void convolve(int size, float * restrict input, float * restrict output)
+void convolve(int size, const float * restrict input, float * restrict output)
 {
     int i, j;
     for (i = 2; i < size - 2; ++i)
