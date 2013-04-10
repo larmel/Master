@@ -4009,7 +4009,7 @@ Compiling these using two different link orders yields the same speedup
  
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 Bias effects from trivial source code changes
 \end_layout
 
@@ -4085,12 +4085,17 @@ Long function names
 \begin_layout Standard
 Function names are placed in the .strtab section in the ELF file.
  When running readelf or objdump, the names are used to print nice output.
- The question is: Does .strtab, or any other section, affect program layout
- at execution time?
+ However, function names of external symbols resolved at run-time does affect
+ code layout.
+ Longer function names (or more external dependencies) will offset the text
+ segment because of allocable segments related to dynamic linking is placed
+ before text.
+ This includes dynsym, dynstr, gnu.version and rela sections in an executable
+ made with GCC.
 \end_layout
 
-\begin_layout Subsection
-Changing interpreter
+\begin_layout Subsubsection*
+Changing Interpreter
 \end_layout
 
 \begin_layout Standard
@@ -4294,7 +4299,9 @@ printf
 \end_layout
 
 \begin_layout Description
-.dynstr
+.dynstr The string table associated with dynamically linked symbols.
+ Probably indexed into by dynsym.
+ 
 \end_layout
 
 \begin_layout Description
@@ -4333,7 +4340,9 @@ printf
 \end_layout
 
 \begin_layout Description
-.text
+.text Executable code.
+ This is the interesting part -- if changes to any other section offsets
+ this, we might experience bias effects.
 \end_layout
 
 \begin_layout Description
@@ -4430,7 +4439,9 @@ GCC: (Ubuntu Linaro 4.6.3-1ubuntu5) 4.6.3
 \end_layout
 
 \begin_layout Description
-.symtab ?
+.symtab Symbol table.
+ Nice printout in readelf.
+ Entries point to .strtab and .dynstr for names.
 \end_layout
 
 \begin_layout Description
