@@ -4037,7 +4037,26 @@ objdump -D a.out : Disassemble
 \end_layout
 
 \begin_layout Standard
-strip a.out : Removes .symtab and .strtab
+strip a.out : Removes .symtab and .strtab.
+ See thread for more info: http://stackoverflow.com/questions/9401217/is-the-elf-
+notes-section-really-needed
+\end_layout
+
+\begin_layout Standard
+elfedit: GNU utility to edit some fields.
+ Very limited properties, doesn't look like arbitrary big strings can be
+ inserted.
+\end_layout
+
+\begin_layout Standard
+ht: Downloaded and built from source.
+ Too complex :p
+\end_layout
+
+\begin_layout Standard
+patchelf: Works for changing dynamic linker.
+ Nice explanation on homepage.
+ 
 \end_layout
 
 \begin_layout Paragraph
@@ -4070,9 +4089,43 @@ Function names are placed in the .strtab section in the ELF file.
  at execution time?
 \end_layout
 
+\begin_layout Subsection
+Changing interpreter
+\end_layout
+
+\begin_layout Standard
+In principle, anything that can change the memory layout of the code or
+ data in a program can cause bias.
+ Looking at the ELF file generated with cc, we find several segments that
+ preceeds .text, where code is.
+ By altering the size of any of thezse increasing the size of 
+\end_layout
+
+\begin_layout Standard
+Details for each of the ELF sections on GNU platform can be found in the
+ man pages 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://linux.die.net/man/5/elf"
+target "http://linux.die.net/man/5/elf"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
 \begin_layout Description
-.interp Interpreter.
- 
+.interp ELF interpreter/linker to be loaded.
+ Default on our system is 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4080,23 +4133,164 @@ Function names are placed in the .strtab section in the ELF file.
 \begin_inset Quotes erd
 \end_inset
 
- This might vary I guess...
+.
+ This can indeed vary, and there are tools for changing interpreter in compiled
+ binaries (patchelf).
+ It can be changed with a compile flag to the GCC linker with -Wl,-dynamic-linke
+r,/this/is/a/very/long/name/for/a/dynamic/linker.so.2.
+ This does indeed move everything, a very plausible way to change code layout.
 \end_layout
 
 \begin_layout Description
-.note.ABI-tag
+.note.ABI-tag Formatted as comment section from ELF standard.
+ Specifies OS (0 for Linux), and earliest compatible Linux kernel 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
+target "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ Example from ELF output.
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Notes at offset 0x00000254 with length 0x00000020:
+\end_layout
+
+\begin_layout Plain Layout
+
+  Owner                 Data size	Description
+\end_layout
+
+\begin_layout Plain Layout
+
+  GNU                  0x00000010	NT_GNU_ABI_TAG (ABI version tag)
+\end_layout
+
+\begin_layout Plain Layout
+
+    OS: Linux, ABI: 2.6.24
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Description
-.note.gnu.build-i
+.note.gnu.build-id Bitstring with some kind of hash to identify the build.
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Notes at offset 0x00000274 with length 0x00000024:
+\end_layout
+
+\begin_layout Plain Layout
+
+  Owner                 Data size	Description
+\end_layout
+
+\begin_layout Plain Layout
+
+  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Build ID: a449e580b52059227cbefd8d4454a9c6f16b9cde
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Description
-.gnu.hash
+.gnu.hash Some hash value.
+ 28 bytes on our machine.
+ An 
+\begin_inset Quotes eld
+\end_inset
+
+old
+\begin_inset Quotes erd
+\end_inset
+
+ hash method can be used by providing linker options, but that might break
+ libc compatibility.
 \end_layout
 
 \begin_layout Description
+.dynsym As explained very well here 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
+target "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, there are two symbol tables in ELF files; 
+\begin_inset Quotes eld
+\end_inset
+
 .dynsym
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+.symtab
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Only dynsym is allocable (marked with 'A' in readelf) -- meaning it will
+ occupy virtual address space in the running process.
+ This is needed for global external symbols, references that needs to be
+ resolved at runtime.
+ References to library functions such as 
+\begin_inset Quotes eld
+\end_inset
+
+printf
+\begin_inset Quotes erd
+\end_inset
+
+ appears in dynsym, and is resolved at runtime after libc (or whatever standard
+ library) is loaded.
+ The symtab section is not allocable, and contains all symbols (including
+ those in dynsym).
+ 
 \end_layout
 
 \begin_layout Description
@@ -4104,27 +4298,38 @@ Function names are placed in the .strtab section in the ELF file.
 \end_layout
 
 \begin_layout Description
-.gnu.version
+.gnu.version A table of version numbers.
+ Increasing with more external references to library functions.
 \end_layout
 
 \begin_layout Description
-.gnu.version_r
+.gnu.version_r More version table stuff.
 \end_layout
 
 \begin_layout Description
-.rela.dyn
+.rela.dyn Relocation stuff, for 
+\begin_inset Quotes eld
+\end_inset
+
+'dyn
+\begin_inset Quotes erd
+\end_inset
+
+ section? These also change with more external references.
 \end_layout
 
 \begin_layout Description
-.rela.plt
+.rela.plt Relocation stuff for plt section.
 \end_layout
 
 \begin_layout Description
-.init
+.init Executable instructions that are done before main is called.
 \end_layout
 
 \begin_layout Description
-.plt
+.plt Procedure Linkage Table.
+ Also changes with more external references.
+ Manual says attributes are processor specific.
 \end_layout
 
 \begin_layout Description
