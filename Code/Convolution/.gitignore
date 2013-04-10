@@ -1,3 +1,6 @@
 
-convolution.s
+convolution.cc.s
+convolution.clang.s
+convolution.icc.s
 stat.csv
+a.out
