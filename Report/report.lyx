@@ -360,7 +360,33 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 hopefully contains some actual smart stuff, we'll see :)
+3 investigates various performance metrics acquired from micro-kernels with
+ clear bias.
+ We will concentrate on two different causes for effects.
+ The first has to with memory address aliasing between variables, that can
+ cause problems for the out-of-order scheduling.
+ Next we will look at Loop Stream Detector, another hardware optimization
+ that sometimes can give bad performance.
+\end_layout
+
+\begin_layout Description
+Chapter
+\begin_inset space ~
+\end_inset
+
+4 briefly looks at potential improvements in an actual software package
+ where the effects pointed out in Chapter 3 might be a problem.
+ 
+\end_layout
+
+\begin_layout Description
+Chapter
+\begin_inset space ~
+\end_inset
+
+5 summarizes results from previous chapters, and provides directions for
+ future work.
+ 
 \end_layout
 
 \begin_layout Chapter
@@ -387,7 +413,109 @@ In this section we discuss previous work done on measurement bias in computer
 \end_layout
 
 \begin_layout Section
-Performance Counters
+Measurement Bias in Performance Analysis
+\end_layout
+
+\begin_layout Standard
+Many possible sources of bias.
+ Some that have been studied to some extent are 
+\emph on
+link order of object files
+\emph default
+ and the 
+\emph on
+size of Unix environment
+\emph default
+.
+ It is not entirely clear what variables should be cause of measurement
+ bias.
+ Bias occurs when some property of the 
+\emph on
+environment
+\emph default
+ can skew measurements away from the 
+\begin_inset Quotes eld
+\end_inset
+
+true
+\begin_inset Quotes erd
+\end_inset
+
+ result.
+ What we are interested in measuring is typically performance of a computer
+ program.
+ Performance can be represented by various metrics, such as cycle count,
+ cache misses or page faults.
+ By environment we think of anything that is external to the program, things
+ that can (and will) vary from each machine, or between each time measurements
+ are made.
+\end_layout
+
+\begin_layout Standard
+It is clear that the Unix environment should be considered part of the environme
+nt for a measurement.
+ This is a variable that will typically vary between measurements, at least
+ between machine, independent of the program we benchmark.
+\end_layout
+
+\begin_layout Standard
+Link order is more dubious.
+ For the link order to be part of the environment, we might have a program
+ that is distributed as object files, and a Makefile with unspecified link
+ order, leaving it up to the particular linker implementation on the target
+ machine to decide the order.
+ 
+\end_layout
+
+\begin_layout Standard
+Definition:
+\end_layout
+
+\begin_layout Quote
+Any variable that can be changed without changing the program can count
+ as measurement bias.
+\end_layout
+
+\begin_layout Standard
+The kind of variables we should include as possible sources for
+\end_layout
+
+\begin_layout Standard
+Other, more esoteric variables, might include the time of day, room temperature,
+ and 
+\end_layout
+
+\begin_layout Standard
+Time of day
+\end_layout
+
+\begin_layout Standard
+Room temperature
+\end_layout
+
+\begin_layout Standard
+Introduce all papers from Mytkovitz et al.
+ 
+\end_layout
+
+\begin_layout Subsection
+Blind Optimization
+\end_layout
+
+\begin_layout Standard
+Giving up, treat everything as a black box.
+ Use methods from AI to find local minima/maxima 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Knights:2009:BlindOpt"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Hardware Performance Counters
 \end_layout
 
 \begin_layout Standard
