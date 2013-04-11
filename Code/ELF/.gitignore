@@ -1,0 +1,6 @@
+
+*.elf
+*.s
+patch
+orig
+a.out

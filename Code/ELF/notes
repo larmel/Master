@@ -1,0 +1,24 @@
+
+
+cc elf.c -Wl,-dynamic-linker,/home/lars/very/long/path/to/another/loader.symlink.so.2 -o patch
+readelf -a patch > patch.elf
+
+
+lars@Barcelona:~/Master/Code/ELF$ ldd patch
+	linux-vdso.so.1 =>  (0x00007fff149ff000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f3fee1fa000)
+	/home/lars/very/long/path/to/another/loader.symlink.so.2 => /lib64/ld-linux-x86-64.so.2 (0x00007f3fee5d8000)
+
+
+lars@Barcelona:~/Master/Code/ELF$ nm -u patch
+                 w _Jv_RegisterClasses
+                 w __gmon_start__
+                 U __libc_start_main@@GLIBC_2.2.5
+                 U printf@@GLIBC_2.2.5
+                 U puts@@GLIBC_2.2.5
+
+
+lars@Barcelona:~/Master/Code/ELF$ strip patch
+lars@Barcelona:~/Master/Code/ELF$ file patch
+patch: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.24, BuildID[sha1]=0x97038601afdbd7f8aefcb9db9a57535f80b49982, stripped
+

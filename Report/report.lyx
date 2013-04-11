@@ -4025,7 +4025,11 @@ Useful commands for analysing binary files:
 \end_layout
 
 \begin_layout Standard
-nm a.out : List symbols
+ldd a.out : Print shared library dependencies
+\end_layout
+
+\begin_layout Standard
+nm (-u) a.out : List symbols
 \end_layout
 
 \begin_layout Standard
@@ -4059,7 +4063,7 @@ patchelf: Works for changing dynamic linker.
  
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 The order of functions within a source file
 \end_layout
 
@@ -4092,6 +4096,31 @@ Function names are placed in the .strtab section in the ELF file.
  before text.
  This includes dynsym, dynstr, gnu.version and rela sections in an executable
  made with GCC.
+\end_layout
+
+\begin_layout Paragraph
+Using strip
+\end_layout
+
+\begin_layout Standard
+Various sections of the ELF binary is not necessarily needed for normal
+ execution.
+ Quite a lot of extra information is included to aid in debugging etc.
+ The strip command gets rid of symbol table and stringtable.
+ These sections are non-allocable, so itdoes not affect code layout.
+ Printing with objdump for example will not be as nice.
+ Text segment is not marked with functions (internally resolved symbols).
+ 
+\end_layout
+
+\begin_layout Standard
+It is possible to specify specific segments to remove using the -R parameter.
+ Removing the .note sections for example, will probably not prevent the program
+ from running correctly.
+ Even though they are located (and allocated) before the .text segment, stripping
+ them out will not offset code.
+ This makes sense, as any reordering would require offseting every jump
+ address accordingly.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -4128,6 +4157,10 @@ target "http://linux.die.net/man/5/elf"
 .
 \end_layout
 
+\begin_layout Standard
+TODO: Create example with injecting loader triggers lsd.
+\end_layout
+
 \begin_layout Description
 .interp ELF interpreter/linker to be loaded.
  Default on our system is 
@@ -4142,8 +4175,8 @@ target "http://linux.die.net/man/5/elf"
  This can indeed vary, and there are tools for changing interpreter in compiled
  binaries (patchelf).
  It can be changed with a compile flag to the GCC linker with -Wl,-dynamic-linke
-r,/this/is/a/very/long/name/for/a/dynamic/linker.so.2.
- This does indeed move everything, a very plausible way to change code layout.
+r,/home/lars/very/long/path/to/another/loader.symlink.so.2.
+ This does indeed move everything, a plausible way to change code layout.
 \end_layout
 
 \begin_layout Description
