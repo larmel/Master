@@ -17,8 +17,10 @@ from scipy import stats
 # Get OS Error 7 in Popen for very long envoronment variables. 
 #
 # strace ./a.out // Very cool! Trace system calls made by command
-n_fixed_counters = 3
-n_general_purpose_counters = 8 # Really 4 ?
+
+# Should be (3, 8), but be safe with 4 -- special rules for some counters
+n_fixed_counters = 0
+n_general_purpose_counters = 4 # Half on HT enabled
 
 fixed_counters = ['cycles:u']
 

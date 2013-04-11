@@ -3,4 +3,6 @@ convolution.cc.s
 convolution.clang.s
 convolution.icc.s
 stat.csv
+stat.all.csv
 a.out
+convolution

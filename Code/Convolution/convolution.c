@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// For automated testing, set -DOFFSET
+#ifndef OFFSET
+    #define OFFSET 0x00
+#endif
+
 // Hoard:    export LD_PRELOAD=~/Allocators/Hoard/libhoard.so
 // tcmalloc: libgoogle-perftools-dev, -ltcmalloc
 // cc -O3 convolution.c; cc -O3 convolution.c -S; perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./a.out
@@ -21,14 +26,18 @@ void convolve(int size, const float * restrict input, float * restrict output)
     }
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
-    float *input  = malloc( N         * sizeof(float));
-    float *result = malloc((N + 0xf0) * sizeof(float));
+    // Needed for automated test script. Just want to run all performance counters
+    // to find cause of very odd resource stall spike.
+    int offset = atoi(argv[1]);
 
-    convolve(N, input, (result + 0x00));
+    float *input  = malloc( N          * sizeof(float));
+    float *result = malloc((N + 0x2000) * sizeof(float));
 
-    printf("input, result : (%p, %p)\n", input, result);
+    convolve(N, input, (result + offset));
+
+    printf("Offset: %d : (%p, %p)\n", offset, input, result);
 
     return 0;
 }

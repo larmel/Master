@@ -4,7 +4,7 @@ CCFLAGS=-std=c99 -march=native -O3
 
 all: clang cc icc
 
-.PHONY: all clang cc
+.PHONY: all clang cc graph graph-all
 
 clang:
 	# Best offset: 0x30
@@ -23,3 +23,15 @@ icc:
 	icc $(CCFLAGS) convolution.c
 	icc $(CCFLAGS) -S convolution.c -o convolution.icc.s
 	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./a.out
+
+stat.csv:
+	./run-offsets
+
+stat.all.csv:
+	../lperf -i 0 -a 1 --repeat 4 -n 100 -o stat.all.csv ./convolution > /dev/null
+
+graph-all: stat.all.csv
+	../lplot -l 'upper right' -t 'Array Offset' -e 'cycles:u,r01a2:u,r02a3:u,r025c:u,r013c:u,r003c:u,r04a3:u,r05a3:u,r8108:u' stat.all.csv
+
+graph: stat.csv
+	../lplot -l 'upper right' -t 'Array Offset' stat.csv

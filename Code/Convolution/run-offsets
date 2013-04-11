@@ -1,0 +1,30 @@
+#!/bin/bash
+
+perf_rounds=10
+perf_events='cycles:u,r0107:u,r01a2:u,r05a3:u'
+perf_names='Cycles,Address alias,Resource stalls,Cycles L2 pending'
+perf_file='stat.csv'
+temp_file='temp.csv'
+
+cc_flags='-std=c99 -march=native -O3'
+
+cp /dev/null $perf_file
+
+# Write labels
+IFS=',' read -ra names <<< "$perf_names"
+IFS=',' read -ra events <<< "$perf_events"
+for (( i=0; i<${#events[@]}; i++ ))
+do
+	echo "${names[$i]},${events[$i]},0.0" >> $perf_file
+done
+
+# Wrte statistic
+for i in {0..1200..1}
+do
+	cc $cc_flags -DOFFSET=$i convolution.c -o convolution
+	perf stat -x ',' -e $perf_events -r $perf_rounds ./convolution $i \
+		0>&1 > /dev/null \
+		| cut -d ',' -f1 \
+		| paste -d ',' $perf_file - > $temp_file
+	mv $temp_file $perf_file
+done
