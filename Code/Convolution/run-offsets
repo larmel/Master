@@ -5,8 +5,10 @@ perf_events='cycles:u,r0107:u,r01a2:u,r05a3:u'
 perf_names='Cycles,Address alias,Resource stalls,Cycles L2 pending'
 perf_file='stat.csv'
 temp_file='temp.csv'
+code_file=$1
 
-cc_flags='-std=c99 -march=native -O3'
+cc_flags='-std=c99 -march=corei7 -O3'
+#cc_flags=''
 
 cp /dev/null $perf_file
 
@@ -18,11 +20,11 @@ do
 	echo "${names[$i]},${events[$i]},0.0" >> $perf_file
 done
 
+clang $cc_flags -DOFFSET=$i $code_file.c -o $code_file
 # Wrte statistic
-for i in {0..1200..1}
+for i in {0..200..1}
 do
-	cc $cc_flags -DOFFSET=$i convolution.c -o convolution
-	perf stat -x ',' -e $perf_events -r $perf_rounds ./convolution $i \
+	perf stat -x ',' -e $perf_events -r $perf_rounds ./$code_file $i \
 		0>&1 > /dev/null \
 		| cut -d ',' -f1 \
 		| paste -d ',' $perf_file - > $temp_file

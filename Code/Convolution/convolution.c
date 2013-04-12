@@ -18,7 +18,7 @@ static float kernel[5] = {0.1, 0.25, 0.3, 0.25, 0.1};
 void convolve(int size, const float * restrict input, float * restrict output)
 {
     int i, j;
-    for (i = 2; i < size - 2; ++i)
+    for (i = 2; i < size/1 - 2; ++i)
     {
         output[i] = 0;
         for (j = 0; j < 5; ++j)
@@ -30,12 +30,13 @@ int main(int argc, char **argv)
 {
     // Needed for automated test script. Just want to run all performance counters
     // to find cause of very odd resource stall spike.
-    int offset = atoi(argv[1]);
+    int offset = atoi(argv[1]), i = 0;
 
     float *input  = malloc( N          * sizeof(float));
     float *result = malloc((N + 0x2000) * sizeof(float));
 
-    convolve(N, input, (result + offset));
+    for (i = 0; i < 2; i++)
+        convolve(N, input, (result + offset));
 
     printf("Offset: %d : (%p, %p)\n", offset, input, result);
 
