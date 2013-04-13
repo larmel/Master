@@ -629,6 +629,16 @@ empty
 \end_layout
 
 \begin_layout Subsection
+Performance Counters in Linux
+\end_layout
+
+\begin_layout Standard
+The Linux kernel provides an interface to hardware performance counters
+ through the perf utility, which we will be using for our measurements.
+ 
+\end_layout
+
+\begin_layout Subsection
 Details from Intel Manual
 \end_layout
 
@@ -948,6 +958,7 @@ Information in Intel 64 and IA-32 Architectures Optimization Reference Manual.
 
 \begin_layout Standard
 \begin_inset Float figure
+placement H
 wide false
 sideways false
 status open
@@ -991,7 +1002,12 @@ Memory disambiguation: Information in 2.2.4.5.
 \end_layout
 
 \begin_layout Subsection
-Store Forwarding
+Loop Stream Detecor
+\end_layout
+
+\begin_layout Standard
+Front end optimization.
+ Hinted to being a possible source of bias in Google tech talk (reference).
 \end_layout
 
 \begin_layout Section
@@ -1004,25 +1020,139 @@ t.
  Running tests on a particular operating system might very well result in
  big performance differences.
  Because of time limitations we have not considered bias effects due to
- specific variations in OS-es (true?).
+ specific variations in OS-es, but rather specific variations within the
+ execution context provided by the operating system.
  For all our results, we have used the latest stable release of Ubuntu,
  version 12.04, updated with the latest kernel updates.
 \end_layout
 
 \begin_layout Standard
 To understand why some of the bias effects occur, it is necessary to understand
- some of the low-level aspects of how processes are managed by the Linux
- kernel -- most importantly how memory layout for code and data are handled.
+ some of the low-level aspects of how processes and memory is managed by
+ the operating system.
+ In particular, we will see that the memory layout in virtual address space
+ can lead to bias.
  
 \end_layout
 
 \begin_layout Subsection
-Process Memory Layout
+Object Files
 \end_layout
 
 \begin_layout Standard
-A process in Linux consists of a set of segments.
+Let us consider what happens between writing a simple C program to actually
+ executing it.
+ On the Linux platform, object files are represented in Executable and Linkable
+ Format (ELF) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily},language=C,showstringspaces=false"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#include <stdlib.h>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+static int counter = 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main()
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int answer = 42;
+\end_layout
+
+\begin_layout Plain Layout
+
+    printf("The answer is %d
+\backslash
+n", answer);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Virtual Memory
+\end_layout
+
+\begin_layout Standard
+Before a program can be run, it needs to be loaded into memory in some way.
+ The ELF file includes the path to an interpreter, a program that is responsible
+ for loading code and data, setting up a stack, and loading any dependencies.
+ Files compiled for execution on a 64 bit Linux platform will point to a
+ loader in 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+/lib64/ld-linux-x86-64.so.2
+\end_layout
+
+\end_inset
+
+.
+ This file can be a symbolic link to the actual program.
+ The loader then places each 
+\emph on
+allocable
+\emph default
+ section of the object file in virtual address space.
+ The most important sections include the stack, heap, bss, data and text,
+ as shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:virtual-address-space"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -1046,7 +1176,13 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Process layout in memory
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:virtual-address-space"
+
+\end_inset
+
+Program segments in virtual memory
 \end_layout
 
 \end_inset
@@ -1060,41 +1196,28 @@ Process layout in memory
 \end_layout
 
 \begin_layout Standard
-Address Space Layout Randomization (ASLR)
-\end_layout
+Effectively, only 48 out of 64 available bits are used for addressing.
+ The lower 0x00000000'00000000 through 0x007fff'ffffffff is addressable
+ to user programs, i.e.
+ the virtual address space.
+ The upper segment of addresses 0xff8000'00000000 through 0xffffffff'ffffffff
+ is used by the operating system 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lomont:2012:x64Assembly"
 
-\begin_layout Subsection
-ELF format
-\end_layout
-
-\begin_layout Standard
-Memory map, addresses, layout.
- Stack placement.
- How processes are loaded.
- 
-\end_layout
-
-\begin_layout Standard
-Segments: Look up memory maps of running processes by reading file /proc/<id>/ma
-ps.
-\end_layout
-
-\begin_layout Standard
-Reference: 
-\begin_inset Quotes eld
-\end_inset
-
-Introduction to x64 Assembly
-\begin_inset Quotes erd
 \end_inset
 
 .
- Effectively, only 48 out of 64 available bits are used for addressing.
- The lower 0x00000000'00000000 through 0x00007f'ffffffff is addressable
- to user programs, i.e.
- the virtual address space.
- The upper segment of addresses 0xffff80'00000000 through 0xffffffff'ffffffff
- is used by the operating system.
+ Note that this leaves a large 
+\begin_inset Quotes eld
+\end_inset
+
+hole
+\begin_inset Quotes erd
+\end_inset
+
+ of unused addresses.
  A process image under Linux consists of several 
 \begin_inset Quotes eld
 \end_inset
@@ -1107,32 +1230,248 @@ or areas:
 \end_layout
 
 \begin_layout Description
-Text Starts at ox40000 ? Lower addresses not used.
- Address 0 needs to be invalid, or there might be confusion with null pointers
- and such.
-\end_layout
+stack The stack is allocated starting somewhere around address 0x7fff'ffffffff
+ and expanding downwards.
+ Automatic variables 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
 
-\begin_layout Description
-Data Initialized data
-\end_layout
+\end_inset
 
-\begin_layout Description
-BSS Uninitialized data.
-\end_layout
-
-\begin_layout Standard
-The stack starts at the high end of addresses, and grows downwards.
+ in C are stack-allocated.
  
 \end_layout
 
-\begin_layout Section
-Measurement Bias
+\begin_layout Description
+text Executable code is placed in the text segment, which is marked as executabl
+e.
+ This segment is placed at the bottom of virtual address space, typically
+ starting at address 0x400000.
+ 
+\end_layout
+
+\begin_layout Description
+data The data segment contains initialized data, variables that have some
+ assigned value at compile time.
+ This segment typically contains initialized variables that does not have
+ automatic storage class.
+ 
+\end_layout
+
+\begin_layout Description
+bss The bss segment contains uninitialized data.
+ This segment occupies no space in the object file, only the size is needed.
+ Everything is initialized to zero.
+ The C standard specifies that variables with static storage class and not
+ initializer should be zero by default -- thus compilers will typically
+ place uninitialized static variables in this segment.
+ Note that initialized variables that are assigned the value zero may be
+ placed in the bss segment.
+\end_layout
+
+\begin_layout Description
+heap The heap is used for dynamically allocated memory.
+ The C standard library specifies the function malloc for dynamically allocating
+ memory from the heap.
+ The heap is allocated above the text and data segments, growing upwards.
+ The start of heap is marked by 'brk'.
+ A Linux system call to brk will request more memory, extending the current
+ limit.
+ 
 \end_layout
 
 \begin_layout Standard
-Much of the previous work on measurement bias seems to stem from Todd Mytkovicz
- et al.
- In 
+Dynamically loaded libraries are mapped into virtual memory as well.
+ They typically end up with high addresses, conceptually located below the
+ stack.
+ Note that the virtual address space available to user mode processes does
+ not utilize the full 64 bit range of addresses.
+ 
+\end_layout
+
+\begin_layout Standard
+The actual memory map from running processes can be obtained by reading
+ 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+/proc/$id/maps
+\end_layout
+
+\end_inset
+
+ for some process id.
+ A sample output from a run of the previous hello world example is shown
+ below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+00400000-00401000 r-xp 00000000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+00600000-00601000 r--p 00000000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+00601000-00602000 rw-p 00001000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+01027000-01048000 rw-p 00000000 00:00 0                  [heap]
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e493000-7f127e646000 r-xp 00000000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e646000-7f127e845000 ---p 001b3000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e845000-7f127e849000 r--p 001b2000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e849000-7f127e84b000 rw-p 001b6000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e84b000-7f127e850000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e850000-7f127e872000 r-xp 00000000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea59000-7f127ea5c000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea6f000-7f127ea72000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea72000-7f127ea73000 r--p 00022000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea73000-7f127ea75000 rw-p 00023000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7fff47114000-7fff47135000 rw-p 00000000 00:00 0          [stack]
+\end_layout
+
+\begin_layout Plain Layout
+
+7fff471ff000-7fff47200000 r-xp 00000000 00:00 0          [vdso]
+\end_layout
+
+\begin_layout Plain Layout
+
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0  [vsyscall]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Address Space Layout Randomization (ASLR)
+\end_layout
+
+\begin_layout Standard
+The process of loading segments to virtual memory is not necessarily determinist
+ic.
+ If virtual addresses can be known a priori, programs will be more vulnerable
+ to buffer overflow attacks 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Shackham:2004:ASLR"
+
+\end_inset
+
+.
+ If an attacker manages to inject malicous code, he can use the known virtual
+ addresses to access data or call any function.
+ One technique known as 'return to libc' attacks uses this knowledge to
+ call functions in the C standard library, which will be loaded in most
+ scenarios.
+\end_layout
+
+\begin_layout Standard
+Address space randomization is a technique employed by the operating system
+ to make it more difficult to compromise programs.
+ By default, the placement of stack, heap (initial position of brk) and
+ location of dynamically linked libraries will vary between each run of
+ a program.
+ For a controlled execution environment we will need to manually disable
+ address randomization in many cases.
+ This is done by overwriting the randomize_va_space file.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\ttfamily},language=bash"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The default value is 2, indicating full randomization.
+ For randomizing only (??), a value of 1 can be written instead.
+ We will use zero to disable all randomization, making virtual memory layout
+ completely deterministic between each run.
 \end_layout
 
 \begin_layout Chapter
@@ -1157,10 +1496,16 @@ Producing Wrong Data Without Doing Anything Obviously Wrong!
 \begin_inset Quotes erd
 \end_inset
 
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
  is shown in Figure 1.
  They show that by adding bytes to the Unix environment, the cycle count
- (when compiled with no optimization flags) periodically increased by about
- 33%, and once by almost 300%.
+ periodically increased by about 33%, and once by almost 300%.
  We tested the same program on the i7 Ivy Bridge and were able to reproduce
  very similar results.
  

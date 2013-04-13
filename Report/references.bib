@@ -29,6 +29,14 @@
     organization = {Intel Corporation}
 }
 
+@misc { Lomont:2012:x64Assembly,
+    title        = {Introduction to x64 Assembly},
+    author       = {Cris Lomont},
+    year         = {2012},
+    url          = {http://software.intel.com/en-us/articles/introduction-to-x64-assembly},
+    organization = {Intel Corporation}
+}
+
 # TODO: Presentations
 
 
@@ -136,6 +144,38 @@
     year         = 2007
 }
 
+# ASLR ############################################################################################
+
+@inproceedings { Shackham:2004:ASLR
+    author       = {Shacham, Hovav and Page, Matthew and Pfaff, Ben and Goh, Eu-Jin and Modadugu, Nagendra and Boneh, Dan},
+    title        = {On the effectiveness of address-space randomization},
+    booktitle    = {Proceedings of the 11th ACM conference on Computer and communications security},
+    series       = {CCS '04},
+    year         = {2004},
+    isbn         = {1-58113-961-6},
+    location     = {Washington DC, USA},
+    pages        = {298--307},
+    numpages     = {10},
+    url          = {http://doi.acm.org/10.1145/1030083.1030124},
+    doi          = {10.1145/1030083.1030124},
+    acmid        = {1030124},
+    publisher    = {ACM},
+    address      = {New York, NY, USA},
+    keywords     = {address-space randomization, automated attacks, diversity},
+}
+
+# C Programming ###################################################################################
+
+@book{ Kernighan:1988:CProgrammingLanguage,
+    author       = {Kernighan, Brian W.},
+    editor       = {Ritchie, Dennis M.},
+    title        = {The  C Programming Language},
+    year         = {1988},
+    isbn         = {0131103709},
+    edition      = {2nd},
+    publisher    = {Prentice Hall Professional Technical Reference}
+} 
+
 # Misc ############################################################################################
 
 # Google says 8th annual IEEE, ACM says 9th
@@ -154,6 +194,10 @@
     url          = {http://dl.acm.org/citation.cfm?id=2190025.2190077},
     acmid        = {2190077},
     publisher    = {IEEE Computer Society},
-    address      = {Washington, DC, USA},
+    address      = {Washington, DC, USA}
 } 
 
+@book { SystemVABI,
+    title        = {System V Application Binary Interface},
+    url          = {http://www.sco.com/developers/devspecs/gabi41.pdf}
+}
