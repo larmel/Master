@@ -532,6 +532,28 @@ key "Knights:2009:BlindOpt"
 \end_layout
 
 \begin_layout Section
+Architectural Optimization
+\end_layout
+
+\begin_layout Standard
+Bias effects are hardware dependent -- need to optimize for specific architectur
+es.
+\end_layout
+
+\begin_layout Standard
+Support in GCC and other compilers.
+\end_layout
+
+\begin_layout Subsection
+Assembly-Level Optimizations
+\end_layout
+
+\begin_layout Standard
+MAO, paper from Google.
+ 
+\end_layout
+
+\begin_layout Section
 Hardware Performance Counters
 \end_layout
 
@@ -1030,89 +1052,9 @@ t.
 To understand why some of the bias effects occur, it is necessary to understand
  some of the low-level aspects of how processes and memory is managed by
  the operating system.
- In particular, we will see that the memory layout in virtual address space
- can lead to bias.
+ In particular, we will see that changes to memory layout in virtual address
+ space can lead to performance variations.
  
-\end_layout
-
-\begin_layout Subsection
-Object Files
-\end_layout
-
-\begin_layout Standard
-Let us consider what happens between writing a simple C program to actually
- executing it.
- On the Linux platform, object files are represented in Executable and Linkable
- Format (ELF) 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SystemVABI"
-
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily},language=C,showstringspaces=false"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-#include <stdlib.h>
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-static int counter = 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-int main()
-\end_layout
-
-\begin_layout Plain Layout
-
-{
-\end_layout
-
-\begin_layout Plain Layout
-
-    int answer = 42;
-\end_layout
-
-\begin_layout Plain Layout
-
-    printf("The answer is %d
-\backslash
-n", answer);
-\end_layout
-
-\begin_layout Plain Layout
-
-    return 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsection
@@ -1165,7 +1107,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/unix-vm.eps
+	filename Img/unix-vm-all.eps
 
 \end_inset
 
@@ -1182,7 +1124,7 @@ name "fig:virtual-address-space"
 
 \end_inset
 
-Program segments in virtual memory
+Organization of virtual memory on a 64 bit Linux system.
 \end_layout
 
 \end_inset
@@ -1197,18 +1139,61 @@ Program segments in virtual memory
 
 \begin_layout Standard
 Effectively, only 48 out of 64 available bits are used for addressing.
- The lower 0x00000000'00000000 through 0x007fff'ffffffff is addressable
- to user programs, i.e.
- the virtual address space.
- The upper segment of addresses 0xff8000'00000000 through 0xffffffff'ffffffff
- is used by the operating system 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Lomont:2012:x64Assembly"
+ The lower 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0x0
+\end_layout
 
 \end_inset
 
-.
+ through 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0x7fff'ffffffff
+\end_layout
+
+\end_inset
+
+ is addressable to user programs, i.e.
+ the virtual address space.
+ The upper segment of addresses 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0xffff8000'00000000
+\end_layout
+
+\end_inset
+
+ through 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0xffffffff'ffffffff
+\end_layout
+
+\end_inset
+
+ is reserved for the operating system .
  Note that this leaves a large 
 \begin_inset Quotes eld
 \end_inset
@@ -1217,82 +1202,303 @@ hole
 \begin_inset Quotes erd
 \end_inset
 
- of unused addresses.
- A process image under Linux consists of several 
-\begin_inset Quotes eld
-\end_inset
-
-segments
-\begin_inset Quotes erd
-\end_inset
-
-or areas:
-\end_layout
-
-\begin_layout Description
-stack The stack is allocated starting somewhere around address 0x7fff'ffffffff
- and expanding downwards.
- Automatic variables 
+ of unused addresses, as current hardware does not support addressing the
+ whole 64 bit range 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Kernighan:1988:CProgrammingLanguage"
+key "Lomont:2012:x64Assembly"
 
 \end_inset
 
- in C are stack-allocated.
+.
+\end_layout
+
+\begin_layout Standard
+A running process is divided into several sections within the virtual address
+ space:
+\end_layout
+
+\begin_layout Description
+stack Stack frames with parameters and local variables for function calls.
+ Allocated starting somewhere around the top address 
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0x007fff'ffffffff
+\end_layout
+
+\end_inset
+
+ and expanding downwards.
  
 \end_layout
 
 \begin_layout Description
-text Executable code is placed in the text segment, which is marked as executabl
-e.
- This segment is placed at the bottom of virtual address space, typically
- starting at address 0x400000.
- 
-\end_layout
-
-\begin_layout Description
-data The data segment contains initialized data, variables that have some
- assigned value at compile time.
- This segment typically contains initialized variables that does not have
- automatic storage class.
- 
-\end_layout
-
-\begin_layout Description
-bss The bss segment contains uninitialized data.
- This segment occupies no space in the object file, only the size is needed.
- Everything is initialized to zero.
- The C standard specifies that variables with static storage class and not
- initializer should be zero by default -- thus compilers will typically
- place uninitialized static variables in this segment.
- Note that initialized variables that are assigned the value zero may be
- placed in the bss segment.
-\end_layout
-
-\begin_layout Description
-heap The heap is used for dynamically allocated memory.
- The C standard library specifies the function malloc for dynamically allocating
- memory from the heap.
- The heap is allocated above the text and data segments, growing upwards.
+heap Dynamically allocated memory, allocated above the text and data segments
+ and growing upwards as programs request more memory.
  The start of heap is marked by 'brk'.
  A Linux system call to brk will request more memory, extending the current
  limit.
  
 \end_layout
 
-\begin_layout Standard
-Dynamically loaded libraries are mapped into virtual memory as well.
- They typically end up with high addresses, conceptually located below the
- stack.
- Note that the virtual address space available to user mode processes does
- not utilize the full 64 bit range of addresses.
+\begin_layout Description
+bss Uninitialized data.
+ This segment occupies no space in the object file, only the size is needed.
+ Everything is initialized to zero.
+ 
+\end_layout
+
+\begin_layout Description
+data Initialized data, variables that have some assigned value at compile
+ time.
+ 
+\end_layout
+
+\begin_layout Description
+text Executable binary code.
+ This segment is placed at the lower end of virtual address space.
  
 \end_layout
 
 \begin_layout Standard
-The actual memory map from running processes can be obtained by reading
+Dynamically loaded libraries are mapped into virtual memory as well.
+ They typically end up with high addresses, located relatively close to
+ the stack.
  
+\end_layout
+
+\begin_layout Subsubsection*
+Address Space Layout Randomization (ASLR)
+\end_layout
+
+\begin_layout Standard
+The process of loading segments to virtual memory is not necessarily determinist
+ic.
+ If virtual addresses can be known a priori, programs will be more vulnerable
+ to buffer overflow attacks 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Shackham:2004:ASLR"
+
+\end_inset
+
+.
+ If an attacker manages to inject malicous code, he can use the known virtual
+ addresses to access data or call any function.
+ One technique known as 'return to libc' attacks uses this knowledge to
+ call functions in the C standard library, which will be loaded in most
+ scenarios.
+\end_layout
+
+\begin_layout Standard
+Address space randomization is a technique employed by the operating system
+ to make it more difficult to compromise programs.
+ By default, the placement of stack, heap (initial position of brk) and
+ location of dynamically linked libraries will vary between each run of
+ a program.
+ For a controlled execution environment we will need to manually disable
+ address randomization in many cases.
+ This is done by overwriting the randomize_va_space file.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\ttfamily},language=bash"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The default value is 2, indicating full randomization.
+ For randomizing only (??), a value of 1 can be written instead.
+ We will use zero to disable all randomization, making virtual memory layout
+ completely deterministic between each run.
+\end_layout
+
+\begin_layout Subsubsection*
+Environment Variables
+\end_layout
+
+\begin_layout Standard
+As pointed out in (??), the size of a user's Unix environment variable can
+ affect the placement of stack.
+ Environemtn variables are allocated above the stack, pushing the first
+ possible stack starting address downwards.
+ With ASLR disabled, the initial stack address can be manipulated by manually
+ changing environment variables.
+\end_layout
+
+\begin_layout Subsection
+Memory Context of C Programs
+\end_layout
+
+\begin_layout Standard
+Recognizing that the location of variables in virtual memory is significant,
+ it is useful to have an idea of where data might end up in actual programs.
+ The program in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:c-context"
+
+\end_inset
+
+ contains four variables, utilizing both initialized and unitialized data,
+ as well as dynamically allocated data on heap and automatic stack allocated
+ variables.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily},language=C,showstringspaces=false"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static int a;      // .bss
+\end_layout
+
+\begin_layout Plain Layout
+
+static int b = 42; // .data
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    int c = 0; // .stack
+\end_layout
+
+\begin_layout Plain Layout
+
+    int *d = malloc(sizeof(int)); // .heap
+\end_layout
+
+\begin_layout Plain Layout
+
+    printf("stack: %p
+\backslash
+nheap: %p
+\backslash
+nbss: %p
+\backslash
+ndata: %p
+\backslash
+n", &c, d, &a, &b);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:c-context"
+
+\end_inset
+
+Simple C program with data allocated in four different segments of virtual
+ memory
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Variable c and d are 
+\emph on
+automatic
+\emph default
+ variables
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
+
+\end_inset
+
+, which are stack allocated.
+ Their run-time address depends on where the stack segment is initialized
+ in virtual memory, and can in general not be known ahead of time.
+ The address returned by malloc and stored in variable d points to a location
+ on the heap.
+ The exact address depends on the implementation of malloc, as well as the
+ initial position of the heap segment, and is also impossible to predict
+ in general.
+ Global variables a and b should be placed in bss and data segments respectively.
+ Their virtual addresses are determined at compile time, and can be found
+ in the ELF object file's symbol table 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Executing the same program multiple times with ASLR enabled will yield different
+ output for stack and heap addresses.
+ Each variation constitutes a different execution context, with potentially
+ different performance characteristics.
+\end_layout
+
+\begin_layout Standard
+The actual memory map from running processes can be obtained by reading
+ the file 
 \begin_inset listings
 lstparams "basicstyle={\ttfamily}"
 inline true
@@ -1414,64 +1620,6 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0  [vsyscall]
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsubsection*
-Address Space Layout Randomization (ASLR)
-\end_layout
-
-\begin_layout Standard
-The process of loading segments to virtual memory is not necessarily determinist
-ic.
- If virtual addresses can be known a priori, programs will be more vulnerable
- to buffer overflow attacks 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Shackham:2004:ASLR"
-
-\end_inset
-
-.
- If an attacker manages to inject malicous code, he can use the known virtual
- addresses to access data or call any function.
- One technique known as 'return to libc' attacks uses this knowledge to
- call functions in the C standard library, which will be loaded in most
- scenarios.
-\end_layout
-
-\begin_layout Standard
-Address space randomization is a technique employed by the operating system
- to make it more difficult to compromise programs.
- By default, the placement of stack, heap (initial position of brk) and
- location of dynamically linked libraries will vary between each run of
- a program.
- For a controlled execution environment we will need to manually disable
- address randomization in many cases.
- This is done by overwriting the randomize_va_space file.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\ttfamily},language=bash"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-The default value is 2, indicating full randomization.
- For randomizing only (??), a value of 1 can be written instead.
- We will use zero to disable all randomization, making virtual memory layout
- completely deterministic between each run.
 \end_layout
 
 \begin_layout Chapter
