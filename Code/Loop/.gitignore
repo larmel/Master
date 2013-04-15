@@ -1,5 +1,6 @@
 
 loop
+loop-fixed
 stat.csv
 stat.*.csv
 *.eps

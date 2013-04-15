@@ -150,7 +150,6 @@ if __name__ == '__main__':
     args.environment_increment = int(args.environment_increment)
     args.argument_offset = int(args.argument_offset)
     args.argument_increment = int(args.argument_increment)
-    print args
     events = benchmark(events, args)
 
     # Export result

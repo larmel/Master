@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u
+COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u,r05a3:u
 PLOT_AXIS_LABELS=--xlabel 'Bytes added to environment' --ylabel 'Counter value'
 PLOT_LEGEND=--legend 'upper right'
 
@@ -19,30 +19,28 @@ loop-fixed: loop-fixed.c
 	cc loop-fixed.c -o loop-fixed
 
 stat.all.csv: loop
-	../lperf ./loop -o stat.all.csv -n 500 -r 10 -c r0107:u --environment-increment 16
+	../lperf ./loop -o stat.all.csv -n 200 -r 10 \
+		--environment-offset $(ENV_OFFSET) \
+		--environment-increment 1
 
 stat.csv: loop
 	../lperf ./loop -e $(COUNTERS) -o stat.csv -n 200 -r 10 \
-		--correlate r0107:u \
 		--environment-offset $(ENV_OFFSET) \
 		--environment-increment 1
 
 stat.fixed.csv: loop-fixed
 	../lperf ./loop-fixed -e $(COUNTERS) -o stat.fixed.csv -n 200 -r 10 \
-		--correlate r0107:u \
 		--environment-offset $(ENV_OFFSET) \
 		--environment-increment 1
 
 figure-alias-cycles: stat.csv
-	../lplot stat.csv -e cycles:u \
-		--title 'Environment size bias' \
-		--xlabel 'Bytes added to environment' --ylabel 'Cycle count'
+	../lplot stat.csv -e cycles:u --xlabel 'Bytes added to environment' --ylabel 'Cycle count' --title 'loop-alias-cycles'
 
 figure-alias: stat.csv
-	../lplot stat.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'Environment size bias'
+	../lplot stat.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'loop-alias'
 
 figure-fixed: stat.fixed.csv
-	../lplot stat.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'Runtime detection of address alias'
+	../lplot stat.fixed.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'loop-alias-fixed'
 
 clean:
 	rm -f loop loop-fixed stat.csv
