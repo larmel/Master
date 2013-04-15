@@ -119,8 +119,8 @@ In this thesis we will study a small set of very distinct bias effects,
  changing the link order of a program.
  Through experimentation and careful measurement using hardware performance
  counters, we locate the source of what causes performance deviations.
- With accurate models of intricate hardware details, measures can be made
- to try to avoid problems caused by bias.
+ We show that environment bias is in fact not completely unpredictable,
+ and discuss measures can be made to try to avoid problems caused by bias.
 \end_layout
 
 \begin_layout Abstract
@@ -268,43 +268,6 @@ reference "chap:Background"
 
 .
  
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/loop-alias-cycles.eps
-	scale 70
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Cycle count from running the same program with different Unix environment
- size.
- Horizontal axis shows number of bytes added to an empty environment.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -1627,8 +1590,24 @@ Sources of Measurement Bias
 \end_layout
 
 \begin_layout Standard
-Create a cool performance model, and programs to replicate the effect.
- Suggest empirical solutions.
+Modern microprocessors are extremely complex in design and functionality.
+ Some of the features on our Ivy Bridge includes; several layers of cache
+ to camouflage slow memory, multiple prefetchers -- able to detect strided
+ access patters[ref], 
+\emph on
+macro fusion[ref]
+\emph default
+ -- combining simple instructions to one, speculative out-of-order execution,
+ complicated branch prediction, just to name a few.
+ Optimizing for the common case, these hardware optimizations sometimes
+ behaves badly.
+ Dispite reasonably good documentation, only Intel knows all the details
+ of the inner workings of the processor, leaving us with sort of a black
+ box testing.
+ In this chapter we will unveil characteristics about two architectural
+ features in the Core i7; speculative out-of-order memory operations, and
+ the Loop Stream Detector.
+ 
 \end_layout
 
 \begin_layout Section
@@ -1636,7 +1615,7 @@ Partial Address Alias Effects
 \end_layout
 
 \begin_layout Standard
-An interesting micro-kernel example from the paper 
+In 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1651,11 +1630,13 @@ key "Mytkowicz:2009:WrongData"
 
 \end_inset
 
- is shown in Figure 1.
+, the authors present an intriguing little C program with extreme sensitivity
+ to environment bias.
  They show that by adding bytes to the Unix environment, the cycle count
- periodically increased by about 33%, and once by almost 300%.
- We tested the same program on the i7 Ivy Bridge and were able to reproduce
- very similar results.
+ periodically increases by about 33%, and some times by almost 300%.
+ Their measurements are done on an older Intel Core 2 architecture, providing
+ this an excellent example to start our investigation of the newer Core
+ i7 architecture.
  
 \end_layout
 
@@ -1688,37 +1669,37 @@ int main() {
 
 \begin_layout Plain Layout
 
-	int g = 0, inc = 1;
+    int g = 0, inc = 1;
 \end_layout
 
 \begin_layout Plain Layout
 
-	for (; g < 65536; g++) {
+    for (; g < 65536; g++) {
 \end_layout
 
 \begin_layout Plain Layout
 
-		i += inc;
+        i += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-		j += inc;
+        j += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-		k += inc;
+        k += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-	}
+    }
 \end_layout
 
 \begin_layout Plain Layout
 
-	return 0;
+    return 0;
 \end_layout
 
 \begin_layout Plain Layout
@@ -1735,6 +1716,12 @@ int main() {
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:loop-micro-kernel"
+
+\end_inset
+
 C code for micro-kernel
 \end_layout
 
@@ -1745,7 +1732,91 @@ C code for micro-kernel
 
 \end_inset
 
+The micro-kernel from Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:loop-micro-kernel"
 
+\end_inset
+
+ does in fact show clear bias effects also on the newer architecture.
+ We use perf and an automated script to run samples, with increasing environment
+ size using a dummy variable.
+ The program is compiled using cc and no optimization (-O0).
+ The results are plotted for each environment size, incrementing by one
+ between each run.
+ A very distinct spike can be observed, starting at an offset of 3400? bytes.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/loop-alias-cycles.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Cycle count from running the same program with different Unix environment
+ size.
+ Horizontal axis shows number of bytes added to an empty environment.
+ Tests were run with an empty initial environment and address randomization
+ disabled, for reproducible results.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Measurement Methodology
+\end_layout
+
+\begin_layout Standard
+Before going ahead with all the details, it is important to describe the
+ methodology used to aquire accurate measurements.
+ For many of our examples, we are interested first and foremost in the number
+ of cycles retured in user mode during execution.
+ We use perf stat to aquire performance counter measurements.
+ We make the following configuration to our experimental setup:
+\end_layout
+
+\begin_layout Itemize
+Unless specified otherwise, address space layout randomization (ASLR) is
+ kept disabled.
+ This is necessary when testing effects from memory context, and often required
+ to make results reproducible.
+\end_layout
+
+\begin_layout Itemize
+Hyper threading is disabled, ennsuring that only one thread runs simultaneously
+ on each core.
+ Two threads competing on hardware resources is another potential source
+ of bias, which we will not be studying.
+ 
+\end_layout
+
+\begin_layout Itemize
+A minimal amount of system load.
 \end_layout
 
 \begin_layout Subsection
@@ -1766,6 +1837,19 @@ status open
 
 \begin_layout Plain Layout
 \align center
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{scriptsize}
+\end_layout
+
+\end_inset
+
+
 \begin_inset Tabular
 <lyxtabular version="3" rows="17" columns="3">
 <features tabularvalignment="middle">
@@ -2782,6 +2866,19 @@ r04a2:u
 </cell>
 </row>
 </lyxtabular>
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{scriptsize}
+\end_layout
 
 \end_inset
 
