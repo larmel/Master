@@ -280,8 +280,8 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/demo.svg
-	scale 35
+	filename Img/loop-alias-cycles.eps
+	scale 70
 
 \end_inset
 
@@ -1765,13 +1765,7 @@ status open
 
 \begin_layout Plain Layout
 \align center
-\begin_inset Graphics
-	filename /home/lars/Master/Code/Loop/loop-demo.eps
-	scale 83
-
-\end_inset
-
-
+TODO
 \end_layout
 
 \begin_layout Plain Layout

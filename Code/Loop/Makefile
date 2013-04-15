@@ -1,23 +1,48 @@
+SHELL := /bin/bash
 
-loop:
-	cc loop.c
+COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u
+PLOT_AXIS_LABELS=--xlabel 'Bytes added to environment' --ylabel 'Counter value'
+PLOT_LEGEND=--legend 'upper right'
 
-stat:
-	../lperf -e cycles:u,r02a3:u,r0107:u,r40a1:u,r04a2:u,r01a1:u,r01a2:u,r80a1:u -n 500 -r 10 -c r0107:u -i 16 ./a.out
-	#../perfrun.py -e ../counters -n 40 -r 5 -c r0107:u ./a.out
-	#../stat ./a.out -n 1000 > stat.dat
+# Positions stack close to where alias effects occur
+# The precise number of bytes in environment is difficult to get,
+# about 130 is added by perf.
+ENV_OFFSET=3200
 
-graph:
-	#../plot.py -e cycles:u,r0107:u,r003c:u,r013c:u,r025c:u,r01a2:u,r02a3:u,branch-misses:u
-	../lplot -e cycles:u,r0107:u,r40a1:u,r04a2:u,r01a1:u,r01a2:u,r80a1:u
-	#../plot stat.dat branch-misses:u,cycles:u,cache-references:u,cache-misses:u,r203 | gnuplot -persist
+.DEFAULT: loop
+.PHONY: clean figure-alias figure-fixed figure-alias-all
+
+loop: loop.c
+	cc loop.c -o loop
+
+loop-fixed: loop-fixed.c
+	cc loop-fixed.c -o loop-fixed
+
+stat.all.csv: loop
+	../lperf ./loop -o stat.all.csv -n 500 -r 10 -c r0107:u --environment-increment 16
+
+stat.csv: loop
+	../lperf ./loop -e $(COUNTERS) -o stat.csv -n 200 -r 10 \
+		--correlate r0107:u \
+		--environment-offset $(ENV_OFFSET) \
+		--environment-increment 1
+
+stat.fixed.csv: loop-fixed
+	../lperf ./loop-fixed -e $(COUNTERS) -o stat.fixed.csv -n 200 -r 10 \
+		--correlate r0107:u \
+		--environment-offset $(ENV_OFFSET) \
+		--environment-increment 1
+
+figure-alias-cycles: stat.csv
+	../lplot stat.csv -e cycles:u \
+		--title 'Environment size bias' \
+		--xlabel 'Bytes added to environment' --ylabel 'Cycle count'
+
+figure-alias: stat.csv
+	../lplot stat.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'Environment size bias'
+
+figure-fixed: stat.fixed.csv
+	../lplot stat.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'Runtime detection of address alias'
 
 clean:
-	rm -f a.out
-	rm -f
-
-demo:
-	#cc loop.c
-	#../perfrun.py -e cycles:u,r02a3:u,r0107:u,r40a1:u,r04a2:u,r01a1:u,r01a2:u,r80a1:u -n 200 -r 10 -c r0107:u -i 1 ./a.out
-	../lplot -e cycles:u,r0107:u &
-
+	rm -f loop loop-fixed stat.csv

@@ -10,20 +10,17 @@ int main(void)
 	int i = 0;
 	unsigned length = 0;
 
-	FILE* f = fopen("program-output", "w");
-
 	while (environ[i]) {
 		char *str = environ[i++];
 		length += strlen(str);
-		fprintf(f, "%s\n", str);
+		printf("%s\n", str);
 	}
-	fprintf(f, "Environment size:    %d\n", length);
-	fprintf(f, "Environment address: %p\n", &environ[i-1][strlen(environ[i-1]) - 1]);
-	fprintf(f, "Stack address:       %p\n", &i);
-
-	fclose(f);
+	printf("Environment size:    %d\n", length);
+	printf("Environment address: %p\n", &environ[i-1][strlen(environ[i-1]) - 1]);
+	printf("Stack address:       %p\n", &i);
 
 	printf("/proc/%d/maps\n", getpid());
+	printf("/proc/%d/environ\n", getpid());
 	sleep(20);
 	return 0;
 }

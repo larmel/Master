@@ -8,7 +8,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot lperf data')
     parser.add_argument('file', default='stat.csv')
     parser.add_argument('-e', '--events', default='all')
-    parser.add_argument('-t', '--title',)
+    parser.add_argument('-t', '--title', default='Figure 1')
     parser.add_argument('-x', '--xlabel', default='')
     parser.add_argument('-y', '--ylabel', default='')
     parser.add_argument('-l', '--legend')
@@ -28,7 +28,7 @@ def read_file(events, csv):
 def plot_lines(data, args):
     rc('text', usetex=True)
     rc('font', family='serif', serif='Computer Modern Roman', size=10)
-    plt.figure(args.title, facecolor='white', edgecolor='white')
+    plt.figure(args.title, facecolor='white', edgecolor='white', figsize=(8,4))
     plt.xlabel(args.xlabel)
     plt.ylabel(args.ylabel)
     plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: '{:0,d}'.format(int(x))))
@@ -39,6 +39,7 @@ def plot_lines(data, args):
     if args.legend != None:
         plt.legend(loc=args.legend, frameon=True, prop={'size':10}).draggable()
     plt.tight_layout()
+    plt.savefig(args.title + '.eps')
     plt.show()
 
 if __name__ == '__main__':

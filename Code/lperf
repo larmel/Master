@@ -1,6 +1,5 @@
 #!/usr/bin/env python 
-import subprocess
-import argparse
+import subprocess, argparse
 import sys
 import copy
 from scipy import stats
@@ -70,27 +69,26 @@ def split_counters(counters):
             general, fixed = [next], []
     yield general + fixed
 
-def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
+def benchmark(events, args):
+    #runs, repeat, program, stack_offset, stack_increment, arg_increment):
     for e in events:
-        e['count'] = [0]*runs
-        e['variance'] = [0]*runs
+        e['count'] = [0]*args.num
+        e['variance'] = [0]*args.num
 
     #print "Stack increment:   ", stack_increment
     #print "Argument increment:", arg_increment
-    environment = {'FOO':'0'} # 3220
-    argument = 0;
+    environment = {'FOO':'0'*args.environment_offset} # 3220
+    argument = args.argument_offset;
 
-    for run in range(runs):
+    for run in range(args.num):
         tempfile = 'stat.tmp.' + str(run) + '.dat'
         subprocess.call('cp /dev/null '+tempfile, shell=True)
-        environment['FOO'] += '0'*stack_increment
-        argument += arg_increment;
 
         # Sample events in batches of 8 (+3)
         for batch in split_counters(events):
             #print "Running", [b['code'] for b in batch]
             e = ','.join(map(lambda x: x['code'], batch))
-            c = ' '.join(['perf stat -r', str(repeat), '-x","', '-e', e, program, str(argument), '0>>', tempfile])
+            c = ' '.join(['perf stat -r', str(args.repeat), '-x","', '-e', e, args.program, str(argument), '0>>', tempfile])
             p = subprocess.Popen(c, env=environment, shell=True)
             p.wait()
 
@@ -101,9 +99,12 @@ def benchmark(events, runs, repeat, program, stack_increment, arg_increment):
                 if (line[0] == "<not counted>"):
                     continue
                 events[i]['count'][run] = float(line[0])
-                if repeat > 1:
+                if args.repeat > 1:
                     events[i]['variance'] = float(line[2][:-1])
         subprocess.call('rm '+tempfile, shell=True)
+
+        environment['FOO'] += '0'*args.environment_increment
+        argument += args.argument_increment;
     return events
 
 def correlation(events, reference_event):
@@ -122,17 +123,19 @@ def export_csv(events, filename):
             f.write(','.join(map(str, row)))
             f.write('\n')
 
-def execute():
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Automated perf runner')
     parser.add_argument('program', help='program to be run')
     parser.add_argument('-e', '--events')
-    parser.add_argument('-f', '--event_file', default='../counters')
+    parser.add_argument('-f', '--event-file', default='../counters')
     parser.add_argument('-o', '--output', default='stat.csv')
     parser.add_argument('-n', '--num', default=2)
     parser.add_argument('-r', '--repeat', default=1)
     parser.add_argument('-c', '--correlate', default='cycles:u')
-    parser.add_argument('-i', '--stack', default=1)
-    parser.add_argument('-a', '--arg', default=0)
+    parser.add_argument('-eo', '--environment-offset', default=0)
+    parser.add_argument('-ei', '--environment-increment', default=1)
+    parser.add_argument('-ao', '--argument-offset', default=0)
+    parser.add_argument('-ai', '--argument-increment', default=0)
     args = parser.parse_args()
 
     # Make memory layout deterministic    
@@ -141,12 +144,15 @@ def execute():
     # List of event properties [[code, perfmnemonic, description]]
     events = filter_events(args.event_file, [] if args.events == None else args.events.strip().lower().split(','))
 
-    # Run benchmarks
-    events = benchmark(events, int(args.num), int(args.repeat), args.program, int(args.stack), int(args.arg))
+    args.num = int(args.num)
+    args.repeat = int(args.repeat)
+    args.environment_offset = int(args.environment_offset)
+    args.environment_increment = int(args.environment_increment)
+    args.argument_offset = int(args.argument_offset)
+    args.argument_increment = int(args.argument_increment)
+    print args
+    events = benchmark(events, args)
 
     # Export result
     correlation(events, args.correlate)
     export_csv(events, args.output)
-
-if __name__ == '__main__':
-    execute()
