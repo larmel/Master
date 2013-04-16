@@ -6339,6 +6339,55 @@ Idea: Try compiling fftw with align-loops=32 perhaps.
  Might not work on generated codelets.
 \end_layout
 
+\begin_layout Section
+FFTW
+\end_layout
+
+\begin_layout Standard
+Many modes, double or float.
+ Using double, as that is the standard.
+ Otherwise needs to link -lfftw3f.
+ Indeed possible to observe bias from array alignment.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/fft-float-alias.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Offseting incrementally by 2.
+ Double.
+ n = 16, x = 200000
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Conclusions and Future Work
 \end_layout
