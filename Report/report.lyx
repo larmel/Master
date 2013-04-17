@@ -478,6 +478,11 @@ Introduce all papers from Mytkovitz et al.
  
 \end_layout
 
+\begin_layout Standard
+Idea: Version of shell (bash or sh or tch etc) matters because of environment
+ size variable etc)
+\end_layout
+
 \begin_layout Subsection
 Blind Optimization
 \end_layout
@@ -6386,6 +6391,15 @@ Offseting incrementally by 2.
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Malloc alignment
+\end_layout
+
+\begin_layout Standard
+Fftw provides a wrapper around the provided malloc to ensure alignment.
+ Found in kernel/kalloc.c in the source code.
 \end_layout
 
 \begin_layout Chapter

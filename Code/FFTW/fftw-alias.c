@@ -16,10 +16,10 @@
 
 #define MAX_OFFSET 0xf00
 #ifndef N
-    #define N 1600001 // 8 73 75 76 80 103
+    #define N 16 // 8 73 75 76 80 103
 #endif
 #ifndef X
-    #define X 1
+    #define X 200000
 #endif
 
 // 0xef for -n 16

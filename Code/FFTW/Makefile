@@ -2,6 +2,10 @@
 COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u,r05a3:u
 
 CFLAGS=-O3 -ffast-math -fomit-frame-pointer -march=native -Wall
+
+# Custom built FFTW 3.3.3
+#   ./configure; make; make install
+# Remove to use prebuilt package instead
 FFTWLIBDIR=-L/usr/local/lib/
 
 # float | double | int32_t | int16_t | simd
