@@ -3,12 +3,12 @@ COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u,r05a3:u
 
 CFLAGS=-O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 
-# Custom built FFTW 3.3.3
-#   ./configure; make; make install
-# Remove to use prebuilt package instead
-FFTWLIBDIR=-L/usr/local/lib/
+# Custom built FFTW-3.3.2 (see INSTALL)
+# Remove to use prebuilt package instead. Using evil rpath because LD_LIBRARY_PATH cannot
+# be set using the lperf framework (default empty environment). Not needed for static link.
+FFTW_INCLUDES=
+#-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
 
-# float | double | int32_t | int16_t | simd
 DATATYPE=double
 
 ifeq "$(DATATYPE)" "float"
@@ -17,19 +17,16 @@ else
 	FFTWLIB=-lfftw3
 endif
 
-
 .DEFAULT: fftw-alias
-.PHONY: clean
+.PHONY: clean graph
 
 fftw-alias: fftw-alias.c
-	cc -o $@ $(CFLAGS) -DDATATYPE$(DATATYPE) $+ $(FFTWLIB) $(FFTWLIBDIR) -lm
+	cc -o $@ $(CFLAGS) -DDATATYPE$(DATATYPE) $+ $(FFTW_INCLUDES) $(FFTWLIB) -lm
 
 stat.csv: fftw-alias
-	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 60 \
-		--argument-offset 0 \
-		--argument-increment 2 \
-		--environment-offset 0 \
-		--environment-increment 0 > /dev/null
+	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 1000 \
+		--argument-offset 0 --argument-increment 0 \
+		--environment-offset 0 --environment-increment 16 > /dev/null
 
 graph: stat.csv
 	../lplot stat.csv --legend 'upper right'
