@@ -6,8 +6,7 @@ CFLAGS=-O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 # Custom built FFTW-3.3.2 (see INSTALL)
 # Remove to use prebuilt package instead. Using evil rpath because LD_LIBRARY_PATH cannot
 # be set using the lperf framework (default empty environment). Not needed for static link.
-FFTW_INCLUDES=
-#-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
+FFTW_INCLUDES=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
 
 DATATYPE=double
 
@@ -26,7 +25,7 @@ fftw-alias: fftw-alias.c
 stat.csv: fftw-alias
 	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 1000 \
 		--argument-offset 0 --argument-increment 0 \
-		--environment-offset 0 --environment-increment 16 > /dev/null
+		--environment-offset 2000 --environment-increment 1 > /dev/null
 
 graph: stat.csv
 	../lplot stat.csv --legend 'upper right'
