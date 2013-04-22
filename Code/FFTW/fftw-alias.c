@@ -16,7 +16,7 @@
 
 #define MAX_OFFSET 0xf00
 #ifndef N
-    #define N 16 // 8 73 75 76 80 103
+    #define N 16 //524288 // 8 73 75 76 80 103
 #endif
 #ifndef X
     #define X 200000
@@ -37,18 +37,25 @@ int main(int argc, char **argv)
     out += offset;
 
     for (i = 0; i < n; ++i) {
-        in[i][0] = rand() - RAND_MAX/2;
-        in[i][1] = rand() - RAND_MAX/2;
+        in[i][0] = i; //rand() - RAND_MAX/2;
+        in[i][1] = i; //rand() - RAND_MAX/2;
     }
 
     p = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_print_plan(p);
+    putchar('\n');
 
     for (i = 0; i < x; ++i)
         fftw_execute(p);
 
     fftw_destroy_plan(p);
 
-    printf("fftw\tn=%d\tx=%d\tstack=%p\t(%p, %p)\n", n, x, &i, in, out);
+    // Printf result for verification
+    for (i = 0; i < n; ++i)
+        printf("(%f, %f), ", out[i][0], out[i][1]);
+    putchar('\n');
+
+    //printf("fftw\tn=%d\tx=%d\tstack=%p\t(%p, %p)\n", n, x, &i, in, out);
 
     fftw_free(in), fftw_free(out - offset);
 

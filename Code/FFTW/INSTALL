@@ -1,14 +1,24 @@
-** Notes on installing fftw-3.3.3 for Ivy Bridge **
+** Notes on installing fftw-3.3.3 for Ivy Bridge on Ubuntu **
 
-The default install is
-./configure; make; make install
+0) The default install is
 
-This produces worse code than the prebuilt package libfftw3; need to manually specify mmx and avx flags.
-By default only -mtune=native is enabled. A slight gain by compiling with the native instruction set specified.
-There are probably better configurations, but at least this is faster than the default.
+./configure && make && make install
+
+
+1) This produces worse code than the prebuilt package libfftw3; need to manually specify mmx and avx flags.
+   By default only -mtune=native is enabled. A slight gain by compiling with the native instruction set specified.
+   There are probably better configurations, but at least this is faster than the default.
 
 make clean && make distclean
 
 ./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx --enable-fma
 make
 make install
+
+
+2) To install with different directory (for modified kernels)
+
+./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx --enable-fma
+make
+make install
+
