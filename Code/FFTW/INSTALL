@@ -18,7 +18,7 @@ make install
 
 2) To install with different directory (for modified kernels)
 
-./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx --enable-fma
+./configure CC="gcc -march=native" --prefix=/usr/local/custom --enable-shared --enable-sse2 --enable-avx --enable-fma
 make
 make install
 

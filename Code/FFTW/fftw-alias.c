@@ -19,7 +19,7 @@
     #define N 16 //524288 // 8 73 75 76 80 103
 #endif
 #ifndef X
-    #define X 200000
+    #define X 1
 #endif
 
 // 0xef for -n 16
@@ -29,21 +29,23 @@ int main(int argc, char **argv)
     int n = N, x = X;
     int offset = atoi(argv[1]), i;
     fftw_complex *in  = NULL;
+    fftw_complex *temp = NULL;
     fftw_complex *out = NULL;
     fftw_plan p;
 
     in  = fftw_malloc(sizeof(fftw_complex) * n);
+    temp = fftw_malloc(sizeof(fftw_complex) * 0*n);
     out = fftw_malloc(sizeof(fftw_complex) * (n + MAX_OFFSET));
     out += offset;
 
     for (i = 0; i < n; ++i) {
-        in[i][0] = i; //rand() - RAND_MAX/2;
-        in[i][1] = i; //rand() - RAND_MAX/2;
+        in[i][0] = i;
+        in[i][1] = i;
     }
 
     p = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_print_plan(p);
-    putchar('\n');
+    //fftw_print_plan(p);
+    //putchar('\n');
 
     for (i = 0; i < x; ++i)
         fftw_execute(p);
@@ -51,9 +53,9 @@ int main(int argc, char **argv)
     fftw_destroy_plan(p);
 
     // Printf result for verification
-    for (i = 0; i < n; ++i)
-        printf("(%f, %f), ", out[i][0], out[i][1]);
-    putchar('\n');
+    //for (i = 0; i < n; ++i)
+    //    printf("(%f, %f), ", out[i][0], out[i][1]);
+    //putchar('\n');
 
     //printf("fftw\tn=%d\tx=%d\tstack=%p\t(%p, %p)\n", n, x, &i, in, out);
 

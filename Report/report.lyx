@@ -6519,6 +6519,73 @@ Problem: when inserting printf's into the kernel, bias disappears.
  Needs a smarter approach.
 \end_layout
 
+\begin_layout Standard
+Command to output kernel assembly.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+~/FFT/fftw-mod-3.3.3/dft/simd/avx$ gcc -march=native -std=gnu99 -DHAVE_CONFIG_H
+ -I.
+ -I../../..
+ -I../../../kernel -I../../../dft -I../../../dft/simd 
+\end_layout
+
+\begin_layout Plain Layout
+
+   -I../../../simd-support -mavx -O3 -fomit-frame-pointer -mtune=native -malign-double
+ -fstrict-aliasing -fno-schedule-insns -ffast-math -MT n1fv_16.lo 
+\end_layout
+
+\begin_layout Plain Layout
+
+   -MD -MP -MF .deps/n1fv_16.Tpo -c n1fv_16.c  -fPIC -DPIC -fverbose-asm -S
+ -o .libs/n1fv_16.s
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Variables affecting memory access:
+\end_layout
+
+\begin_layout Itemize
+Position of input and output arrays; likely heap allocated, so 2 independent
+ (maybe!) factors.
+ A possible fix to fftw_malloc: add argument for input array when allocating
+ output, like fftw_malloc_cobuffer(void* sibling, size_t n).
+ 
+\end_layout
+
+\begin_layout Itemize
+Position of stack
+\end_layout
+
+\begin_layout Itemize
+Position of text segment with constants.
+ Seems like there are 3 or 4 accesses, happening at the start, where large
+ floating point constants are read into stack-allocated variables.
+\end_layout
+
+\begin_layout Standard
+Notes on creating assembly code
+\end_layout
+
+\begin_layout Standard
+The x86_64 ABI specifies 6 registers to be used for argument passing; %rdi
+ %rsi %rdx %rcx %r8 %r9.
+ 
+\end_layout
+
 \begin_layout Chapter
 Conclusions and Future Work
 \end_layout
