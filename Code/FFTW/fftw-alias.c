@@ -14,35 +14,41 @@
     #define fftw_free         fftwf_free
 #endif
 
-#define MAX_OFFSET 0xf00
+//#define MAX_OFFSET 0xf00
 #ifndef N
     #define N 16 //524288 // 8 73 75 76 80 103
 #endif
 #ifndef X
-    #define X 1
+    #define X 200000
 #endif
 
 // 0xef for -n 16
 
 int main(int argc, char **argv)
 {
-    int n = N, x = X;
-    int offset = atoi(argv[1]), i;
+    int n = N, x = X, i;
+    long offset = atoi(argv[1]);
     fftw_complex *in  = NULL;
-    fftw_complex *temp = NULL;
+    fftw_complex *temp = NULL, *temp2 = NULL;
     fftw_complex *out = NULL;
     fftw_plan p;
 
-    in  = fftw_malloc(sizeof(fftw_complex) * n);
-    temp = fftw_malloc(sizeof(fftw_complex) * 0*n);
-    out = fftw_malloc(sizeof(fftw_complex) * (n + MAX_OFFSET));
-    out += offset;
+    /*asm volatile (
+        "subq   %0, %%rsp"  "\n\t"
+        :  
+        : "r"(offset)
+        :
+        );*/
+
+    temp2 = fftw_malloc(sizeof(fftw_complex) * 0);
+    in    = fftw_malloc(sizeof(fftw_complex) * n);
+    temp  = fftw_malloc(sizeof(fftw_complex) * 32);
+    out   = fftw_malloc(sizeof(fftw_complex) * n);
 
     for (i = 0; i < n; ++i) {
         in[i][0] = i;
         in[i][1] = i;
     }
-
     p = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
     //fftw_print_plan(p);
     //putchar('\n');
@@ -57,9 +63,15 @@ int main(int argc, char **argv)
     //    printf("(%f, %f), ", out[i][0], out[i][1]);
     //putchar('\n');
 
-    //printf("fftw\tn=%d\tx=%d\tstack=%p\t(%p, %p)\n", n, x, &i, in, out);
+    printf("in: %p, out: %p\n", in, out);
 
-    fftw_free(in), fftw_free(out - offset);
+    fftw_free(in), fftw_free(out); //fftw_free(out - offset);
 
+    /*asm volatile (
+        "addq   %0, %%rsp"  "\n\t"
+        :  
+        : "r"(offset)
+        :
+        );*/
     return 0;
 }

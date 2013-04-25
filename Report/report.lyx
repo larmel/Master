@@ -6580,10 +6580,42 @@ Position of text segment with constants.
 Notes on creating assembly code
 \end_layout
 
-\begin_layout Standard
+\begin_layout Itemize
 The x86_64 ABI specifies 6 registers to be used for argument passing; %rdi
  %rsi %rdx %rcx %r8 %r9.
  
+\end_layout
+
+\begin_layout Itemize
+The exact alignment of stack pointer is very sensitive.
+ %rsp should be aligned with a trailing 0x1000.
+ Formula: rsp -= 8 + 64*n.
+ A clean example "andq $-4096, %%rsp; subq $8, %%rsp".
+ This fixes case with heap=32, stack=0x800 -- removing the two areas assumed
+ to be collision between stack and input/output respectively.
+\end_layout
+
+\begin_layout Itemize
+Whith this fixed stack alignment, we can trigger bias across all environments
+ by placing input/output close to 0x000.
+ Ex.
+ allocating 220-sized array before input will place arrays close to boundary,
+ giving lots of alias all over.
+ 
+\end_layout
+
+\begin_layout Itemize
+Unknown spike depending on environment.
+ Position varies depending on heap addresses, but shape remains mostly the
+ same.
+ Not sure how this can be mitigated -- need to know cause.
+\end_layout
+
+\begin_layout Itemize
+Can be quite certain it is not the size or content of the environment that
+ is the cause.
+ Using input argument to manually subtract froms tack pointer inside main
+ gives exactly the same results as incrementing environment.
 \end_layout
 
 \begin_layout Chapter

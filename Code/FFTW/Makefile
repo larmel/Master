@@ -37,7 +37,7 @@ fftw-alias: fftw-alias.c
 stat.csv: fftw-alias
 	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 300 \
 		--argument-offset 0 --argument-increment 0 \
-		--environment-offset 1700 --environment-increment 16 > /dev/null
+		--environment-offset 1700 --environment-increment 16 > output
 
 graph: stat.csv
 	../lplot -e cycles:u,r0107:u,r01a2:u,r05a3:u stat.csv --title '${title}' --legend 'upper right'
