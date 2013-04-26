@@ -6618,6 +6618,111 @@ Can be quite certain it is not the size or content of the environment that
  gives exactly the same results as incrementing environment.
 \end_layout
 
+\begin_layout Itemize
+Offseting stack before caling the kernel can fix all bias.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq  %%rsp, %0;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        "andq  $-1024, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "=r"(offset)
+\end_layout
+
+\begin_layout Plain Layout
+
+        : 
+\end_layout
+
+\begin_layout Plain Layout
+
+        :
+\end_layout
+
+\begin_layout Plain Layout
+
+        );
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i = 0; i < x; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        fftw_execute(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq   %0, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        :  
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "r"(offset)
+\end_layout
+
+\begin_layout Plain Layout
+
+        :
+\end_layout
+
+\begin_layout Plain Layout
+
+        );
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Conclusions and Future Work
 \end_layout

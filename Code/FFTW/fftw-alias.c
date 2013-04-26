@@ -33,13 +33,6 @@ int main(int argc, char **argv)
     fftw_complex *out = NULL;
     fftw_plan p;
 
-    /*asm volatile (
-        "subq   %0, %%rsp"  "\n\t"
-        :  
-        : "r"(offset)
-        :
-        );*/
-
     temp2 = fftw_malloc(sizeof(fftw_complex) * 0);
     in    = fftw_malloc(sizeof(fftw_complex) * n);
     temp  = fftw_malloc(sizeof(fftw_complex) * 32);
@@ -53,8 +46,25 @@ int main(int argc, char **argv)
     //fftw_print_plan(p);
     //putchar('\n');
 
+    asm volatile (
+        "movq  %%rsp, %0;"
+        "andq  $-1024, %%rsp;"
+        : "=r"(offset)
+        : 
+        :
+        );
+
     for (i = 0; i < x; ++i)
+    {
         fftw_execute(p);
+    }
+
+    asm volatile (
+        "movq   %0, %%rsp;"
+        :  
+        : "r"(offset)
+        :
+        );
 
     fftw_destroy_plan(p);
 
@@ -67,11 +77,5 @@ int main(int argc, char **argv)
 
     fftw_free(in), fftw_free(out); //fftw_free(out - offset);
 
-    /*asm volatile (
-        "addq   %0, %%rsp"  "\n\t"
-        :  
-        : "r"(offset)
-        :
-        );*/
     return 0;
 }
