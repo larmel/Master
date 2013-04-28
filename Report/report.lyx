@@ -214,38 +214,9 @@ true
  
 \end_layout
 
-\begin_layout Section
-Observer Effect and Measurement Bias
-\end_layout
-
-\begin_layout Standard
-In an analysis of 70? papers from X conference, almost none took into account
- the effects of observer effects or environment bias, which has been been
- shown to potentially skew the results of benchmarks by very significant
- amounts 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-.
- 
-\end_layout
-
 \begin_layout Standard
 Seemingly innocious properties such as the length of your Unix user name
  can bias performance measurements.
- In the paper appropriately named 
-\begin_inset Quotes eld
-\end_inset
-
-Producing the wrong data without doing anything obviously wrong
-\begin_inset Quotes erd
-\end_inset
-
-, the authors show how simple changes to the execution environment can heavily
- impact performance of SPEC 2006 benchmark.
  There are many potential sources of bias that could come from the environment.
  In the widest sense, properties like the time of day, or temperature of
  the room should be considered relevant variables of the execution environment.
@@ -255,58 +226,222 @@ Producing the wrong data without doing anything obviously wrong
  different code paths dependent on that information.
 \end_layout
 
+\begin_layout Section
+Motivation
+\end_layout
+
 \begin_layout Standard
-Other potential sources of bias include memory layout in virtual address
- space, and the link order of object files.
- These variables have been studied to some extent in previous work, which
- we will revisit in Chapter 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "chap:Background"
+In the paper appropriately named 
+\begin_inset Quotes eld
+\end_inset
+
+Producing Wrong Data Without Doing Anything Obviously Wrong
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
 
 \end_inset
 
-.
- 
+, the authors show how simple changes to the execution environment can heavily
+ impact performance of SPEC 2006 benchmarks.
+ Two variables are studied; size of Unix environment and object file link
+ order.
+ Both are found to be significant with respect to measured performance of
+ standardized benchmarks.
+ This paper is getting old however, thus it is unclear whether measurement
+ bias is an issue on the new Core i7 architecture.
+ A quick reproduction of one of their tests however, clearly shows that
+ measurement bias is still an issue on the (as of now) most recent Intel
+ architecture.
 \end_layout
 
 \begin_layout Standard
-This thesis will focus on 
+\noindent
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "29col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static int i=0,j=0,k=0;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    int g = 0, inc = 1;
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (;g<65536;g++) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        i += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        j += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        k += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "70col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename Img/loop-alias-cycles.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:c-micro-kernel-reproduction"
+
+\end_inset
+
+Micro kernel running under increasing environment size showing huge performance
+ variations on the Core i7 Ivy Bridge.
+ Similar results observed for Core 2, proving that measurement bias is still
+ a problem and worth investigating.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Producing bad data
+Using perf
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+perf
 \end_layout
 
-\begin_layout Standard
-Methodolology
+\end_inset
+
+: Linux profiling with performance counters, 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://perf.wiki.kernel.org"
+target "https://perf.wiki.kernel.org/index.php/Main_Page"
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-Observer effect and measurement bias is known, but not handled in papers.
-\end_layout
+\end_inset
 
-\begin_layout Standard
-Papers exploring measurement bias.
- Fancy graphic of memory layout.
- Conclusion that this is an unsolved problem.
- 
-\end_layout
-
-\begin_layout Standard
-Execution environment
-\end_layout
-
-\begin_layout Itemize
-Environment variables
-\end_layout
-
-\begin_layout Itemize
-Link order (affecting static area layout and address of global variables)
-\end_layout
-
-\begin_layout Itemize
-Page sizeof system
+ and an automated script to run samples, with increasing environment size
+ using a dummy variable.
+ The program is compiled using gcc and no optimization (-O0).
+ The results are plotted for each environment size, incrementing by one
+ between each run.
+ A very distinct spike can be observed, starting at an offset of 3400? bytes.
 \end_layout
 
 \begin_layout Section
@@ -314,11 +449,11 @@ Outline
 \end_layout
 
 \begin_layout Standard
-The purpose of this report is to explore ways to tackle the effects of measureme
+The purpose of this thesis is to explore ways to tackle the effects of measureme
 nt bias.
- Previous work has focused mostly on ways to eliminate the effects in order
- to produce reliable measurements -- working towards a more statistically
- valid methodology employed in the computer science community.
+ Previous work has focused mostly on ways to statistically eliminate the
+ effects in order to produce reliable measurements -- working towards a
+ more statistically valid methodology employed in the computer science community.
  Our approach is slightly different.
  If bias could be controlled in certain situations, we could change program
  or environment to enhance performance -- essentially control the bias to
@@ -354,8 +489,9 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 briefly looks at potential improvements in an actual software package
- where the effects pointed out in Chapter 3 might be a problem.
+4 looks at FFTW, a high performance and automatically tuned implementation
+ of the fourier transform, showing how the effects identified in Chapter
+ 3 can impact real software.
  
 \end_layout
 
