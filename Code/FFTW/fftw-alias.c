@@ -27,7 +27,7 @@
 int main(int argc, char **argv)
 {
     int n = N, x = X, i;
-    long offset = atoi(argv[1]);
+    long offset = atoi(argv[1]), rsp;
     fftw_complex *in  = NULL;
     fftw_complex *temp = NULL, *temp2 = NULL;
     fftw_complex *out = NULL;
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 
     temp2 = fftw_malloc(sizeof(fftw_complex) * 0);
     in    = fftw_malloc(sizeof(fftw_complex) * n);
-    temp  = fftw_malloc(sizeof(fftw_complex) * 32);
+    temp  = fftw_malloc(sizeof(fftw_complex) * 0);
     out   = fftw_malloc(sizeof(fftw_complex) * n);
 
     for (i = 0; i < n; ++i) {
@@ -46,32 +46,33 @@ int main(int argc, char **argv)
     //fftw_print_plan(p);
     //putchar('\n');
 
-    asm volatile (
+    /*asm volatile (
         "movq  %%rsp, %0;"
-        "andq  $-1024, %%rsp;"
-        : "=r"(offset)
-        : 
+        "andq  $-4096, %%rsp;"
+        "subq  %1, %%rsp;"
+        : "=r"(rsp)
+        : "r"(offset)
         :
-        );
+        );*/
 
     for (i = 0; i < x; ++i)
     {
         fftw_execute(p);
     }
 
-    asm volatile (
+   /*asm volatile (
         "movq   %0, %%rsp;"
         :  
-        : "r"(offset)
+        : "r"(rsp)
         :
-        );
+        );*/
 
     fftw_destroy_plan(p);
 
     // Printf result for verification
-    //for (i = 0; i < n; ++i)
-    //    printf("(%f, %f), ", out[i][0], out[i][1]);
-    //putchar('\n');
+    /*for (i = 0; i < n; ++i)
+        printf("(%f, %f), ", out[i][0], out[i][1]);
+    putchar('\n');*/
 
     printf("in: %p, out: %p\n", in, out);
 

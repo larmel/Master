@@ -1,24 +1,26 @@
 ** Notes on installing fftw-3.3.3 for Ivy Bridge on Ubuntu **
 
-0) The default install is
+0) The default install produces worse code than the prebuilt package libfftw3
 
 ./configure && make && make install
 
 
-1) This produces worse code than the prebuilt package libfftw3; need to manually specify mmx and avx flags.
-   By default only -mtune=native is enabled. A slight gain by compiling with the native instruction set specified.
+1) By default only -mtune=native is enabled. A slight gain by compiling with the native instruction set specified.
    There are probably better configurations, but at least this is faster than the default.
+   Fused multiply-add is not actually supported on Ivy Bridge, but the flag could be included anyway because it 
+   gives better performance for the 16-element avx kernel. FMA in FFTW is supported by favoring "FMA" macros, 
+   hoping that the compiler will replace it with the correct instructions. FMA is coming in Haswell.
 
 make clean && make distclean
 
-./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx --enable-fma
+./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx
 make
 make install
 
 
 2) To install with different directory (for modified kernels)
 
-./configure CC="gcc -march=native" --prefix=/usr/local/custom --enable-shared --enable-sse2 --enable-avx --enable-fma
+./configure CC="gcc -march=native" --prefix=/usr/local/custom --enable-shared --enable-sse2 --enable-avx
 make
 make install
 
