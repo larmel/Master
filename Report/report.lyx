@@ -175,13 +175,30 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Optimizing for performance generally consist of trying to strive for things
- like reduced cycle count, eliminate branch misses and reduce the number
- of cache misses.
- In disciplines other than computer science, such as medicine, the notions
- of measurement bias and observer effect is more often considered.
- The notions of observation effect and measurement bias can be described
- as follows.
+Optimizing for performance often consist of 
+\begin_inset Quotes eld
+\end_inset
+
+high level
+\begin_inset Quotes erd
+\end_inset
+
+ tasks such as reducing algorithmic complexity, change data structures and
+ ..., but also trying to eliminate branch misses and reduce the number of cache
+ misses.
+ As programmers, we are usually content as soon as we are able to measure
+ a speedup.
+ We will often be using simple techniques for observing performance metrics,
+ such as incrementing counter variables for each invocation of function
+ X, or inserting printf's in strategic places.
+ 
+\end_layout
+
+\begin_layout Standard
+In disciplines other than computer science, such as medicine and the social
+ sciences, the notions of measurement bias and observer effect is more often
+ considered.
+ 
 \end_layout
 
 \begin_layout Description
@@ -189,7 +206,7 @@ Observer
 \begin_inset space ~
 \end_inset
 
-effect occurs when the phenomena being measured is changed by observing
+effect The phenomena is changed (or even disappears) merely by observing
  it.
 \end_layout
 
@@ -198,31 +215,20 @@ Measurement
 \begin_inset space ~
 \end_inset
 
-bias refers to the potential for 
-\emph on
-external
-\emph default
- variables to skew the measurements of some phenomena away from the 
-\begin_inset Quotes eld
-\end_inset
-
-true
-\begin_inset Quotes erd
-\end_inset
-
- result.
+bias Properties of the experimental setup or environment, external and independe
+t of what is being measured, is affecting the outcome of the experiment.
  
 \end_layout
 
 \begin_layout Standard
-Seemingly innocious properties such as the length of your Unix user name
- can bias performance measurements.
+Seemingly innocious properties properties of the experimental setup, external
+ to the program being measured, can bias performance measurements.
  There are many potential sources of bias that could come from the environment.
  In the widest sense, properties like the time of day, or temperature of
  the room should be considered relevant variables of the execution environment.
  This is actually not as far fetched as it may sound -- electronic circuits
  might very well operate more efficiently in lower temperatures, and programs
- we benchmark might use some API to ask for the time of day and execuet
+ we benchmark might use some API to ask for the time of day and execute
  different code paths dependent on that information.
 \end_layout
 
@@ -248,15 +254,15 @@ key "Mytkowicz:2009:WrongData"
 
 , the authors show how simple changes to the execution environment can heavily
  impact performance of SPEC 2006 benchmarks.
- Two variables are studied; size of Unix environment and object file link
- order.
+ Two variables are studied; size of the Unix environment variables, and
+ link order of object files.
  Both are found to be significant with respect to measured performance of
  standardized benchmarks.
  This paper is getting old however, thus it is unclear whether measurement
- bias is an issue on the new Core i7 architecture.
+ bias is an issue on newer CPUs.
  A quick reproduction of one of their tests however, clearly shows that
- measurement bias is still an issue on the (as of now) most recent Intel
- architecture.
+ measurement bias is still an issue on the -- at the time of writing --
+ most recent Intel Core i7 Ivy Bridge architecture.
 \end_layout
 
 \begin_layout Standard
@@ -275,7 +281,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "29col%"
+width "42col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -356,7 +362,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "70col%"
+width "57col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -364,9 +370,9 @@ status open
 
 \begin_layout Plain Layout
 \noindent
-\align center
+\align right
 \begin_inset Graphics
-	filename Img/loop-alias-cycles.eps
+	filename Img/loop/motivation.eps
 	scale 70
 
 \end_inset
@@ -385,14 +391,12 @@ status open
 \begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
-name "alg:c-micro-kernel-reproduction"
+name "fig:motivation"
 
 \end_inset
 
-Micro kernel running under increasing environment size showing huge performance
- variations on the Core i7 Ivy Bridge.
- Similar results observed for Core 2, proving that measurement bias is still
- a problem and worth investigating.
+A simple C program with significant performance variations under different
+ environment sizes.
 \end_layout
 
 \end_inset
@@ -406,7 +410,24 @@ Micro kernel running under increasing environment size showing huge performance
 \end_layout
 
 \begin_layout Standard
-Using perf
+Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:motivation"
+
+\end_inset
+
+ shows the micro-kernel presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, together with measurements from our machine.
+ The graph shows the number of cycles over a large number of runs, where
+ characters are appended to a dummy environment variable between each.
+ Cycle counts were measured with hardware performance counters using perf
 \begin_inset Foot
 status open
 
@@ -436,12 +457,14 @@ target "https://perf.wiki.kernel.org/index.php/Main_Page"
 
 \end_inset
 
- and an automated script to run samples, with increasing environment size
- using a dummy variable.
- The program is compiled using gcc and no optimization (-O0).
- The results are plotted for each environment size, incrementing by one
- between each run.
- A very distinct spike can be observed, starting at an offset of 3400? bytes.
+ to obtain accurate results.
+ The program is compiled with gcc using all default options.
+ The code should not appear particularly extraordinary in any way, yet its
+ performance characteristics are quite peculiar.
+ Even though the exact same binary executable file is run multiple times,
+ the performance is clearly not the same for every environment size.
+ Measurement bias is still an issue on the most recent architectures, and
+ worth investigating.
 \end_layout
 
 \begin_layout Section
@@ -466,8 +489,14 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-2 begins by looking at some of the previous work done.
- Most of this is documenting measurement bias.
+2 presents some of the previous work done on measurement bias, showing its
+ severity as well as proposed solutions to mitigate or compensate for it.
+ A discussion of what actually constitutes the 
+\emph on
+environment
+\emph default
+ is discussed.
+ 
 \end_layout
 
 \begin_layout Description
@@ -475,11 +504,15 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 investigates various performance metrics acquired from micro-kernels with
- clear bias.
- We will concentrate on two different causes for effects.
- The first has to with memory address aliasing between variables, that can
- cause problems for the out-of-order scheduling.
+3 investigates various performance metrics acquired from simple programs,
+ trying to identify potential 
+\emph on
+sources
+\emph default
+ of measurement bias.
+ We will focus on two different bias effects; memory address aliasingthe
+ first has to with memory address aliasing between variables, that can cause
+ problems for the out-of-order scheduling.
  Next we will look at Loop Stream Detector, another hardware optimization
  that sometimes can give bad performance.
 \end_layout
@@ -489,9 +522,10 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 looks at FFTW, a high performance and automatically tuned implementation
- of the fourier transform, showing how the effects identified in Chapter
- 3 can impact real software.
+4 applies knowledge of bias effects from Chapter 3 in an attempt to speed
+ up real-world applications.
+ We take an in-depth look at FFTW, a high performance and automatically
+ tuned implementation of the fourier transform.
  
 \end_layout
 
@@ -1137,7 +1171,7 @@ Front end optimization.
 \end_layout
 
 \begin_layout Section
-Linux
+The Execution Context
 \end_layout
 
 \begin_layout Standard
@@ -1439,9 +1473,16 @@ Environment Variables
 \end_layout
 
 \begin_layout Standard
-As pointed out in (??), the size of a user's Unix environment variable can
- affect the placement of stack.
- Environemtn variables are allocated above the stack, pushing the first
+As pointed out in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, the size of a user's Unix environment variable can affect the placement
+ of stack.
+ Environment variables are allocated above the stack, pushing the first
  possible stack starting address downwards.
  With ASLR disabled, the initial stack address can be manipulated by manually
  changing environment variables.
@@ -1752,7 +1793,39 @@ macro fusion[ref]
 \end_layout
 
 \begin_layout Section
-Partial Address Alias Effects
+Measurement Methodology
+\end_layout
+
+\begin_layout Standard
+Before going ahead with all the details, it is important to describe the
+ methodology used to aquire accurate measurements.
+ For many of our examples, we are interested first and foremost in the number
+ of cycles retured in user mode during execution.
+ We use perf stat to aquire performance counter measurements.
+ We make the following configuration to our experimental setup:
+\end_layout
+
+\begin_layout Itemize
+Unless specified otherwise, address space layout randomization (ASLR) is
+ kept disabled.
+ This is necessary when testing effects from memory context, and often required
+ to make results reproducible.
+\end_layout
+
+\begin_layout Itemize
+Hyper threading is disabled, ennsuring that only one thread runs simultaneously
+ on each core.
+ Two threads competing on hardware resources is another potential source
+ of bias, which we will not be studying.
+ 
+\end_layout
+
+\begin_layout Itemize
+A minimal amount of system load.
+\end_layout
+
+\begin_layout Section
+Virtual Memory Layout
 \end_layout
 
 \begin_layout Standard
@@ -1926,38 +1999,6 @@ Cycle count from running the same program with different Unix environment
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsection
-Measurement Methodology
-\end_layout
-
-\begin_layout Standard
-Before going ahead with all the details, it is important to describe the
- methodology used to aquire accurate measurements.
- For many of our examples, we are interested first and foremost in the number
- of cycles retured in user mode during execution.
- We use perf stat to aquire performance counter measurements.
- We make the following configuration to our experimental setup:
-\end_layout
-
-\begin_layout Itemize
-Unless specified otherwise, address space layout randomization (ASLR) is
- kept disabled.
- This is necessary when testing effects from memory context, and often required
- to make results reproducible.
-\end_layout
-
-\begin_layout Itemize
-Hyper threading is disabled, ennsuring that only one thread runs simultaneously
- on each core.
- Two threads competing on hardware resources is another potential source
- of bias, which we will not be studying.
- 
-\end_layout
-
-\begin_layout Itemize
-A minimal amount of system load.
 \end_layout
 
 \begin_layout Subsection
@@ -5055,7 +5096,7 @@ Most allocators focus on efficiency in a multithreaded environment, and
 \end_layout
 
 \begin_layout Section
-Loop Stream Detector
+Code Layout
 \end_layout
 
 \begin_layout Standard
@@ -5104,7 +5145,7 @@ Loops should have at least 64 iterations.
 \end_layout
 
 \begin_layout Subsection
-Experiments
+Properties Of The Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
