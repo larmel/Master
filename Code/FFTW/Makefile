@@ -10,9 +10,9 @@
 #
 # ~/FFT/fftw-mod-3.3.3/dft/simd/avx$ gcc -march=native -std=gnu99 -DHAVE_CONFIG_H -I. -I../../.. -I../../../kernel -I../../../dft -I../../../dft/simd -I../../../simd-support -mavx -O3 -fomit-frame-pointer -mtune=native -malign-double -fstrict-aliasing -fno-schedule-insns -ffast-math -MT n1fv_16.lo -MD -MP -MF .deps/n1fv_16.Tpo -c n1fv_16.c  -fPIC -DPIC -fverbose-asm -S -o .libs/n1fv_16.s
 #
-COUNTERS=cycles:u,r02a3:u,r0107:u,r01a2:u,r05a3:u
+COUNTERS=cycles:u,r0107:u,r01a2:u,r05a3:u
 
-CFLAGS=-O3 -ffast-math -fomit-frame-pointer -march=native -Wall
+CFLAGS=-std=c99 -O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 
 # Custom built FFTW-3.3.3 (see INSTALL)
 # Remove to use prebuilt package instead. Using evil rpath because LD_LIBRARY_PATH cannot
@@ -21,6 +21,13 @@ CFLAGS=-O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 FFTW_PATH=/usr/local/custom
 FFTW_INCLUDES=-I$(FFTW_PATH)/include -L$(FFTW_PATH)/lib/ -Wl,-rpath,$(FFTW_PATH)/lib
 
+# Link with custom built but unmodified fftw library
+FFTW_DEFAULT=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
+
+# Link with custom built and modified fftw library
+FFTW_MODIFIED=-I/usr/local/custom/include -L/usr/local/custom/lib/ -Wl,-rpath,/usr/local/custom/lib
+
+# TODO: Remove this
 DATATYPE=double
 ifeq "$(DATATYPE)" "float"
 	FFTWLIB=-lfftw3f
@@ -28,8 +35,7 @@ else
 	FFTWLIB=-lfftw3
 endif
 
-.DEFAULT: fftw-alias
-.PHONY: clean graph
+.PHONY: clean graph benchmark
 
 fftw-alias: fftw-alias.c
 	cc -o $@ $(CFLAGS) -DDATATYPE$(DATATYPE) $+ $(FFTW_INCLUDES) $(FFTWLIB) -lm
@@ -41,6 +47,25 @@ stat.csv: fftw-alias
 
 graph: stat.csv
 	../lplot -e cycles:u,r0107:u,r01a2:u,r05a3:u stat.csv --title '${title}' --legend 'upper right'
+
+# Rewamped makefile
+
+fftw-default: fftw-alias.c
+	cc -o $@ $(CFLAGS) $+ $(FFTW_DEFAULT) -lfftw3 -lm
+
+fftw-modified: fftw-alias.c
+	cc -o $@ $(CFLAGS) -DMODIFIED $+ $(FFTW_MODIFIED) -lfftw3 -lm
+
+# Creates two dataseries, one for fftw with stackfix implemented, and one default installation.
+# Run a large number of samples with randomized environment (ASLR enabled). 
+benchmark: fftw-default fftw-modified
+	../lperf ./fftw-default  -e $(COUNTERS) -r 1 -n 500 -o bin/benchmark-default.csv  \
+		--environment-offset 1700 --environment-increment 0
+	../lperf ./fftw-modified -e $(COUNTERS) -r 1 -n 500 -o bin/benchmark-modified.csv \
+		--environment-offset 1700 --environment-increment 16 --argument-increment 10
+	../lplot bin/benchmark-default.csv  -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'default'  --legend 'upper right' &
+	../lplot bin/benchmark-modified.csv -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'modified' --legend 'upper right' &
+	bin/statistics bin/benchmark-default.csv bin/benchmark-modified.csv
 
 clean:
 	rm -f fftw-alias stat.csv

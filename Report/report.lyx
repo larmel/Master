@@ -6897,7 +6897,11 @@ asm volatile (
 
 \end_inset
 
-
+Measuring over 500 runs with increasing stack offset (sampling over ca two
+ intervals).
+ Maximum speedup = 31112710 / 30461410 = 1.0213x on average.
+ More interesting; removes outliers.
+ Max with fix is 30578830, without fix 37828250.
 \end_layout
 
 \begin_layout Subsection
@@ -6980,6 +6984,38 @@ fftw_dft_solve Located in /dft/solve.c.
 fftw_execute Located in /api/execute.c.
  Same result as for dft_solve.
  
+\end_layout
+
+\begin_layout Standard
+The most logical place to apply alignment fixes would probably be close
+ to the kernel invocation.
+ Properties of the kernel itself decides most of the alias effects, thus
+ only the kernel, or the function calling the kernel, would know how the
+ stack should be aligned.
+ We insert some assembly to apply_extra_iter, aligning stack before the
+ kernel is called twice.
+\end_layout
+
+\begin_layout Standard
+Our example is very hard to achieve a speedup for because whatever we do
+ the dynamic instruction count will increase significantly, adding a constant
+ overhead whose cost is very hard to equalize on average over all environment
+ sizes.
+\end_layout
+
+\begin_layout Subsection
+Heap collisions
+\end_layout
+
+\begin_layout Standard
+Consider cases where heap addresses can collide.
+ Here it is possible to apply a fix during the fftw_allocate phase, guaranteed
+ speedup.
+ Definitely possible to do something here.
+ Implement fftw_malloc(size_t n, void* pair), or even keep a history of
+ previously allocated sizes, and try to return addresses with no conflicts
+ for small allocations.
+ That way no modifications to the interface is needed either.
 \end_layout
 
 \begin_layout Chapter

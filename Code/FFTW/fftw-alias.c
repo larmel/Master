@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fftw3.h>
-#include <unistd.h>
 
 // Based on code provided in KISSFFT
 #ifdef DATATYPEfloat
@@ -14,9 +13,10 @@
     #define fftw_free         fftwf_free
 #endif
 
-//#define MAX_OFFSET 0xf00
+#define DEBUG 0
+
 #ifndef N
-    #define N 16 //524288 // 8 73 75 76 80 103
+    #define N 16
 #endif
 #ifndef X
     #define X 200000
@@ -26,58 +26,46 @@
 
 int main(int argc, char **argv)
 {
-    int n = N, x = X, i;
-    long offset = atoi(argv[1]), rsp;
-    fftw_complex *in  = NULL;
-    fftw_complex *temp = NULL, *temp2 = NULL;
-    fftw_complex *out = NULL;
-    fftw_plan p;
+    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
+#ifdef MODIFIED
+    int n = atoi(argv[1]);
+    char *fill = malloc(sizeof(char) * n);
+#endif
+    fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
 
-    temp2 = fftw_malloc(sizeof(fftw_complex) * 0);
-    in    = fftw_malloc(sizeof(fftw_complex) * n);
-    temp  = fftw_malloc(sizeof(fftw_complex) * 0);
-    out   = fftw_malloc(sizeof(fftw_complex) * n);
+    for (int i = 0; i < N; ++i)
+        in[i][0] = i, in[i][1] = i;
 
-    for (i = 0; i < n; ++i) {
-        in[i][0] = i;
-        in[i][1] = i;
-    }
-    p = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    //fftw_print_plan(p);
-    //putchar('\n');
+    fftw_plan p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-
-    /*asm volatile (
+    /*void *rsp;
+    __asm__ volatile (
         "movq  %%rsp, %0;"
         "andq  $-4096, %%rsp;"
-        "subq  %1, %%rsp;"
         : "=r"(rsp)
-        : "r"(offset)
+        : 
         :
         );*/
 
-    for (i = 0; i < x; ++i)
-    {
+    for (int i = 0; i < X; ++i)
         fftw_execute(p);
-    }
 
-   /*asm volatile (
+    /*__asm__ volatile (
         "movq   %0, %%rsp;"
         :  
         : "r"(rsp)
         :
         );*/
 
-    fftw_destroy_plan(p);
-
-    // Printf result for verification
-    /*for (i = 0; i < n; ++i)
+#if (DEBUG)
+    fftw_print_plan(p);
+    printf(" in: %p, out: %p\n", in, out);
+    for (int i = 0; i < N; ++i)
         printf("(%f, %f), ", out[i][0], out[i][1]);
-    putchar('\n');*/
+    putchar('\n');
+#endif
 
-    printf("in: %p, out: %p\n", in, out);
-
-    fftw_free(in), fftw_free(out); //fftw_free(out - offset);
-
+    fftw_destroy_plan(p);
+    fftw_free(in), fftw_free(out);
     return 0;
 }

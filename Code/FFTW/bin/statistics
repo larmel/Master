@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Read first line of CSV file containing cycles, skipping metadata on first three columns
+a=`head -n 1 $1` && IFS=',' read -ra a <<< "$a"
+unset a[0] && unset a[1] && unset a[2]
+
+b=`head -n 1 $2` && IFS=',' read -ra b <<< "$b"
+unset b[0] && unset b[1] && unset b[2]
+
+echo
+echo "Statistics for $1"
+R --slave << EOF 
+options(digits = 10)
+d <- scan()
+${a[@]}
+
+summary(d)
+EOF
+
+echo
+echo "Statistics for $2"
+R --slave << EOF 
+options(digits = 10)
+d <- scan()
+${b[@]}
+
+summary(d)
+EOF
