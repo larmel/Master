@@ -6756,8 +6756,8 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/fft/callgraph.png
-	scale 50
+	filename Img/fft/callgraph.eps
+	scale 70
 
 \end_inset
 
