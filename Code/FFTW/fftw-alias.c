@@ -2,17 +2,6 @@
 #include <stdlib.h>
 #include <fftw3.h>
 
-// Based on code provided in KISSFFT
-#ifdef DATATYPEfloat
-    #define fftw_complex      fftwf_complex
-    #define fftw_plan         fftwf_plan
-    #define fftw_plan_dft_1d  fftwf_plan_dft_1d
-    #define fftw_execute      fftwf_execute
-    #define fftw_destroy_plan fftwf_destroy_plan
-    #define fftw_malloc       fftwf_malloc
-    #define fftw_free         fftwf_free
-#endif
-
 #define DEBUG 0
 
 #ifndef N
@@ -27,10 +16,8 @@
 int main(int argc, char **argv)
 {
     fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
-#ifdef MODIFIED
     int n = atoi(argv[1]);
     char *fill = malloc(sizeof(char) * n);
-#endif
     fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
 
     for (int i = 0; i < N; ++i)

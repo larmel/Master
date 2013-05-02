@@ -6511,18 +6511,538 @@ Case Studies
 \end_layout
 
 \begin_layout Standard
-Graphs illustrating the effect in generated or constructed examples.
- Effects of applying heuristics.
- Ideally some results from applying this to FFT.
-\end_layout
-
-\begin_layout Standard
-Idea: Try compiling fftw with align-loops=32 perhaps.
- Might not work on generated codelets.
+In this chapter we show that bias effects illustrated in the previous chapter
+ is present in real software, and poses a significant challenge for performance
+ benchmarks.
+ In addition to pointing out problems, also show how measures can be taken
+ to handle bias, and obtain a speedup on average over the space of possible
+ contexts.
+ 
 \end_layout
 
 \begin_layout Section
 FFTW
+\end_layout
+
+\begin_layout Standard
+The fast fourier transform is arguably one of the most fundamental and important
+ algorithms available.
+ As an integral part of applications such as signal and image processing,
+ a huge amount of work has been done over the years to optimize and tweak
+ the performance of this algorithm.
+ Today there are a plethora of excellent implementations available, FFTW,
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+Fastest Fourier Transform in the West
+\begin_inset Quotes erd
+\end_inset
+
+ being one of the more widely used.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Memory Access Pattern
+\end_layout
+
+\begin_layout Standard
+As we have seen previously, algorithms with lots of read and write operations
+ to two or more aligned areas of memory can trigger aliasing effects.
+ Unlike the convolution example from Section [?], fourier transforms are
+ not computed with sequential accesses between input and output buffers.
+ 
+\end_layout
+
+\begin_layout Subsection
+Impact of Stack Position for Small Transforms
+\end_layout
+
+\begin_layout Standard
+Our understanding of the fft memory access patterns, together with knowledge
+ about address alias effects, suggests that potential for bias most likely
+ will be present in kernels for small input sizes.
+ With input and output arrays covering less than the 4K limit, there will
+ be potential for overlap.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#define N 16
+\end_layout
+
+\begin_layout Plain Layout
+
+#define X 200000
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main(int argc, char **argv)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < N; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+        in[i][0] = i, in[i][1] = i;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_plan p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < X; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+        fftw_execute(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_destroy_plan(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_free(in), fftw_free(out);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:fft-alias-program"
+
+\end_inset
+
+C program invoking the 16 element AVX kernel of FFTW
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The code in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:fft-alias-program"
+
+\end_inset
+
+ computes the fourier transform of 16 complex numbers with double precision.
+ 
+\end_layout
+
+\begin_layout Description
+fftw_malloc A wrapper around the standard malloc, returning heap-allocated
+ data.
+ This is supposed to provide a stronger alignment guarantee than malloc
+ does, needed for vectorized code.
+ The system's default malloc might not align data on wide enough boundaries,
+ although reasonable implementations do.
+\end_layout
+
+\begin_layout Description
+fftw_plan_dft_1d This creates a 
+\emph on
+plan
+\emph default
+ for how to most efficiently compute a one-dimensional discrete fourier
+ transform.
+ This step encapsules the auto-tuning part of FFTW, as plans can be constructed
+ based on actual measurements and benchmarks done for the current machine.
+ Knowledge of well performing plans is stored as wisdom, which is used to
+ construct other plans later.
+\end_layout
+
+\begin_layout Description
+fftw_execute Issues the plan.
+\end_layout
+
+\begin_layout Subsection
+Eliminating Bias by Modifying Kernels
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/callgraph.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Call graph for Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:fft-alias-program"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Reset stack in apply_extra_iter
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    void *rsp;
+\end_layout
+
+\begin_layout Plain Layout
+
+    asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq  %%rsp, %0;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        "andq  $-4096, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "=r"(rsp) : : );
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    const P *ego = (const P *) ego_;
+\end_layout
+
+\begin_layout Plain Layout
+
+    INT vl = ego->vl;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    ASSERT_ALIGNED_DOUBLE;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    /* for 4-way SIMD when VL is odd: iterate over an
+\end_layout
+
+\begin_layout Plain Layout
+
+    even vector length VL, and then execute the last
+\end_layout
+
+\begin_layout Plain Layout
+
+    iteration as a 2-vector with vector stride 0.
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+    ego->k(ri, ii, ro, io, ego->is, ego->os, vl - 1, ego->ivs, ego->ovs);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    ego->k(ri + (vl - 1) * ego->ivs, ii + (vl - 1) * ego->ivs,
+\end_layout
+
+\begin_layout Plain Layout
+
+        ro + (vl - 1) * ego->ovs, io + (vl - 1) * ego->ovs,
+\end_layout
+
+\begin_layout Plain Layout
+
+        ego->is, ego->os, 1, 0, 0);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq  %0, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : : "r"(rsp) : );
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/default.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/modified.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Performance with and without stack fix
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+On average over two 4K periods, the modified fftw has a slight performance
+ gain on average.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Statistics for bin/benchmark-default.csv
+\end_layout
+
+\begin_layout Plain Layout
+
+Read 512 items
+\end_layout
+
+\begin_layout Plain Layout
+
+    Min.
+  1st Qu.
+   Median     Mean  3rd Qu.
+     Max.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+30343190 30439340 30478460 31076180 30700200 39197490 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Statistics for bin/benchmark-modified.csv
+\end_layout
+
+\begin_layout Plain Layout
+
+Read 512 items
+\end_layout
+
+\begin_layout Plain Layout
+
+    Min.
+  1st Qu.
+   Median     Mean  3rd Qu.
+     Max.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+30749250 30844800 30891190 30946340 30937830 33109630
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+OLD STUFF BEYOND THIS POINT
 \end_layout
 
 \begin_layout Standard
@@ -6580,7 +7100,7 @@ Fftw provides a wrapper around the provided malloc to ensure alignment.
 \end_layout
 
 \begin_layout Subsection
-Environment size
+Stack Alignment
 \end_layout
 
 \begin_layout Standard
@@ -7016,6 +7536,10 @@ Consider cases where heap addresses can collide.
  previously allocated sizes, and try to return addresses with no conflicts
  for small allocations.
  That way no modifications to the interface is needed either.
+\end_layout
+
+\begin_layout Section
+BLAS
 \end_layout
 
 \begin_layout Chapter

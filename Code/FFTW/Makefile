@@ -27,18 +27,10 @@ FFTW_DEFAULT=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
 # Link with custom built and modified fftw library
 FFTW_MODIFIED=-I/usr/local/custom/include -L/usr/local/custom/lib/ -Wl,-rpath,/usr/local/custom/lib
 
-# TODO: Remove this
-DATATYPE=double
-ifeq "$(DATATYPE)" "float"
-	FFTWLIB=-lfftw3f
-else
-	FFTWLIB=-lfftw3
-endif
-
-.PHONY: clean graph benchmark
+.PHONY: clean graph benchmark worstcase
 
 fftw-alias: fftw-alias.c
-	cc -o $@ $(CFLAGS) -DDATATYPE$(DATATYPE) $+ $(FFTW_INCLUDES) $(FFTWLIB) -lm
+	cc -o $@ $(CFLAGS) $+ $(FFTW_INCLUDES) $(FFTWLIB) -lm
 
 stat.csv: fftw-alias
 	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 300 \
@@ -54,18 +46,27 @@ fftw-default: fftw-alias.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_DEFAULT) -lfftw3 -lm
 
 fftw-modified: fftw-alias.c
-	cc -o $@ $(CFLAGS) -DMODIFIED $+ $(FFTW_MODIFIED) -lfftw3 -lm
+	cc -o $@ $(CFLAGS) $+ $(FFTW_MODIFIED) -lfftw3 -lm
 
 # Creates two dataseries, one for fftw with stackfix implemented, and one default installation.
 # Run a large number of samples with randomized environment (ASLR enabled). 
 benchmark: fftw-default fftw-modified
-	../lperf ./fftw-default  -e $(COUNTERS) -r 1 -n 500 -o bin/benchmark-default.csv  \
-		--environment-offset 1700 --environment-increment 0
-	../lperf ./fftw-modified -e $(COUNTERS) -r 1 -n 500 -o bin/benchmark-modified.csv \
-		--environment-offset 1700 --environment-increment 16 --argument-increment 10
+	../lperf ./fftw-default  -e $(COUNTERS) -r 1 -n 512 -o bin/benchmark-default.csv  \
+		--environment-offset 1700 --environment-increment 16
+	../lperf ./fftw-modified -e $(COUNTERS) -r 1 -n 512 -o bin/benchmark-modified.csv \
+		--environment-offset 1700 --environment-increment 16 --argument-increment 0
 	../lplot bin/benchmark-default.csv  -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'default'  --legend 'upper right' &
 	../lplot bin/benchmark-modified.csv -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'modified' --legend 'upper right' &
 	bin/statistics bin/benchmark-default.csv bin/benchmark-modified.csv
+
+# Runs the default fftw with a worst-case environment and varying heap placement.
+# Does not work: heap-heap is insignificant. No alias when arrays are aligned -.-
+worstcase: fftw-default
+	../lperf ./fftw-default -e $(COUNTERS) -r 1 -n 500 -o bin/worstcase.csv \
+		--environment-offset 1700 --environment-increment 16 \
+		--argument-offset 0 --argument-increment 0 > output
+	../lplot bin/worstcase.csv -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'worstcase' --legend 'upper right' &
+
 
 clean:
 	rm -f fftw-alias stat.csv
