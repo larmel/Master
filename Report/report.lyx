@@ -6511,7 +6511,7 @@ Case Studies
 \end_layout
 
 \begin_layout Standard
-In this chapter we show that bias effects illustrated in the previous chapter
+In this chapter we show how bias effects illustrated in the previous chapter
  is present in real software, and poses a significant challenge for performance
  benchmarks.
  In addition to pointing out problems, also show how measures can be taken
@@ -6544,7 +6544,7 @@ Fastest Fourier Transform in the West
 \end_layout
 
 \begin_layout Paragraph
-Memory Access Pattern
+Potential for Bias
 \end_layout
 
 \begin_layout Standard
@@ -6555,16 +6555,47 @@ As we have seen previously, algorithms with lots of read and write operations
  
 \end_layout
 
-\begin_layout Subsection
-Impact of Stack Position for Small Transforms
+\begin_layout Paragraph
+Installation and Configuration
 \end_layout
 
 \begin_layout Standard
-Our understanding of the fft memory access patterns, together with knowledge
- about address alias effects, suggests that potential for bias most likely
- will be present in kernels for small input sizes.
- With input and output arrays covering less than the 4K limit, there will
- be potential for overlap.
+We used the latest version 3.3.3 of FFTW in all our tests, compiled from source
+ and built as a shared library.
+ For optimal performance on our machine, we explicitly enable support for
+ sse2 and avx instruction set.
+ In addition, we set the march option to 'native', allowing the compiler
+ to specifically tune generated code to our architecture.
+ The configure script is envoked as follows.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph*
+Test Setup
+\end_layout
+
+\begin_layout Standard
+FFTW is a very comprehensive library with lots of functionality.
+ Our approach will be to intelligently engineer examples where measurement
+ bias is easily measurable.
+ We create a simple C program with two parameters; the number of elements
+ to transform, and the number of times to repeat the transform.
+ This way, slight bias in smaller input sizes can be amplified.
  
 \end_layout
 
@@ -6577,27 +6608,13 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily},language=C"
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-#define N 16
-\end_layout
-
-\begin_layout Plain Layout
-
-#define X 200000
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-int main(int argc, char **argv)
+int main() 
 \end_layout
 
 \begin_layout Plain Layout
@@ -6691,7 +6708,8 @@ name "alg:fft-alias-program"
 
 \end_inset
 
-C program invoking the 16 element AVX kernel of FFTW
+C program snippet for computing the Fourier transform of N double precision
+ complex numbers X times.
 \end_layout
 
 \end_inset
@@ -6705,15 +6723,16 @@ C program invoking the 16 element AVX kernel of FFTW
 \end_layout
 
 \begin_layout Standard
-The code in Listing 
+For more information about the API, we recommend what resource? (commence
+ link or reference).
+ The api calls from Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:fft-alias-program"
 
 \end_inset
 
- computes the fourier transform of 16 complex numbers with double precision.
- 
+ is explained below.
 \end_layout
 
 \begin_layout Description
@@ -6730,12 +6749,24 @@ fftw_plan_dft_1d This creates a
 \emph on
 plan
 \emph default
- for how to most efficiently compute a one-dimensional discrete fourier
- transform.
+ for how to most efficiently compute a discrete fourier transform of size
+ 
+\begin_inset Formula $N$
+\end_inset
+
+.
  This step encapsules the auto-tuning part of FFTW, as plans can be constructed
- based on actual measurements and benchmarks done for the current machine.
- Knowledge of well performing plans is stored as wisdom, which is used to
- construct other plans later.
+ based on actual measurements and benchmarks done on the current machine.
+ Knowledge of well performing plans is stored as 
+\emph on
+wisdom
+\emph default
+, which is used to construct other plans later.
+\begin_inset Newline newline
+\end_inset
+
+FFTW_FORWARD specifies that a forward transform is to be performed, as opposed
+ to FFTW_BACKWARDS, which will compute the inverse transform.
 \end_layout
 
 \begin_layout Description
@@ -6743,6 +6774,86 @@ fftw_execute Issues the plan.
 \end_layout
 
 \begin_layout Subsection
+Impact of Stack Position for Small Transforms
+\end_layout
+
+\begin_layout Standard
+Our understanding of the fft memory access patterns, together with knowledge
+ about address alias effects, suggests that potential for bias most likely
+ will be present in kernels for small input sizes.
+ With input and output arrays covering less than the 4K limit, there will
+ be potential for overlap, as well as situations where all memory segments
+ are disjoint.
+ There are at least four different 
+\end_layout
+
+\begin_layout Standard
+After attempting a couple of different configurations for tranform size
+ and iteration count, we find that computing transforms of 16-element arrays
+ has noticeable bias to stack position.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+ shows the performance of 200'000 repeated transforms under increasing environme
+nt size.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/default.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-stack-bias"
+
+\end_inset
+
+Performance counter measures for Fourier transform under changing stack
+ position.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The program is run 512 times, each with an additional 16 bytes added to
+ the environment, covering two 4096B segments.
+ As suspected, we see a cyclic pattern repeating twice in this case.
+ Quite clearly, the size of the environment (or rather, lower-order bits
+ in virtual address position of stack), significantly impacts performance.
+\end_layout
+
+\begin_layout Subsubsection*
 Eliminating Bias by Modifying Kernels
 \end_layout
 
@@ -6768,7 +6879,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Call graph for Listing 
+Call graph for call to execute in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:fft-alias-program"
@@ -6793,8 +6904,16 @@ Reset stack in apply_extra_iter
 \end_layout
 
 \begin_layout Standard
+\noindent
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
 inline false
 status open
 
@@ -6929,22 +7048,28 @@ static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
 
 \end_layout
 
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status open
+\begin_layout Plain Layout
+\begin_inset Caption
 
 \begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/fft/default.eps
-	scale 70
+Modified apply_extra_iter from FFTW, located under ?
+\end_layout
 
 \end_inset
 
 
 \end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
 
 \begin_layout Plain Layout
 \align center
@@ -6961,7 +7086,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Performance with and without stack fix
+Performance after stack fix is added to apply_extra_iter
 \end_layout
 
 \end_inset
@@ -7042,7 +7167,7 @@ Read 512 items
 \end_layout
 
 \begin_layout Standard
-OLD STUFF BEYOND THIS POINT
+=============== OLD STUFF BEYOND THIS POINT ===============
 \end_layout
 
 \begin_layout Standard
