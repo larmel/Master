@@ -6814,7 +6814,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/fft/default.eps
-	scale 70
+	width 100col%
 
 \end_inset
 
@@ -6846,15 +6846,31 @@ Performance counter measures for Fourier transform under changing stack
 \end_layout
 
 \begin_layout Standard
-The program is run 512 times, each with an additional 16 bytes added to
- the environment, covering two 4096B segments.
- As suspected, we see a cyclic pattern repeating twice in this case.
- Quite clearly, the size of the environment (or rather, lower-order bits
- in virtual address position of stack), significantly impacts performance.
+The same program is run 8192 times, adding a single byte to the environment
+ between each execution.
+ This covers two 4K segments of lower order virtual address bits.
+ As suspected, we get a graph with the same pattern repeating twice in this
+ case.
+ As shown by the cycle count, position of stack significantly impacts performanc
+e.
 \end_layout
 
 \begin_layout Subsubsection*
 Eliminating Bias by Modifying Kernels
+\end_layout
+
+\begin_layout Standard
+Hypothesis; stack collides with heap segments.
+ Looking at callgraph shows the chain of calls leading to the eventual kernel
+ 
+\begin_inset Quotes eld
+\end_inset
+
+n1fv_16
+\begin_inset Quotes erd
+\end_inset
+
+, which is compiled with AVX instructions enabled on our machine.
 \end_layout
 
 \begin_layout Standard
@@ -6900,13 +6916,128 @@ reference "alg:fft-alias-program"
 \end_layout
 
 \begin_layout Standard
-Reset stack in apply_extra_iter
+The function signature for the kernel can give some hints as to what is
+ happening.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride
+ os, INT v, INT ivs, INT ovs)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This kernel computes the Fourier transform between input buffer 
+\begin_inset Quotes eld
+\end_inset
+
+ri
+\begin_inset Quotes erd
+\end_inset
+
+, writing the result to output buffer 
+\begin_inset Quotes eld
+\end_inset
+
+ro
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Consider the possible memory locations that can vary at runtime for this
+ function.
+\end_layout
+
+\begin_layout Itemize
+Position of buffers ri (input) and ro (output) on heap.
+ These are pointers previously returned by calls to fftw_malloc, addresses
+ in general unpredictable by the kernel, except for some alignment constraints.
+\end_layout
+
+\begin_layout Itemize
+Position of stack at function invocation.
+ Looking at the assembly generated for the kernel, we find that many memory
+ access instructions to stack, often specified relative to the stack pointer.
+ Some examples include 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+vmovapd %ymm14, -120(%rsp)
+\end_layout
+
+\end_inset
+
+ and 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+vaddpd -56(%rsp), %ymm7, %ymm12
+\end_layout
+
+\end_inset
+
+.
+ The six first function arguments reside in registers 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+%rdi %rsi %rdx %rcx %r8 %r9
+\end_layout
+
+\end_inset
+
+, while the remaining three are pushed on stack.
+ 
+\end_layout
+
+\begin_layout Itemize
+Position of statically allocated constants in memory.
+ Three large floating point constants are statically built into the kernel,
+ confirmed by looking at the disassembly, which can be found in dft/simd/avx/n1f
+v_16.o.
+ Their positions in virtual address space will be determined by where the
+ library is placed by the dynamic linker.
+ The relative position between the constants are fixed.
+\end_layout
+
+\begin_layout Standard
+With address randomization (ASLR) disabled, all parameters except stack
+ position, are fixed for the previous test.
+ For our particular test, the heap allocated input and output buffers reside
+ in virtual addresses 0x602040 and 0x601c0 respectively.
+ The stack pointer at kernel invocation is difficult to observe without
+ introducing observer effects.
+ However, it is a fair assumption that address alias happens when stack
+ accesses collide with heap addresses.
 \end_layout
 
 \begin_layout Standard
 \noindent
 \begin_inset Float algorithm
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -6958,65 +7089,7 @@ static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
 
 \begin_layout Plain Layout
 
-    const P *ego = (const P *) ego_;
-\end_layout
-
-\begin_layout Plain Layout
-
-    INT vl = ego->vl;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    ASSERT_ALIGNED_DOUBLE;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    /* for 4-way SIMD when VL is odd: iterate over an
-\end_layout
-
-\begin_layout Plain Layout
-
-    even vector length VL, and then execute the last
-\end_layout
-
-\begin_layout Plain Layout
-
-    iteration as a 2-vector with vector stride 0.
- */
-\end_layout
-
-\begin_layout Plain Layout
-
-    ego->k(ri, ii, ro, io, ego->is, ego->os, vl - 1, ego->ivs, ego->ovs);
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    ego->k(ri + (vl - 1) * ego->ivs, ii + (vl - 1) * ego->ivs,
-\end_layout
-
-\begin_layout Plain Layout
-
-        ro + (vl - 1) * ego->ovs, io + (vl - 1) * ego->ovs,
-\end_layout
-
-\begin_layout Plain Layout
-
-        ego->is, ego->os, 1, 0, 0);
+    /** (Original implementation) **/
 \end_layout
 
 \begin_layout Plain Layout
@@ -7052,7 +7125,8 @@ static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Modified apply_extra_iter from FFTW, located under ?
+Modified apply_extra_iter from FFTW, aligning stack to a 4K boundary.
+ Implementation located in the file dft/direct.c.
 \end_layout
 
 \end_inset
@@ -7063,10 +7137,73 @@ Modified apply_extra_iter from FFTW, located under ?
 \end_inset
 
 
+\end_layout
+
+\begin_layout Paragraph
+The fix
+\end_layout
+
+\begin_layout Standard
+The position of stack or heap at runtime is unknown to the kernel.
+ It can execute with a 
+\begin_inset Quotes eld
+\end_inset
+
+good
+\begin_inset Quotes erd
+\end_inset
+
+ configuration with few collisions, or a 
+\begin_inset Quotes eld
+\end_inset
+
+bad
+\begin_inset Quotes erd
+\end_inset
+
+ configuration as in one of the periodic peaks illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+.
+ Once the kernel is invoked, the only thing we can control is placement
+ of stack allocated variables.
+ Somewhat surprisingly, the generated code uses almost exclusively stack
+ pointer to specify addresses for memory operations, suggesting that simply
+ offseting the stack pointer via some inline assembly can work.
+\end_layout
+
+\begin_layout Standard
+Looking at the call graph again, we have several options for where to programmat
+ically align stack on a suitable address.
+ In the end, we found that aligning in apply_extra_iter made the most sense,
+ and also provided a slight gain compared to doing it within the kernel
+ itself.
+ As the name suggests, this function actually calls the kernel twice.
+ 
+\end_layout
+
+\begin_layout Standard
+The andq instruction will zero out the last 12 bits of %rsp, effectively
+ subtracting some number between 0 and 0xfff.
+ Recall that the stack grows downwards, thus subtracting any (reasonably
+ small) amount will not overwrite other data.
+ We run the same benchmark again, shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-modified"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
+placement h
 wide false
 sideways false
 status open
@@ -7075,7 +7212,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/fft/modified.eps
-	scale 70
+	width 100col%
 
 \end_inset
 
@@ -7086,6 +7223,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-modified"
+
+\end_inset
+
 Performance after stack fix is added to apply_extra_iter
 \end_layout
 
@@ -7100,12 +7243,22 @@ Performance after stack fix is added to apply_extra_iter
 \end_layout
 
 \begin_layout Standard
-On average over two 4K periods, the modified fftw has a slight performance
- gain on average.
+Over two 4K periods, the modified version is much less sensitive to stack
+ placement, removing almost all the bias from previously.
+ We also gain a 
+\emph on
+very
+\emph default
+ slight speedup on average, with mean cycle count going from 31061930 to
+ 30936690.
+ More interestingly however, is the worst case performance, which greatly
+ improves.
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
+lstparams "basicstyle={\small}"
 inline false
 status open
 
@@ -7116,7 +7269,7 @@ Statistics for bin/benchmark-default.csv
 
 \begin_layout Plain Layout
 
-Read 512 items
+Read 8192 items
 \end_layout
 
 \begin_layout Plain Layout
@@ -7130,7 +7283,7 @@ Read 512 items
 
 \begin_layout Plain Layout
 
-30343190 30439340 30478460 31076180 30700200 39197490 
+30296120 30423280 30461260 31061930 30702760 45402980 
 \end_layout
 
 \begin_layout Plain Layout
@@ -7144,7 +7297,7 @@ Statistics for bin/benchmark-modified.csv
 
 \begin_layout Plain Layout
 
-Read 512 items
+Read 8192 items
 \end_layout
 
 \begin_layout Plain Layout
@@ -7158,12 +7311,21 @@ Read 512 items
 
 \begin_layout Plain Layout
 
-30749250 30844800 30891190 30946340 30937830 33109630
+30695600 30835880 30876730 30936690 30927460 33106160
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\begin_layout Paragraph
+Why it works
+\end_layout
+
+\begin_layout Standard
+Let's draw a picture of the 4K memory map when running this function.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -7240,49 +7402,6 @@ reference "fig:fftw-environment"
  A clear bias towards environment sizes outside of the 2000--3000 area.
  Plotting over a wider area shows that the bias is periodic over 4096 bytes,
  showing that alias on the last 16 bits is probably the cause again.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/fft/fftw-environment.eps
-	scale 70
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:fftw-environment"
-
-\end_inset
-
-Offseting incrementally by 2.
- Double.
- n = 16, x = 200000
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsection

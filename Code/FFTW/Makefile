@@ -14,33 +14,13 @@ COUNTERS=cycles:u,r0107:u,r01a2:u,r05a3:u
 
 CFLAGS=-std=c99 -O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 
-# Custom built FFTW-3.3.3 (see INSTALL)
-# Remove to use prebuilt package instead. Using evil rpath because LD_LIBRARY_PATH cannot
+# Custom built FFTW-3.3.3 (see INSTALL) Using evil rpath because LD_LIBRARY_PATH cannot
 # be set using the lperf framework (default empty environment). Not needed for static link.
 # Built two versions, default in /usr/local, and modified kernels in /usr/local/custom
-FFTW_PATH=/usr/local/custom
-FFTW_INCLUDES=-I$(FFTW_PATH)/include -L$(FFTW_PATH)/lib/ -Wl,-rpath,$(FFTW_PATH)/lib
-
-# Link with custom built but unmodified fftw library
 FFTW_DEFAULT=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
-
-# Link with custom built and modified fftw library
 FFTW_MODIFIED=-I/usr/local/custom/include -L/usr/local/custom/lib/ -Wl,-rpath,/usr/local/custom/lib
 
-.PHONY: clean graph benchmark worstcase
-
-fftw-alias: fftw-alias.c
-	cc -o $@ $(CFLAGS) $+ $(FFTW_INCLUDES) $(FFTWLIB) -lm
-
-stat.csv: fftw-alias
-	../lperf ./fftw-alias -e $(COUNTERS) -r 1 -n 300 \
-		--argument-offset 0 --argument-increment 0 \
-		--environment-offset 1700 --environment-increment 16 > output
-
-graph: stat.csv
-	../lplot -e cycles:u,r0107:u,r01a2:u,r05a3:u stat.csv --title '${title}' --legend 'upper right'
-
-# Rewamped makefile
+.PHONY: clean purge benchmark
 
 fftw-default: fftw-alias.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_DEFAULT) -lfftw3 -lm
@@ -50,23 +30,32 @@ fftw-modified: fftw-alias.c
 
 # Creates two dataseries, one for fftw with stackfix implemented, and one default installation.
 # Run a large number of samples with randomized environment (ASLR enabled). 
-benchmark: fftw-default fftw-modified
-	../lperf ./fftw-default  -e $(COUNTERS) -r 1 -n 512 -o bin/benchmark-default.csv  \
-		--environment-offset 1700 --environment-increment 16
-	../lperf ./fftw-modified -e $(COUNTERS) -r 1 -n 512 -o bin/benchmark-modified.csv \
-		--environment-offset 1700 --environment-increment 16 --argument-increment 0
-	../lplot bin/benchmark-default.csv  -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'default'  --legend 'upper right' &
-	../lplot bin/benchmark-modified.csv -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'modified' --legend 'upper right' &
+benchmark: 
+	#bin/benchmark-default.csv bin/benchmark-modified.csv
+	../lplot bin/benchmark-default.csv  -e cycles:u,r0107:u --ticks 1024 --title 'default' \
+		--legend 'upper right' --labels 'Unhalted core cycles' 'Address alias' \
+		--dimension 8.5 3.5 \
+		--xlabel 'Bytes added to environment'
+	mv default.eps bin/default.eps
+	../lplot bin/benchmark-modified.csv -e cycles:u,r0107:u --ticks 1024 --title 'modified' \
+		--legend 'upper right' --labels 'Unhalted core cycles' 'Address alias' \
+		--dimension 8.5 3.5 --ylim 50000000 \
+		--xlabel 'Bytes added to environment'
+	mv modified.eps bin/modified.eps
 	bin/statistics bin/benchmark-default.csv bin/benchmark-modified.csv
 
-# Runs the default fftw with a worst-case environment and varying heap placement.
-# Does not work: heap-heap is insignificant. No alias when arrays are aligned -.-
-worstcase: fftw-default
-	../lperf ./fftw-default -e $(COUNTERS) -r 1 -n 500 -o bin/worstcase.csv \
-		--environment-offset 1700 --environment-increment 16 \
-		--argument-offset 0 --argument-increment 0 > output
-	../lplot bin/worstcase.csv -e cycles:u,r0107:u,r01a2:u,r05a3:u --title 'worstcase' --legend 'upper right' &
+bin/benchmark-default.csv: fftw-default
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
 
+bin/benchmark-modified.csv: fftw-modified
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
+
+# Allocate padding heap memory to provoke worst case collision with naive stackfix
+worstcase:
+	
 
 clean:
-	rm -f fftw-alias stat.csv
+	rm -f fftw-default fftw-modified
+
+purge:
+	rm -f bin/benchmark*.csv

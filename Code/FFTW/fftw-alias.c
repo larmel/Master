@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <fftw3.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #ifndef N
     #define N 16
@@ -11,13 +11,11 @@
     #define X 200000
 #endif
 
-// 0xef for -n 16
-
 int main(int argc, char **argv)
 {
-    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
     int n = atoi(argv[1]);
     char *fill = malloc(sizeof(char) * n);
+    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
     fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
 
     for (int i = 0; i < N; ++i)
