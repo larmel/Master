@@ -30,32 +30,41 @@ fftw-modified: fftw-alias.c
 
 # Creates two dataseries, one for fftw with stackfix implemented, and one default installation.
 # Run a large number of samples with randomized environment (ASLR enabled). 
-benchmark: 
-	#bin/benchmark-default.csv bin/benchmark-modified.csv
-	../lplot bin/benchmark-default.csv  -e cycles:u,r0107:u --ticks 1024 --title 'default' \
+benchmark: bin/default.csv bin/modified.csv
+	../lplot bin/default.csv  -e cycles:u,r0107:u --ticks 1024 --title 'default' \
 		--legend 'upper right' --labels 'Unhalted core cycles' 'Address alias' \
 		--dimension 8.5 3.5 \
 		--xlabel 'Bytes added to environment'
 	mv default.eps bin/default.eps
-	../lplot bin/benchmark-modified.csv -e cycles:u,r0107:u --ticks 1024 --title 'modified' \
+	../lplot bin/modified.csv -e cycles:u,r0107:u --ticks 1024 --title 'modified' \
 		--legend 'upper right' --labels 'Unhalted core cycles' 'Address alias' \
 		--dimension 8.5 3.5 --ylim 50000000 \
 		--xlabel 'Bytes added to environment'
 	mv modified.eps bin/modified.eps
-	bin/statistics bin/benchmark-default.csv bin/benchmark-modified.csv
-
-bin/benchmark-default.csv: fftw-default
-	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
-
-bin/benchmark-modified.csv: fftw-modified
-	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
+	bin/statistics bin/default.csv bin/modified.csv
 
 # Allocate padding heap memory to provoke worst case collision with naive stackfix
-worstcase:
-	
+worstcase: bin/worstcase.csv
+	../lplot $+ -e cycles:u,r0107:u --ticks 1024 --title $@ \
+		--legend 'center right' --labels 'Unhalted core cycles' 'Address alias' \
+		--dimension 8.5 3.5 \
+		--xlabel 'Bytes added to environment'
+	mv $@.eps bin/$@.eps
+
+bin/default.csv: fftw-default
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
+
+bin/modified.csv: fftw-modified
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1
+
+# 7500 bytes before calling fftw_malloc hits a peak for alias events
+# Aligns in, out to 0x604da0, 0x604f00
+bin/worstcase.csv: fftw-modified
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 8192 -o $@ --environment-offset 1700 --environment-increment 1 \
+		--argument-offset 7500 --argument-increment 0
 
 clean:
 	rm -f fftw-default fftw-modified
 
 purge:
-	rm -f bin/benchmark*.csv
+	rm -f bin/*.csv

@@ -7325,7 +7325,50 @@ Why it works
 
 \begin_layout Standard
 Let's draw a picture of the 4K memory map when running this function.
+ Allocating another buffer of 7400B using regular malloc before calling
+ fftw_malloc, pushing in and out to 0x604da0 and 0x604f00 respectively.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/worstcase.eps
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-worstcase"
+
+\end_inset
+
+Bad heap alignment combined with stack fix
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -7391,14 +7434,7 @@ Stack Alignment
 \end_layout
 
 \begin_layout Standard
-Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-environment"
-
-\end_inset
-
- shows cycles for incrementing environment by one byte.
+Figure shows cycles for incrementing environment by one byte.
  A clear bias towards environment sizes outside of the 2000--3000 area.
  Plotting over a wider area shows that the bias is periodic over 4096 bytes,
  showing that alias on the last 16 bits is probably the cause again.

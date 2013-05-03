@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <fftw3.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifndef N
     #define N 16
