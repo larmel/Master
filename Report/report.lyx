@@ -6591,9 +6591,9 @@ Test Setup
 
 \begin_layout Standard
 FFTW is a very comprehensive library with lots of functionality.
- Our approach will be to intelligently engineer examples where measurement
- bias is easily measurable.
- We create a simple C program with two parameters; the number of elements
+ Our approach will be to engineer simple use cases where bias is easily
+ measurable.
+ We create a small C program with two parameters; the number of elements
  to transform, and the number of times to repeat the transform.
  This way, slight bias in smaller input sizes can be amplified.
  
@@ -6855,14 +6855,41 @@ The same program is run 8192 times, adding a single byte to the environment
 e.
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsection
 Eliminating Bias by Modifying Kernels
 \end_layout
 
 \begin_layout Standard
-Hypothesis; stack collides with heap segments.
- Looking at callgraph shows the chain of calls leading to the eventual kernel
+Knowing address aliasing being the cause of bias, we can try to modify FFTW
+ to avoid collisions at runtime, hopefully avoiding the peaks from Figure
  
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+.
+ We use Valgrind 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://valgrind.org/"
+target "http://valgrind.org/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ to analyze the call chain from fftw_execute.
+ Looking at the callgraph shows a chain of calls, eventually leading to
+ a function called 
 \begin_inset Quotes eld
 \end_inset
 
@@ -6870,7 +6897,18 @@ n1fv_16
 \begin_inset Quotes erd
 \end_inset
 
-, which is compiled with AVX instructions enabled on our machine.
+.
+ An overview of what kernels are used to execute a plan can be found by
+ calling fftw_print_plan.
+ In our case, the plan reads 
+\begin_inset Quotes eld
+\end_inset
+
+(dft-direct-16 "n1fv_16_avx")
+\begin_inset Quotes erd
+\end_inset
+
+, specifying the n1fv_16 kernel compiled with AVX instructions enabled.
 \end_layout
 
 \begin_layout Standard
@@ -6915,9 +6953,14 @@ reference "alg:fft-alias-program"
 
 \end_layout
 
+\begin_layout Paragraph
+n1fv_16
+\end_layout
+
 \begin_layout Standard
-The function signature for the kernel can give some hints as to what is
- happening.
+This particular function is located in the file dft/simd/common/n1fv_16.c,
+ which contains an automatically generated kernel for computing a 16 element
+ DFT.
 \end_layout
 
 \begin_layout Standard
@@ -6928,8 +6971,8 @@ status open
 
 \begin_layout Plain Layout
 
-static void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride
- os, INT v, INT ivs, INT ovs)
+void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride os,
+ INT v, INT ivs, INT ovs)
 \end_layout
 
 \end_inset
@@ -6938,24 +6981,14 @@ static void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride
 \end_layout
 
 \begin_layout Standard
-This kernel computes the Fourier transform between input buffer 
-\begin_inset Quotes eld
-\end_inset
+Two separate implementations are provided, one specifically optimized for
+ architectures supporting fused multiply-add.
+ FFTW is compiled with FMA disabled in our case, as there are no such instructio
+ns on Ivy Bridge.
+\end_layout
 
-ri
-\begin_inset Quotes erd
-\end_inset
-
-, writing the result to output buffer 
-\begin_inset Quotes eld
-\end_inset
-
-ro
-\begin_inset Quotes erd
-\end_inset
-
-.
- Consider the possible memory locations that can vary at runtime for this
+\begin_layout Standard
+Consider the possible memory locations that can vary at runtime for this
  function.
 \end_layout
 
@@ -6966,9 +6999,31 @@ Position of buffers ri (input) and ro (output) on heap.
 \end_layout
 
 \begin_layout Itemize
-Position of stack at function invocation.
- Looking at the assembly generated for the kernel, we find that many memory
- access instructions to stack, often specified relative to the stack pointer.
+Position of stack.
+ Both function parameters and local automatic variables contributes to many
+ stack accesses within the function.
+ 
+\end_layout
+
+\begin_layout Itemize
+Position of statically allocated constants in memory.
+ Three large floating point constants are statically built into the kernel.
+ Their positions in virtual address space will be determined at run time
+ by the dynamic linker.
+ The relative position between the constants are fixed.
+\end_layout
+
+\begin_layout Standard
+With address randomization (ASLR) disabled, all parameters except stack
+ position are fixed.
+ For our particular test, the heap allocated input and output buffers always
+ reside in virtual addresses 0x602040 and 0x601c0 respectively.
+ The stack pointer at kernel invocation is difficult to observe without
+ introducing observer effects.
+ However, it is a fair assumption that address alias happens when stack
+ accesses collide with heap addresses.
+ Looking at the generated assembly code, we find that many memory access
+ instructions to stack, often specified relative to the stack pointer.
  Some examples include 
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily},breaklines=true"
@@ -7013,25 +7068,13 @@ status open
  
 \end_layout
 
-\begin_layout Itemize
-Position of statically allocated constants in memory.
- Three large floating point constants are statically built into the kernel,
- confirmed by looking at the disassembly, which can be found in dft/simd/avx/n1f
-v_16.o.
- Their positions in virtual address space will be determined by where the
- library is placed by the dynamic linker.
- The relative position between the constants are fixed.
+\begin_layout Paragraph
+apply_extra_iter
 \end_layout
 
 \begin_layout Standard
-With address randomization (ASLR) disabled, all parameters except stack
- position, are fixed for the previous test.
- For our particular test, the heap allocated input and output buffers reside
- in virtual addresses 0x602040 and 0x601c0 respectively.
- The stack pointer at kernel invocation is difficult to observe without
- introducing observer effects.
- However, it is a fair assumption that address alias happens when stack
- accesses collide with heap addresses.
+This is where we are actually applying the fix.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -7089,7 +7132,7 @@ static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
 
 \begin_layout Plain Layout
 
-    /** (Original implementation) **/
+    (...)
 \end_layout
 
 \begin_layout Plain Layout
@@ -7139,12 +7182,8 @@ Modified apply_extra_iter from FFTW, aligning stack to a 4K boundary.
 
 \end_layout
 
-\begin_layout Paragraph
-The fix
-\end_layout
-
 \begin_layout Standard
-The position of stack or heap at runtime is unknown to the kernel.
+The position of stack is unknown to the kernel at runtime.
  It can execute with a 
 \begin_inset Quotes eld
 \end_inset
@@ -7253,65 +7292,184 @@ very
  30936690.
  More interestingly however, is the worst case performance, which greatly
  improves.
- 
 \end_layout
 
 \begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
+\begin_inset Float table
+placement h
+wide false
+sideways false
 status open
 
 \begin_layout Plain Layout
-
-Statistics for bin/benchmark-default.csv
-\end_layout
-
-\begin_layout Plain Layout
-
-Read 8192 items
-\end_layout
-
-\begin_layout Plain Layout
-
-    Min.
-  1st Qu.
-   Median     Mean  3rd Qu.
-     Max.
- 
-\end_layout
-
-\begin_layout Plain Layout
-
-30296120 30423280 30461260 31061930 30702760 45402980 
-\end_layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
 
 \begin_layout Plain Layout
 
 \end_layout
 
-\begin_layout Plain Layout
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
 
-Statistics for bin/benchmark-modified.csv
+\begin_layout Plain Layout
+Min
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Median
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Mean
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Max
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Default version
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30296120
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30461260
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+31061930
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+45402980
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Modified apply_extra_iter
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30695600
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30876730
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30936690
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33106160
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Plain Layout
-
-Read 8192 items
-\end_layout
+\begin_inset Caption
 
 \begin_layout Plain Layout
-
-    Min.
-  1st Qu.
-   Median     Mean  3rd Qu.
-     Max.
- 
+Cycle count statistics over 8192 executions, for FFTW with default and fixed
+ stack position
 \end_layout
 
-\begin_layout Plain Layout
+\end_inset
 
-30695600 30835880 30876730 30936690 30927460 33106160
+
 \end_layout
 
 \end_inset
@@ -7328,6 +7486,40 @@ Let's draw a picture of the 4K memory map when running this function.
  Allocating another buffer of 7400B using regular malloc before calling
  fftw_malloc, pushing in and out to 0x604da0 and 0x604f00 respectively.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/collision.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Heap buffers colliding with stack growing towards lower addresses
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -7442,93 +7634,6 @@ Figure shows cycles for incrementing environment by one byte.
 
 \begin_layout Subsection
 Modifying Kernels to Avoid Bias
-\end_layout
-
-\begin_layout Standard
-Find plan executed by calling fftw_print_plan(p): (dft-direct-16 "n1fv_16_avx").
- Looking up the file with 
-\begin_inset Quotes eld
-\end_inset
-
-find .
- | grep n1fv_16
-\begin_inset Quotes erd
-\end_inset
-
-.
- Find dft/simd/avx/n1fv_16.c which inludes dft/simd/common/n1fv_16.c containing
- the kernel implementation for 16 element DFT using simd.
- There is also an almost identical object file in dft/simd/avx/.libs/n1fv_16.o
- -- the 
-\begin_inset Quotes eld
-\end_inset
-
-.lo
-\begin_inset Quotes erd
-\end_inset
-
- libtool object file specifies this as a position independent code (PIC)
- version of the kernel.
- Both probably generated by the same implementation with different compiler
- flags.
- The file under common should be the correct one.
- There are two implementations -- depending on wether fused multiply add
- is available or not, we will only care about the one with FMA enabled.
- 
-\end_layout
-
-\begin_layout Standard
-This code is pretty daunting, not likely we are going to find exactly what
- variables gives alias effects.
- What we can do though, is manually offset the stack at runtime in situations
- we know will give bad performance.
- Options: align directives in gcc (but there has been some bugs with this
- not working on stack variables -- not sure about the status on that now.)
- Conflicts will depend on the address of input and/or output arrays, so
- any stack manipulation based on fixed memory addresses will be invalid.
- Need to pinpoint the cause more or less exactly.
-\end_layout
-
-\begin_layout Standard
-Problem: when inserting printf's into the kernel, bias disappears.
- With the extra reads and function calls there, different code is generated.
- Observation bias.
- Needs a smarter approach.
-\end_layout
-
-\begin_layout Standard
-Command to output kernel assembly.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-~/FFT/fftw-mod-3.3.3/dft/simd/avx$ gcc -march=native -std=gnu99 -DHAVE_CONFIG_H
- -I.
- -I../../..
- -I../../../kernel -I../../../dft -I../../../dft/simd 
-\end_layout
-
-\begin_layout Plain Layout
-
-   -I../../../simd-support -mavx -O3 -fomit-frame-pointer -mtune=native -malign-double
- -fstrict-aliasing -fno-schedule-insns -ffast-math -MT n1fv_16.lo 
-\end_layout
-
-\begin_layout Plain Layout
-
-   -MD -MP -MF .deps/n1fv_16.Tpo -c n1fv_16.c  -fPIC -DPIC -fverbose-asm -S
- -o .libs/n1fv_16.s
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
