@@ -581,6 +581,13 @@ Observer Effect and Measurement Bias in Performance Analysis
 \begin_inset Quotes erd
 \end_inset
 
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:OE&MB"
+
+\end_inset
+
 .
  The authors draw parallels to the social and natural sciences, scientific
  fields where considerable care is taken to avoid observer effect and bias
@@ -672,15 +679,52 @@ Causes of Measurement Bias
 \begin_layout Standard
 In a following paper by the same authors, the effects previously presented
  are reiterated, along with a more detailed analysis of measurement bias.
- In the paper appropriately titled 
+ In addition to pointing out sensitivity in large benchmark programs from
+ the SPEC suite, the authors also provide a small, isolated C program with
+ very high sensitivity to change in environment size.
+ We discuss this particular program in the Introduction chapter, showing
+ that similar bias effects appear on newer architectures as well.
+\end_layout
+
+\begin_layout Standard
+For both changing environment variables and link order, the authors points
+ to changes to the virtual memory layout being the real cause of bias.
+\end_layout
+
+\begin_layout Itemize
+Changing environment variables has an effect on where the stack is placed
+ in memory at runtime.
+ A copy of the environment is loaded into virtual address space before the
+ call stack starts.
+ Thus, increasing the environment size offsets the stack start address.
+ The authors suggests that altering the stack addresses of variables at
+ runtime can have an impact on things like alignment in cache and accuracy
+ of branch predictors.
+\end_layout
+
+\begin_layout Itemize
+Changing link order can change the virtual addresses of instructions.
+ Using hardware simulators, the authors show that performance also depends
+ on code alignment in memory.
+ For instance, when a hot loop fits entirely in a single cache line, the
+ number of accesses to instruction cache can be reduced.The authors speculate
+ that the 
 \begin_inset Quotes eld
 \end_inset
 
-Producing Wrong Data Without Doing Anything Obviously Wrong!
+Loop Stream Detector
 \begin_inset Quotes erd
 \end_inset
 
-, some ideas as to what might be the causes of bias are discussed.
+ might cause bias on the Core 2, a hardware optimization that is supposed
+ to speed up instruction fetching of hot loops.
+\end_layout
+
+\begin_layout Standard
+Dispite demystifying the causes of bias somewhat, this paper provides no
+ satisfactory explanation of exactly what mechanisms of the processor causes
+ bias.
+ 
 \end_layout
 
 \begin_layout Subsection
