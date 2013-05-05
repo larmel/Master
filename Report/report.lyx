@@ -549,111 +549,169 @@ name "chap:Background"
 
 \end_inset
 
-In this section we discuss previous work done on measurement bias in computer
- software.
- We will see that the current status for predicting and/or avoiding bias
- effects are to run multiple tests in many different configurations.
- Contributions from T.
- Mytkovicz et al.
- on bias effects for link order and stack address will be discussed, as
- well as other papers with similar observations.
- A paper from Google introduces a framework for assembly-level optimization,
- which tries to avoid some effects that might arise from link order variations.
-\end_layout
-
-\begin_layout Section
-Measurement Bias in Performance Analysis
-\end_layout
-
-\begin_layout Standard
-Many possible sources of bias.
- Some that have been studied to some extent are 
-\emph on
-link order of object files
-\emph default
- and the 
-\emph on
-size of Unix environment
-\emph default
-.
- It is not entirely clear what variables should be cause of measurement
- bias.
- Bias occurs when some property of the 
+In this chapter, we begin by presenting some of the previous work done on
+ measurement bias in computer science.
+ An introduction to virtual memory, linking and loading on x86_64 Linux
+ architectures is provided as background material -- explaining what we
+ mean by the 
 \emph on
 environment
 \emph default
- can skew measurements away from the 
+ of a program.
+ Lastly, we include a brief overview of the Intel Core i7 architecture,
+ highlighting some of the features and hardware optimizations that can cause
+ problems.
+ 
+\end_layout
+
+\begin_layout Section
+Observer Effect and Measurement Bias
+\end_layout
+
+\begin_layout Standard
+Several papers dealing with bias in performance analysis have been published.
+ Mytkowitcz et.
+ al.
+ provide an excellent introduction to measurement bias, together with the
+ closely related phenomenon of observer effect, in the paper 
 \begin_inset Quotes eld
 \end_inset
 
-true
+Observer Effect and Measurement Bias in Performance Analysis
 \begin_inset Quotes erd
 \end_inset
 
- result.
- What we are interested in measuring is typically performance of a computer
- program.
- Performance can be represented by various metrics, such as cycle count,
- cache misses or page faults.
- By environment we think of anything that is external to the program, things
- that can (and will) vary from each machine, or between each time measurements
- are made.
+.
+ The authors draw parallels to the social and natural sciences, scientific
+ fields where considerable care is taken to avoid observer effect and bias
+ in experimental setups.
+ They argue that the methodology currently employed in performance analysis
+ for software is lacking, if not flawed.
+ In a literature survey, they find that very few authors even considers
+ potential effects of bias when evaluating results.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Observer effect 
 \end_layout
 
 \begin_layout Standard
-It is clear that the Unix environment should be considered part of the environme
-nt for a measurement.
- This is a variable that will typically vary between measurements, at least
- between machine, independent of the program we benchmark.
-\end_layout
-
-\begin_layout Standard
-Link order is more dubious.
- For the link order to be part of the environment, we might have a program
- that is distributed as object files, and a Makefile with unspecified link
- order, leaving it up to the particular linker implementation on the target
- machine to decide the order.
+The set of relevant metrics in performance analysis is diverse; a database
+ application might be interested in the number of transactions per second,
+ while for a sorting algorithm implementation, the cycle count and cache
+ misses might be more relevant.
+ Many low level metrics such as cycle count and cache misses, can be aquired
+ with minimal overhead by performance counters in hardware.
+ In other cases we might need to add instrumentation to the program being
+ measured, for example in the form of counter variables incremented for
+ each function call.
  
 \end_layout
 
 \begin_layout Standard
-Definition:
+Mytkowitcz et al.
+ shows that both strict use of hardware counters, as well as adding any
+ form of software instrumentation, is vulnerable to observer effects.
+ Even in standardized benchmark suites such as SPEC 2006, they find that
+ change in performance due to observer effect is significant, enough to
+ invalidate research results if not properly considered.
 \end_layout
 
-\begin_layout Quote
-Any variable that can be changed without changing the program can count
- as measurement bias.
-\end_layout
-
-\begin_layout Standard
-The kind of variables we should include as possible sources for
-\end_layout
-
-\begin_layout Standard
-Other, more esoteric variables, might include the time of day, room temperature,
- and 
+\begin_layout Paragraph
+Measurement bias
 \end_layout
 
 \begin_layout Standard
-Time of day
+The performance characteristics of software changes also from external propertie
+s of the experimental setup.
+ The authors consider two, seemingly irrelevant, properties of the environment:
+\end_layout
+
+\begin_layout Itemize
+Link order of object files: The order of which the .o files are provided
+ to the linker, usually more than one valid permutations exist.
+\end_layout
+
+\begin_layout Itemize
+Shell state, specifically environment variables.
+ The content of environment variables depends on many factors, such as the
+ user currently logged in (stored as 
+\begin_inset Quotes eld
+\end_inset
+
+USER
+\begin_inset Quotes erd
+\end_inset
+
+ in Linux), or which programs are currently installed, adding directories
+ to the 
+\begin_inset Quotes eld
+\end_inset
+
+PATH
+\begin_inset Quotes erd
+\end_inset
+
+ variable.
 \end_layout
 
 \begin_layout Standard
-Room temperature
+The authors study how different compiler optimization levels is affected
+ by adding characters to environment variables or altering the permuting
+ link order.
+ The results show that SPEC benchmarks are sensitive to this as well.
+ Different conclusions about O2's efficiency versus O3 can be drawn depending
+ on the environment.
+\end_layout
+
+\begin_layout Subsection
+Causes of Measurement Bias
 \end_layout
 
 \begin_layout Standard
-Introduce all papers from Mytkovitz et al.
- 
+In a following paper by the same authors, the effects previously presented
+ are reiterated, along with a more detailed analysis of measurement bias.
+ In the paper appropriately titled 
+\begin_inset Quotes eld
+\end_inset
+
+Producing Wrong Data Without Doing Anything Obviously Wrong!
+\begin_inset Quotes erd
+\end_inset
+
+, some ideas as to what might be the causes of bias are discussed.
+\end_layout
+
+\begin_layout Subsection
+Conclusion
 \end_layout
 
 \begin_layout Standard
-Idea: Version of shell (bash or sh or tch etc) matters because of environment
- size variable etc)
+The conclusion reached in both papers is that both observer effect and measureme
+nt bias is unpredictable.
+ Measures should be taken to mitigate rather than avoid
+\end_layout
+
+\begin_layout Section
+Exploiting Bias for Optimization
+\end_layout
+
+\begin_layout Standard
+Bias effects are hardware dependent -- need to optimize for specific architectur
+es.
+\end_layout
+
+\begin_layout Standard
+Support in GCC and other compilers.
 \end_layout
 
 \begin_layout Subsection
 Blind Optimization
+\end_layout
+
+\begin_layout Standard
+In an attemt to circumvent the negative 
 \end_layout
 
 \begin_layout Standard
@@ -668,17 +726,9 @@ key "Knights:2009:BlindOpt"
 .
 \end_layout
 
-\begin_layout Section
-Architectural Optimization
-\end_layout
-
 \begin_layout Standard
-Bias effects are hardware dependent -- need to optimize for specific architectur
-es.
-\end_layout
-
-\begin_layout Standard
-Support in GCC and other compilers.
+Recognizing that properties such as link order can have large impact on
+ performance
 \end_layout
 
 \begin_layout Subsection
@@ -1261,7 +1311,7 @@ name "fig:virtual-address-space"
 
 \end_inset
 
-Organization of virtual memory on a 64 bit Linux system.
+Organization of virtual memory on a typical 64 bit Linux system.
 \end_layout
 
 \end_inset
