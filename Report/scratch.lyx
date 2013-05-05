@@ -1,0 +1,427 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Ideas and Leftovers from Thesis
+\end_layout
+
+\begin_layout Section
+FFTW
+\end_layout
+
+\begin_layout Standard
+Many modes, double or float.
+ Using double, as that is the standard.
+ Otherwise needs to link -lfftw3f.
+ Indeed possible to observe bias from array alignment.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/fft-float-alias.eps
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Offseting incrementally by 2.
+ Double.
+ n = 16, x = 200000
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Malloc alignment
+\end_layout
+
+\begin_layout Standard
+Fftw provides a wrapper around the provided malloc to ensure alignment.
+ Found in kernel/kalloc.c in the source code.
+\end_layout
+
+\begin_layout Paragraph
+Stack Alignment
+\end_layout
+
+\begin_layout Standard
+Figure shows cycles for incrementing environment by one byte.
+ A clear bias towards environment sizes outside of the 2000--3000 area.
+ Plotting over a wider area shows that the bias is periodic over 4096 bytes,
+ showing that alias on the last 16 bits is probably the cause again.
+\end_layout
+
+\begin_layout Paragraph
+Modifying Kernels to Avoid Bias
+\end_layout
+
+\begin_layout Standard
+Variables affecting memory access:
+\end_layout
+
+\begin_layout Itemize
+Position of input and output arrays; likely heap allocated, so 2 independent
+ (maybe!) factors.
+ A possible fix to fftw_malloc: add argument for input array when allocating
+ output, like fftw_malloc_cobuffer(void* sibling, size_t n).
+ 
+\end_layout
+
+\begin_layout Itemize
+Position of stack
+\end_layout
+
+\begin_layout Itemize
+Position of text segment with constants.
+ Seems like there are 3 or 4 accesses, happening at the start, where large
+ floating point constants are read into stack-allocated variables.
+\end_layout
+
+\begin_layout Standard
+Notes on creating assembly code
+\end_layout
+
+\begin_layout Itemize
+The x86_64 ABI specifies 6 registers to be used for argument passing; %rdi
+ %rsi %rdx %rcx %r8 %r9.
+ 
+\end_layout
+
+\begin_layout Itemize
+The exact alignment of stack pointer is very sensitive.
+ %rsp should be aligned with a trailing 0x1000.
+ Formula: rsp -= 8 + 64*n.
+ A clean example "andq $-4096, %%rsp; subq $8, %%rsp".
+ This fixes case with heap=32, stack=0x800 -- removing the two areas assumed
+ to be collision between stack and input/output respectively.
+\end_layout
+
+\begin_layout Itemize
+Whith this fixed stack alignment, we can trigger bias across all environments
+ by placing input/output close to 0x000.
+ Ex.
+ allocating 220-sized array before input will place arrays close to boundary,
+ giving lots of alias all over.
+ 
+\end_layout
+
+\begin_layout Itemize
+Unknown spike depending on environment.
+ Position varies depending on heap addresses, but shape remains mostly the
+ same.
+ Not sure how this can be mitigated -- need to know cause.
+\end_layout
+
+\begin_layout Itemize
+Can be quite certain it is not the size or content of the environment that
+ is the cause.
+ Using input argument to manually subtract froms tack pointer inside main
+ gives exactly the same results as incrementing environment.
+\end_layout
+
+\begin_layout Itemize
+Offseting stack before caling the kernel can fix all bias.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq  %%rsp, %0;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        "andq  $-1024, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "=r"(offset)
+\end_layout
+
+\begin_layout Plain Layout
+
+        : 
+\end_layout
+
+\begin_layout Plain Layout
+
+        :
+\end_layout
+
+\begin_layout Plain Layout
+
+        );
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i = 0; i < x; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        fftw_execute(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    asm volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq   %0, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        :  
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "r"(offset)
+\end_layout
+
+\begin_layout Plain Layout
+
+        :
+\end_layout
+
+\begin_layout Plain Layout
+
+        );
+\end_layout
+
+\end_inset
+
+Measuring over 500 runs with increasing stack offset (sampling over ca two
+ intervals).
+ Maximum speedup = 31112710 / 30461410 = 1.0213x on average.
+ More interesting; removes outliers.
+ Max with fix is 30578830, without fix 37828250.
+\end_layout
+
+\begin_layout Paragraph
+Residual Alias
+\end_layout
+
+\begin_layout Standard
+Investigated the 
+\begin_inset Quotes eld
+\end_inset
+
+residual
+\begin_inset Quotes erd
+\end_inset
+
+ alias effects using perf record.
+ Found that beginning of stack frame uses some reads on stack allocated
+ parameters, namely 
+\begin_inset Quotes eld
+\end_inset
+
+is
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+os
+\begin_inset Quotes erd
+\end_inset
+
+ (possibly others as well).
+ Using valgrind and kcachegrind to analyze callgraph to find out where arguments
+ are pushed.
+ The most recent version (3.8.1) of Valgrind 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://valgrind.org/"
+target "http://valgrind.org/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ was downloaded and compiled from source to enable support for AVX instructions.
+\end_layout
+
+\begin_layout Standard
+Call graph is main -> fftw_execute -> fftw_dft_solve -> apply_extra_iter
+ -> n1fv_16.
+\end_layout
+
+\begin_layout Description
+apply_extra_iter Located in /dft/direct.c.
+ Trying to insert stack fix here works similar to inserting directly to
+ kernel.
+ A bit better, but still some bias not removed.
+ This is the most logical and probable place to insert stack fix I think.
+ The other functions are too high-level for it to make much sense.
+ 
+\end_layout
+
+\begin_layout Description
+fftw_dft_solve Located in /dft/solve.c.
+ Inserting fix here fixes almost everything, small noise left.
+ Everything is removed when aligning main though, so need to try execute
+ as well.
+\end_layout
+
+\begin_layout Description
+fftw_execute Located in /api/execute.c.
+ Same result as for dft_solve.
+ 
+\end_layout
+
+\begin_layout Standard
+The most logical place to apply alignment fixes would probably be close
+ to the kernel invocation.
+ Properties of the kernel itself decides most of the alias effects, thus
+ only the kernel, or the function calling the kernel, would know how the
+ stack should be aligned.
+ We insert some assembly to apply_extra_iter, aligning stack before the
+ kernel is called twice.
+\end_layout
+
+\begin_layout Standard
+Our example is very hard to achieve a speedup for because whatever we do
+ the dynamic instruction count will increase significantly, adding a constant
+ overhead whose cost is very hard to equalize on average over all environment
+ sizes.
+\end_layout
+
+\begin_layout Paragraph
+Heap collisions
+\end_layout
+
+\begin_layout Standard
+Consider cases where heap addresses can collide.
+ Here it is possible to apply a fix during the fftw_allocate phase, guaranteed
+ speedup.
+ Definitely possible to do something here.
+ Implement fftw_malloc(size_t n, void* pair), or even keep a history of
+ previously allocated sizes, and try to return addresses with no conflicts
+ for small allocations.
+ That way no modifications to the interface is needed either.
+\end_layout
+
+\end_body
+\end_document
