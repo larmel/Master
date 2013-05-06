@@ -11,13 +11,15 @@ def parse_arguments():
     parser.add_argument('-t', '--title', default='Figure 1')
     parser.add_argument('-x', '--xlabel', default='')
     parser.add_argument('-y', '--ylabel', default='')
-    parser.add_argument('-d', '--dimension', nargs=2, default=(7, 3.5), metavar=('width', 'height'), type=float)
+    parser.add_argument('-d', '--dimension', nargs=2, default=(6, 3), metavar=('width', 'height'), type=float)
     parser.add_argument('-l', '--legend', \
         choices=['upper right', 'upper left', 'lower left', 'lower right', 'right', \
                  'center left', 'center right', 'lower center', 'upper center', 'center'])
     parser.add_argument('--labels', nargs='+')
     parser.add_argument('--ticks', type=int)
+    parser.add_argument('--stride', type=int, default=1)
     parser.add_argument('--ylim', type=int)
+    parser.add_argument('--fontsize', type=int, default=10)
     args = parser.parse_args()
     args.events = map(string.lower, args.events.strip().split(','))
     return args
@@ -33,7 +35,11 @@ def read_file(events, csv):
 
 def plot_lines(data, args):
     rc('text', usetex=True)
-    rc('font', family='serif', serif='Computer Modern Roman', size=10)
+    rc('font', family='serif', serif='Computer Modern Roman', size=args.fontsize)
+    rc('legend', frameon=True, fontsize=args.fontsize)
+    rc('axes', linewidth=0.5, titlesize=args.fontsize, labelsize=args.fontsize)
+    rc('lines', linewidth=0.5)
+    rc('patch', linewidth=0.5)
     plt.figure(args.title, facecolor='white', edgecolor='white', figsize=(args.dimension[0],args.dimension[1]))
     plt.xlabel(args.xlabel)
     plt.ylabel(args.ylabel)
@@ -50,15 +56,16 @@ def plot_lines(data, args):
         label = line['event'] if line['mnemonic'] == '' else line['mnemonic']
         if args.labels != None and len(args.labels) > i:
             label = args.labels[i]
-        plt.plot(line['count'], label='{{{e}}}'.format(e=label.replace('_', '\_')))
+        plt.plot([args.stride*v for v in range(len(line['count']))], line['count'], \
+            label='{{{e}}}'.format(e=label.replace('_', '\_')))
         i += 1
     plt.grid(True)
 
     if args.legend != None:
-        plt.legend(loc=args.legend, frameon=True, prop={'size':10}).draggable()
+        plt.legend(loc=args.legend).draggable()
 
     plt.tight_layout()
-    plt.savefig(args.title + '.eps', format='eps', dpi=300)
+    plt.savefig(args.title + '.eps', format='eps') #, dpi=300
     plt.show()
 
 if __name__ == '__main__':
