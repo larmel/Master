@@ -20,45 +20,58 @@ CFLAGS=-std=c99 -O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 FFTW_DEFAULT=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
 FFTW_MODIFIED=-I/usr/local/custom/include -L/usr/local/custom/lib/ -Wl,-rpath,/usr/local/custom/lib
 
-.PHONY: clean purge benchmark
+.PHONY: clean purge benchmark kernels
 
-fftw-default: fftw-alias.c
+fftw-default: fftw.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_DEFAULT) -lfftw3 -lm
 
-fftw-modified: fftw-alias.c
+fftw-modified: fftw.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_MODIFIED) -lfftw3 -lm
 
+
 # Creates two dataseries, one for fftw with stackfix implemented, and one default installation
+# Sample 8192/16 = 512 points
 benchmark: bin/default.csv bin/modified.csv
-	../lplot bin/default.csv  -e cycles:u,r0107:u --ticks 1024 --stride 16 --title 'default' \
+	../lplot bin/default.csv  -e cycles:u,r0107:u --ticks 1024 --stride 16 --export 'bin/default.eps' \
 		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
 		--xlabel 'Bytes added to environment'
-	mv default.eps bin/default.eps
-	../lplot bin/modified.csv -e cycles:u,r0107:u --ticks 1024 --stride 16 --title 'modified' \
+	../lplot bin/modified.csv -e cycles:u,r0107:u --ticks 1024 --stride 16 --export 'bin/modified.eps' \
 		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
 		--ylim 40000000 \
 		--xlabel 'Bytes added to environment'
-	mv modified.eps bin/modified.eps
 	bin/statistics bin/default.csv bin/modified.csv
 
-# Allocate padding heap memory to provoke worst case collision with naive stackfix
-worstcase: bin/worstcase.csv
-	../lplot $+ -e cycles:u,r0107:u --ticks 1024 --stride 16 --title $@ \
-		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
-		--xlabel 'Bytes added to environment'
-	mv $@.eps bin/$@.eps
-
-# Sample 8192/16 = 512 points
 bin/default.csv: fftw-default
 	../lperf ./$+ -e $(COUNTERS) -r 1 -n 512 -o $@ --environment-offset 1700 --environment-increment 16
 
 bin/modified.csv: fftw-modified
 	../lperf ./$+ -e $(COUNTERS) -r 1 -n 512 -o $@ --environment-offset 1700 --environment-increment 16
 
+
+# Allocate padding heap memory to provoke worst case collision with naive stackfix
 # 7500 bytes before calling fftw_malloc hits a peak for alias events: aligns (in, out) to (0x604da0, 0x604f00)
+worstcase: bin/worstcase.csv
+	../lplot $+ -e cycles:u,r0107:u --ticks 1024 --stride 16 --export 'bin/worstcase.eps' \
+		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
+		--xlabel 'Bytes added to environment'
+
 bin/worstcase.csv: fftw-modified
 	../lperf ./$+ -e $(COUNTERS) -r 1 -n 512 -o $@ --environment-offset 1700 --environment-increment 16 \
 		--argument-offset 7500 --argument-increment 0
+
+
+# Plot 4 additional sizes of N having their own kernels. FFTW_ESTIMATE is used because it
+# is deterministic. With the default FFTW_MEASURE, different plans messes up the plot.
+# avx kernels are chosen for almost all sizes, except "generic" for 17, 19, 23, 29, 32
+bin/n1fv_8_avx.csv bin/n1fv_15_avx.csv bin/n1fv_20_avx.csv bin/n1fv_32_avx.csv: fftw.c
+	cc $(CFLAGS) -DN=$(subst bin/n1fv_,,$(subst _avx.csv,,$@)) -DPLAN=FFTW_ESTIMATE $+ $(FFTW_DEFAULT) -lfftw3 -lm
+	../lperf ./a.out -e $(COUNTERS) -r 1 -n 256 -o $@ --environment-offset 1700 --environment-increment 16
+	rm a.out
+
+kernels: bin/n1fv_8_avx.csv bin/n1fv_15_avx.csv bin/n1fv_20_avx.csv bin/n1fv_32_avx.csv
+	../lplot $+ --title $(subst bin/,,$(subst .csv,,$+)) --ticks 1024 --stride 16 \
+		--export 'bin/kernels.eps' --dimension 6 5 --ytickformat 'millions'
+
 
 clean:
 	rm -f fftw-default fftw-modified

@@ -6,19 +6,21 @@ from matplotlib.ticker import FuncFormatter, MultipleLocator
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot lperf data')
-    parser.add_argument('file', default='stat.csv')
+    parser.add_argument('file', nargs='+')
     parser.add_argument('-e', '--events', default='all')
-    parser.add_argument('-t', '--title', default='Figure 1')
+    parser.add_argument('-t', '--title', nargs='+')
     parser.add_argument('-x', '--xlabel', default='')
     parser.add_argument('-y', '--ylabel', default='')
     parser.add_argument('-d', '--dimension', nargs=2, default=(6, 3), metavar=('width', 'height'), type=float)
     parser.add_argument('-l', '--legend', \
         choices=['upper right', 'upper left', 'lower left', 'lower right', 'right', \
                  'center left', 'center right', 'lower center', 'upper center', 'center'])
+    parser.add_argument('--export', default='Figure 1')
     parser.add_argument('--labels', nargs='+')
     parser.add_argument('--ticks', type=int)
     parser.add_argument('--stride', type=int, default=1)
     parser.add_argument('--ylim', type=int)
+    parser.add_argument('--ytickformat', choices=['millions', 'commas'], default='commas')
     parser.add_argument('--fontsize', type=int, default=10)
     args = parser.parse_args()
     args.events = map(string.lower, args.events.strip().split(','))
@@ -33,17 +35,21 @@ def read_file(events, csv):
                 lines.append({'mnemonic': e[0], 'event': e[1], 'count': map(float, e[3:])})
     return lines
 
-def plot_lines(data, args):
-    rc('text', usetex=True)
-    rc('font', family='serif', serif='Computer Modern Roman', size=args.fontsize)
-    rc('legend', frameon=True, fontsize=args.fontsize)
-    rc('axes', linewidth=0.5, titlesize=args.fontsize, labelsize=args.fontsize)
-    rc('lines', linewidth=0.5)
-    rc('patch', linewidth=0.5)
-    plt.figure(args.title, facecolor='white', edgecolor='white', figsize=(args.dimension[0],args.dimension[1]))
+# Escape underscored to make LaTeX happy
+def texclean(text):
+    return text.replace('_', '\_')
+
+def millions():
+    return FuncFormatter( lambda x, _: '%1d' % (x*1e-6) )
+
+def commas():
+    return FuncFormatter( lambda x, _: '{:0,d}'.format(int(x)) )
+
+# Draw lines for a single subplot
+def plot(data, args):
     plt.xlabel(args.xlabel)
     plt.ylabel(args.ylabel)
-    plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: '{:0,d}'.format(int(x))))
+    plt.gca().yaxis.set_major_formatter(commas() if args.ytickformat == 'commas' else millions())
 
     if args.ylim != None:
         plt.gca().set_ylim([0,args.ylim])
@@ -64,11 +70,32 @@ def plot_lines(data, args):
     if args.legend != None:
         plt.legend(loc=args.legend).draggable()
 
+# Plot data from a list of .csv files in a 2-column layout
+def grid(args):
+    cols = 2 if len(args.file) > 1 else 1
+    rows = len(args.file) // cols
+
+    rc('text', usetex=True)
+    rc('font', family='serif', serif='Computer Modern Roman', size=args.fontsize)
+    rc('legend', frameon=True, fontsize=args.fontsize)
+    rc('axes', linewidth=0.5, titlesize=args.fontsize, labelsize=args.fontsize)
+    rc('lines', linewidth=0.5)
+    rc('patch', linewidth=0.5)
+    rc('figure', facecolor='white', edgecolor='white', figsize=(args.dimension[0],args.dimension[1]))
+
+    plt.figure(args.export)
+    for csv, fignum in zip(args.file, range(len(args.file))):
+        data = read_file(args.events, csv)
+        plt.subplot(rows, cols, fignum + 1)
+        if args.title != None and fignum < len(args.title):
+            plt.title(texclean(args.title[fignum]))
+        plot(data, args)
+
     plt.tight_layout()
-    plt.savefig(args.title + '.eps', format='eps') #, dpi=300
+    plt.savefig(args.export)
     plt.show()
+    return 0
 
 if __name__ == '__main__':
     args  = parse_arguments()
-    lines = read_file(args.events, args.file)
-    plot_lines(lines, args)
+    grid(args)

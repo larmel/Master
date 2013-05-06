@@ -7937,7 +7937,13 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-(todo)
+\align center
+\begin_inset Graphics
+	filename Img/fft/kernels.eps
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Plain Layout

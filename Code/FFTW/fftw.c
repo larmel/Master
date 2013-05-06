@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <fftw3.h>
 
-#define DEBUG 0
-
+#ifndef DEBUG
+    #define DEBUG 0
+#endif
+#ifndef PLAN
+    #define PLAN FFTW_ESTIMATE
+#endif
 #ifndef N
     #define N 16
 #endif
@@ -18,29 +22,14 @@ int main(int argc, char **argv)
     fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
     fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
 
+    fftw_plan p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, PLAN);
+
+    // FFTW_ESTIMATE overwrites input data, initialize after planning
     for (int i = 0; i < N; ++i)
         in[i][0] = i, in[i][1] = i;
 
-    fftw_plan p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-
-    /*void *rsp;
-    __asm__ volatile (
-        "movq  %%rsp, %0;"
-        "andq  $-4096, %%rsp;"
-        : "=r"(rsp)
-        : 
-        :
-        );*/
-
     for (int i = 0; i < X; ++i)
         fftw_execute(p);
-
-    /*__asm__ volatile (
-        "movq   %0, %%rsp;"
-        :  
-        : "r"(rsp)
-        :
-        );*/
 
 #if (DEBUG)
     fftw_print_plan(p);
@@ -54,3 +43,19 @@ int main(int argc, char **argv)
     fftw_free(in), fftw_free(out);
     return 0;
 }
+
+/*void *rsp;
+__asm__ volatile (
+    "movq  %%rsp, %0;"
+    "andq  $-4096, %%rsp;"
+    : "=r"(rsp)
+    : 
+    :
+    );*/
+
+/*__asm__ volatile (
+    "movq   %0, %%rsp;"
+    :  
+    : "r"(rsp)
+    :
+    );*/
