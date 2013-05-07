@@ -31,6 +31,15 @@
 \paperfontsize 12
 \spacing single
 \use_hyperref false
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
 \papersize default
 \use_geometry true
 \use_amsmath 1
@@ -8439,8 +8448,7 @@ status open
 
 \begin_layout Plain Layout
 
-fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE); // TODO: Correct
- args
+fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 \end_layout
 
 \end_inset
@@ -8456,7 +8464,20 @@ As we have shown, the optimal stack position for each kernel depends on
 
 \begin_layout Standard
 Note that aliasing is still an issue when using a more thorough planner,
- for example using FFTW_MEASURE.
+ for example using 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+FFTW_MEASURE
+\end_layout
+
+\end_inset
+
+.
  FFTW then actually measures the performance for different plans empirically,
  optimizing automatically for the underlying hardware.
  This would cancel out bias if the following were true:
@@ -8535,7 +8556,7 @@ reference "tab:performance-counters"
 status open
 
 \begin_layout Plain Layout
-We suspect that the reference for Ivy Bridge provided by Intel (as of <date>)
+We suspect that the reference for Ivy Bridge provided by Intel (as of <version>)
  is in fact not complete.
  For instance, no counter concerning the loop stream detector is listed
  in 19-5, but events listed for previous generations seems to work anyway.
@@ -8552,7 +8573,24 @@ key "Intel:2013:Volume3B"
 \end_inset
 
 .
- A handy online reference is available at (insert url).
+ A handy online reference is also available
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://software.intel.com/sites/products/documentation/doclib/stdxe/2013/amplifierxe/win/ug_docs/reference/hh_goto.htm#ivb/events/about_events.html"
+target "http://software.intel.com/sites/products/documentation/doclib/stdxe/2013/amplifierxe/win/ug_docs/reference/hh_goto.htm#ivb/events/about_events.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
