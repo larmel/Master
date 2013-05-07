@@ -3,6 +3,10 @@
 \begin_document
 \begin_header
 \textclass report
+\begin_preamble
+\usepackage{float}
+\floatname{algorithm}{Listing}
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -7023,8 +7027,8 @@ An overview of what kernels are used to execute a plan can be found by calling
 \begin_inset Quotes erd
 \end_inset
 
-, specifying that the transform is computed by the n1fv_16 kernel, compiled
- with AVX instructions enabled.
+, specifying that the transform is computed directly by the n1fv_16 kernel,
+ compiled with AVX instructions enabled.
  We use Valgrind 
 \begin_inset Foot
 status open
@@ -7042,7 +7046,7 @@ target "http://valgrind.org/"
 
 \end_inset
 
- to analyze the call chain from fftw_execute, showing a chain of calls eventuall
+ to analyze the call graph from fftw_execute, showing a chain of calls eventuall
 y leading to the kernel invocation.
  
 \end_layout
@@ -7235,7 +7239,7 @@ status open
 \begin_layout Itemize
 Statically allocated constants in memory.
  Three floating point constants are statically built into the object file,
- their positions in virtual address space will be determined at run time
+ their positions in virtual address space will be determined at runtime
  by the dynamic linker.
  
 \end_layout
@@ -7300,7 +7304,7 @@ ng observer effects.
 \end_layout
 
 \begin_layout Subsubsection*
-Fixing Stack Placement at Runtime
+Adjusting Stack Placement at Runtime
 \end_layout
 
 \begin_layout Standard
@@ -7390,13 +7394,18 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Position of stack can be aligned anywhere within the space of virtual addresses
- 
-\begin_inset Formula $\bmod$
+Collisions can be avoided by reseting the stack pointer to an address that
+ does not conflict with the heap allocated pointers.
+ With heap allocated ri and ro occupying 
+\begin_inset Quotes eld
 \end_inset
 
- 0x1000.
- 
+low
+\begin_inset Quotes erd
+\end_inset
+
+ addresses, a reasonable placement of stack is in the other side of the
+ spectrum, close to 0xfff and expanding towards lower addresses.
 \end_layout
 
 \end_inset
@@ -7822,6 +7831,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-worstcase-4k"
+
+\end_inset
+
 Offseting heap addresses; with fixed stack from before, stack and heap accesses
  will always overlap -- regardless of environment size.
 \end_layout
@@ -7864,7 +7879,8 @@ name "fig:fftw-worstcase"
 
 \end_inset
 
-Bad heap alignment combined with stack fix
+Bad heap alignment combined with stack fix results in aliasing consistently
+ across all environment sizes.
 \end_layout
 
 \end_inset
@@ -7882,41 +7898,99 @@ A General Solution
 \end_layout
 
 \begin_layout Standard
-Disabling ASLR, run 8192 tests with all random parameters.
- Formula.
- rsp = rsp & 0x-4096 + (ri & 0xfff).
- Expected result: Almost flat graph, not too much variance.
- Show together with randomized default.
- Maybe histogram.
-\end_layout
-
-\begin_layout Paragraph
-Limitations
-\end_layout
-
-\begin_layout Standard
-The model assumes ro is allocated immediately following ri, which is typically
- the case for two consecutive calls to malloc (or fftw_malloc).
- This is of course not always the case, thus a proper fix needs to take
- both ri and ro into account, placing stack at the largest 
+The static rule of aligning stack to page boundary only works with ASLR
+ disabled, and because our fftw_malloc happens to place 
 \begin_inset Quotes eld
 \end_inset
 
-gap
+ri
 \begin_inset Quotes erd
 \end_inset
 
- within the 4096 byte segment not occupied by heap space.
- 
-\end_layout
+ and 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Subsection
-Heap Aliasing
+ro
+\begin_inset Quotes erd
+\end_inset
+
+ close to the lower end of a 4KiB range of address suffixes.
+ In general however, all the parameters are unknown.
+ A hypothetical complete solution would require a function at least these
+ three parameters to calculate the optimal stack offset.
+\begin_inset Formula 
+\[
+f\left(\text{ri},\text{ro},\text{\%rsp}\right)\rightarrow\text{offset}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Not significant for the 16 element kernel.
- Seems like stack-heap aliasing is the only thing that matters.
+A plausible solution to the previous 
+\begin_inset Quotes eld
+\end_inset
+
+worst case
+\begin_inset Quotes erd
+\end_inset
+
+ scenario from Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-worstcase-4k"
+
+\end_inset
+
+ would be to align stack to 
+\begin_inset Quotes eld
+\end_inset
+
+ri
+\begin_inset Quotes erd
+\end_inset
+
+, no longer overlapping the heap segments.
+ Given the somewhat discouraging results from our simple static fix, we
+ did not attempt to implement a function like this for the n1fv_16 kernel.
+ The added cost of additional dynamic instructions will quickly cancel out
+ any speedup we might get.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Heap-Heap Conflicts
+\end_layout
+
+\begin_layout Standard
+In addition to heap addresses overlaping with stack, there is also a possibility
+ of input and output arrays overlapping themselves.
+ We suspected that additional address conflicts would be generated when
+ the last 12 bits of 
+\begin_inset Quotes eld
+\end_inset
+
+ri
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+ro
+\begin_inset Quotes erd
+\end_inset
+
+ were close.
+ However, we found that aligning input and output buffers did not cause
+ any conflicts in itself for the n1fv_16 kernel.
+ All alias seems to come from conflicting accesses between input/output
+ and stack.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -7924,9 +7998,18 @@ Bias in Other Kernels
 \end_layout
 
 \begin_layout Standard
-Was it unfair to select the newly added n1fv_16_avx kernel? No, these nice
- figures show a collection of other kernels with varying stack positions.
- All have measurement bias.
+So far we have only looked at one particular kernel, although FFTW in fact
+ consists of a quite large collection of automatically generated codelets.
+ In fact, we find that alias effects are apparent in all kernels we tried,
+ a collection of them shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-kernels"
+
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -7950,10 +8033,22 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Grid of 4 or 6 kernels, set title to be the kernel, and show cycle count
- + alias.
- Modify script to handle multiple .csv files for simultaneous graphing (or
- something similar)
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-kernels"
+
+\end_inset
+
+Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
+ element complex DFTs respectively.
+ Plot shows 
+\begin_inset Formula $N=200{,}000$
+\end_inset
+
+ iterations of the kernel, incrementing stack offset between each run, up
+ to 4096 bytes.
+ Vertical axis is given in millions.
+ 
 \end_layout
 
 \end_inset
@@ -7964,10 +8059,441 @@ Grid of 4 or 6 kernels, set title to be the kernel, and show cycle count
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Each kernel shows a different pattern, with clear bias towards some stack
+ positions that performs noticably better than others.
+\end_layout
+
+\begin_layout Subsection
+Ways to Account for Address Alias
+\end_layout
+
+\begin_layout Standard
+The main problem we faced when trying to do anything about aliasing within
+ FFTW itself, was that too many dynamic instructions are added in the process.
+ The problem is of course that the hack is implemented inside the hot loop,
+ where fftw_execute is called repeatedly.
+ However, we can also align stack 
+\emph on
+before
+\emph default
+ the loop, adding only a neglegtible overhead.
+ The relevant parts of our modified main function is shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:fftw-stackfix-main"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C,showstringspaces=false"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+    void *rsp;
+\end_layout
+
+\begin_layout Plain Layout
+
+    __asm__ volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq  %%rsp, %0;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        "andq  $-4096, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : "=r"(rsp) : : );
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < X; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+        fftw_execute(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    __asm__ volatile (
+\end_layout
+
+\begin_layout Plain Layout
+
+        "movq   %0, %%rsp;"
+\end_layout
+
+\begin_layout Plain Layout
+
+        : : "r"(rsp) : );
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:fftw-stackfix-main"
+
+\end_inset
+
+Modified test program with forced stack alignment in main.
+ Stack pointer is saved to a temporary variable before aligned to a 4KiB
+ boundary, then restored once we are done.
+ Only a couple additional instructions are executed, with a significant
+ performance increase on average over all environment sizes.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+With ASLR disabled, keeping the heap addresses constant through all runs,
+ we are now able to avoid 
+\emph on
+all
+\emph default
+ alias effects for the n1fv_16 kernel.
+ If we were to plot the results, the graph for cycle count and alias events
+ would be completely flat.
+ As shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:fftw-stackfix-main"
+
+\end_inset
+
+, the average cycle count is reduced from 31,061,930 to <?>, a speedup of
+ <?>x.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Min
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Median
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Mean
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Max
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Default
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30,296,120
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30,461,260
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+31,061,930
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+45,402,980
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Modified main
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:fftw-stackfix-main"
+
+\end_inset
+
+Cycle count statistics over 8192 runs, sampling two 4KiB stack position
+ perionds.
+ Notice a significant improvement on average with stack alignment in main.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There is clearly a potential for speedup of FFTW kernels by accounting for
+ aliasing in some way.
+ However, requiring users of the library to fiddle with the stack before
+ calling fftw_execute is not a satifactory solution.
+ A more reasonable approach would be to encorporate these ideas in the steps
+ performed 
+\emph on
+prior
+\emph default
+ to executing a plan.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Planning for Alias
+\end_layout
+
+\begin_layout Standard
+A more realistic solution is to give this responsibility to the 
+\emph on
+planner
+\emph default
+.
+ Note that the heap addresses are already required when computing a plan.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE); // TODO: Correct
+ args
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As we have shown, the optimal stack position for each kernel depends on
+ the memory addresses of input and output arrays.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that aliasing is still an issue when using a more thorough planner,
+ for example using FFTW_MEASURE.
+ FFTW then actually measures the performance for different plans empirically,
+ optimizing automatically for the underlying hardware.
+ This would cancel out bias if the following were true:
+\end_layout
+
+\begin_layout Enumerate
+Multiple alternative kernels with varying alias characteristcs exists.
+\end_layout
+
+\begin_layout Enumerate
+The call chain are the same during benchmarking in the planner as when the
+ plan is later executed.
+ Stack addresses during planning must be the same.
+\end_layout
+
+\begin_layout Standard
+The planner can not know the stack depth of which a user calls fftw_execute
+ with a given plan, thus simply benchmarking multiple alternative implementation
+ to find which one does not suffer from bias will not work.
+\end_layout
+
+\begin_layout Subsubsection*
+Allocating Alias-free
+\end_layout
+
+\begin_layout Standard
+Even though we did not find any apparent heap-heap conflicts, fftw_malloc
+ could help by ?
 \end_layout
 
 \begin_layout Section
 BLAS
+\end_layout
+
+\begin_layout Standard
+Find one example of alias (best case: pairwise alignment of heap areas).
+ Speculate wildly about cause -- providing motivation for further investigation.
 \end_layout
 
 \begin_layout Chapter
