@@ -7685,10 +7685,10 @@ Over two 4K periods, the modified version is much less sensitive to stack
 \emph on
 very
 \emph default
- slight speedup on average, with mean cycle count going from 31061930 to
- 30936690.
- More interestingly however, is the worst case performance, which greatly
- improves.
+ slight speedup on average, with mean cycle count reduced from 31,051,690
+ to 30,947,460.
+ More interestingly however, is the worst case performance, where we see
+ a reduction in cycle count by 11.8 %.
 \end_layout
 
 \begin_layout Standard
@@ -7769,7 +7769,7 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-30296120
+30,337,010
 \end_layout
 
 \end_inset
@@ -7778,7 +7778,7 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-30461260
+30,445,740
 \end_layout
 
 \end_inset
@@ -7787,7 +7787,7 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-31061930
+31,051,690
 \end_layout
 
 \end_inset
@@ -7796,7 +7796,7 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-45402980
+37,349,700
 \end_layout
 
 \end_inset
@@ -7816,7 +7816,7 @@ Modified apply_extra_iter
 \begin_inset Text
 
 \begin_layout Plain Layout
-30695600
+30,760,320
 \end_layout
 
 \end_inset
@@ -7825,7 +7825,7 @@ Modified apply_extra_iter
 \begin_inset Text
 
 \begin_layout Plain Layout
-30876730
+30,885,300
 \end_layout
 
 \end_inset
@@ -7834,7 +7834,7 @@ Modified apply_extra_iter
 \begin_inset Text
 
 \begin_layout Plain Layout
-30936690
+30,947,460
 \end_layout
 
 \end_inset
@@ -7843,7 +7843,7 @@ Modified apply_extra_iter
 \begin_inset Text
 
 \begin_layout Plain Layout
-33106160
+32,909,300
 \end_layout
 
 \end_inset
@@ -7860,8 +7860,7 @@ Modified apply_extra_iter
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Cycle count statistics over 8192 executions, for FFTW with default and fixed
- stack position
+Cycle count statistics over 512 runs, sampling uniformly over two 4KiB periods
 \end_layout
 
 \end_inset
@@ -7872,6 +7871,17 @@ Cycle count statistics over 8192 executions, for FFTW with default and fixed
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Even though we are able to remove most of the alias effects, performance
+ did not improve as much as we had hoped.
+ The constant overhead added by inserting the extra instructions in apply_extra_
+iter appears to be significant.
+ Measuring instructions:u using perf, we see that about 1 million additional
+ dynamic instructions are executed in the modified version, an increase
+ of 1.3 %.
+ 
 \end_layout
 
 \begin_layout Subsubsection*
@@ -8285,8 +8295,8 @@ reference "tab:fftw-stackfix-main"
 
 \end_inset
 
-, the average cycle count is reduced from 31,061,930 to <?>, a speedup of
- <?>x.
+, the average cycle count is reduced from 31,051,690 to 30,425,240, a speedup
+ of 1.02x.
 \end_layout
 
 \begin_layout Standard
@@ -8367,7 +8377,7 @@ Default
 \begin_inset Text
 
 \begin_layout Plain Layout
-30,296,120
+30,337,010
 \end_layout
 
 \end_inset
@@ -8376,7 +8386,7 @@ Default
 \begin_inset Text
 
 \begin_layout Plain Layout
-30,461,260
+30,445,740
 \end_layout
 
 \end_inset
@@ -8385,7 +8395,7 @@ Default
 \begin_inset Text
 
 \begin_layout Plain Layout
-31,061,930
+31,051,690
 \end_layout
 
 \end_inset
@@ -8394,7 +8404,7 @@ Default
 \begin_inset Text
 
 \begin_layout Plain Layout
-45,402,980
+37,349,700
 \end_layout
 
 \end_inset
@@ -8414,7 +8424,7 @@ Modified main
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+30,350,120
 \end_layout
 
 \end_inset
@@ -8423,7 +8433,7 @@ Modified main
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+30,427,600
 \end_layout
 
 \end_inset
@@ -8432,7 +8442,7 @@ Modified main
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+30,425,240
 \end_layout
 
 \end_inset
@@ -8441,7 +8451,7 @@ Modified main
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+30,585,470
 \end_layout
 
 \end_inset
@@ -8464,8 +8474,8 @@ name "tab:fftw-stackfix-main"
 
 \end_inset
 
-Cycle count statistics over 8192 runs, sampling two 4KiB stack position
- perionds.
+Cycle count statistics over 512 runs, sampling uniformly over two 4KiB stack
+ position periods.
  Notice a significant improvement on average with stack alignment in main.
 \end_layout
 
@@ -8563,6 +8573,11 @@ The call chain are the same during benchmarking in the planner as when the
 The planner can not know the stack depth of which a user calls fftw_execute
  with a given plan, thus simply benchmarking multiple alternative implementation
  to find which one does not suffer from bias will not work.
+\end_layout
+
+\begin_layout Standard
+Realistic alternative: compiler can generate better assembly that checks
+ for alias conflict on O3 and -march=native.
 \end_layout
 
 \begin_layout Subsubsection*

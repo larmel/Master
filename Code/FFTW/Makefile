@@ -20,13 +20,17 @@ CFLAGS=-std=c99 -O3 -ffast-math -fomit-frame-pointer -march=native -Wall
 FFTW_DEFAULT=-I/usr/local/include -L/usr/local/lib/ -Wl,-rpath,/usr/local/lib
 FFTW_MODIFIED=-I/usr/local/custom/include -L/usr/local/custom/lib/ -Wl,-rpath,/usr/local/custom/lib
 
-.PHONY: clean purge benchmark kernels
+.PHONY: clean purge benchmark kernels mainfix
+
 
 fftw-default: fftw.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_DEFAULT) -lfftw3 -lm
 
 fftw-modified: fftw.c
 	cc -o $@ $(CFLAGS) $+ $(FFTW_MODIFIED) -lfftw3 -lm
+
+fftw-mainfix: fftw.c
+	cc -o $@ $(CFLAGS) -DMAINFIX $+ $(FFTW_DEFAULT) -lfftw3 -lm
 
 
 # Creates two dataseries, one for fftw with stackfix implemented, and one default installation
@@ -69,8 +73,24 @@ bin/n1fv_8_avx.csv bin/n1fv_15_avx.csv bin/n1fv_20_avx.csv bin/n1fv_32_avx.csv: 
 	rm a.out
 
 kernels: bin/n1fv_8_avx.csv bin/n1fv_15_avx.csv bin/n1fv_20_avx.csv bin/n1fv_32_avx.csv
-	../lplot $+ --title $(subst bin/,,$(subst .csv,,$+)) --ticks 1024 --stride 16 \
+	../lplot $+ -e cycles:u,r0107:u --title $(subst bin/,,$(subst .csv,,$+)) --ticks 1024 --stride 16 \
 		--export 'bin/kernels.eps' --dimension 6 5 --ytickformat 'millions'
+
+
+#
+# Illustrate a point by showing all alias gone with fix in main
+mainfix: bin/mainfix.csv bin/default.csv
+	../lplot bin/default.csv  -e cycles:u,r0107:u --ticks 1024 --stride 16 --export 'bin/default.eps' \
+		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
+		--xlabel 'Bytes added to environment'
+	../lplot bin/mainfix.csv -e cycles:u,r0107:u --ticks 1024 --stride 16 --export 'bin/mainfix.eps' \
+		--legend 'center right' --labels 'Cycle count, cycles:u' 'Address alias, r0107:u' \
+		--ylim 40000000 \
+		--xlabel 'Bytes added to environment'
+	bin/statistics bin/default.csv bin/mainfix.csv
+
+bin/mainfix.csv: fftw-mainfix
+	../lperf ./$+ -e $(COUNTERS) -r 1 -n 512 -o $@ --environment-offset 1700 --environment-increment 16
 
 
 clean:

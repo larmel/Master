@@ -28,8 +28,28 @@ int main(int argc, char **argv)
     for (int i = 0; i < N; ++i)
         in[i][0] = i, in[i][1] = i;
 
+#ifdef MAINFIX
+    void *rsp;
+    __asm__ volatile (
+        "movq  %%rsp, %0;"
+        "andq  $-4096, %%rsp;"
+        : "=r"(rsp)
+        : 
+        :
+        );
+#endif
+
     for (int i = 0; i < X; ++i)
         fftw_execute(p);
+
+#ifdef MAINFIX
+    __asm__ volatile (
+        "movq   %0, %%rsp;"
+        :  
+        : "r"(rsp)
+        :
+        );
+#endif
 
 #if (DEBUG)
     fftw_print_plan(p);
@@ -43,19 +63,3 @@ int main(int argc, char **argv)
     fftw_free(in), fftw_free(out);
     return 0;
 }
-
-/*void *rsp;
-__asm__ volatile (
-    "movq  %%rsp, %0;"
-    "andq  $-4096, %%rsp;"
-    : "=r"(rsp)
-    : 
-    :
-    );*/
-
-/*__asm__ volatile (
-    "movq   %0, %%rsp;"
-    :  
-    : "r"(rsp)
-    :
-    );*/
