@@ -1,3 +1,7 @@
 fftw-default
 fftw-modified
-*.eps
+fftw-mainfix
+output
+bin/*.csv
+bin/*.eps
+temp
