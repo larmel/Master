@@ -2132,7 +2132,7 @@ status open
 
 
 \backslash
-begin{scriptsize}
+begin{small}
 \end_layout
 
 \end_inset
@@ -2140,33 +2140,39 @@ begin{scriptsize}
 
 \begin_inset Tabular
 <lyxtabular version="3" rows="17" columns="3">
-<features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
+<features tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="left" valignment="top" width="60text%">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Performance Counter
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
+\series bold
+Perf code
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Correlation
 \end_layout
 
@@ -2174,7 +2180,7 @@ Correlation
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2239,7 +2245,7 @@ cycles:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2304,7 +2310,7 @@ bus-cycles:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2369,7 +2375,7 @@ r02a3:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2434,7 +2440,7 @@ r0107:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2499,7 +2505,7 @@ r01a2:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2552,7 +2558,7 @@ task-clock:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2605,7 +2611,7 @@ cpu-clock:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2670,7 +2676,7 @@ r013c:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2735,7 +2741,7 @@ r003c:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2800,7 +2806,7 @@ r025c:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2865,7 +2871,7 @@ r04a3:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2930,7 +2936,7 @@ r05a3:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2959,7 +2965,7 @@ r05a3:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3024,7 +3030,7 @@ r02a1:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3089,7 +3095,7 @@ r01a1:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3165,7 +3171,7 @@ status open
 
 
 \backslash
-end{scriptsize}
+end{small}
 \end_layout
 
 \end_inset
@@ -4367,7 +4373,7 @@ Interestingly, neither O1, O2 or O3 was able to do anything about this --
  
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Architectural Optimization Flags
 \end_layout
 
@@ -4416,7 +4422,7 @@ corei7-avx
  other architectures, reducing portability.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Use of restrict
 \end_layout
 
@@ -4426,11 +4432,32 @@ We can provide additional information to the compiler's optimizer by using
  This keyword was added in the C99 standard.
  It functions as a type qualifier for pointers, specifying that no pointer
  aliases exists.
- By marking input and output as restrict, we guarantee they are the only
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void convolve(int size, const float * restrict input, float * restrict output)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+By marking input and output as restrict, we guarantee they are the only
  pointers to their respective memory areas, and not accesses through any
  other (aliased) pointers.
  This results in much more efficient code.
- We find that the following compile parameters for cc provide the best code.
+ We find that the following compile parameters for gcc provide the best
+ code.
 \end_layout
 
 \begin_layout Standard
@@ -4566,7 +4593,7 @@ Note that the resulting binaries, providing no offset and offset of 0x30,
  move (for addition), and different register for another movq instruction.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Other Compilers
 \end_layout
 
@@ -5202,14 +5229,14 @@ Most allocators focus on efficiency in a multithreaded environment, and
 \end_layout
 
 \begin_layout Section
-Code Layout
+The Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
 The Loop Stream Detector (LSD) is a front-end hardware optimization introduced
  in the intel Core microarchitecture.
- Measuring the utilization of LSD is supported by the LSD.UOPS performance
- counter.
+ Measuring the utilization of LSD is supported by the LSD.UOPS and LSD.OVERFLOW
+ performance counters.
  Note that this counter is not listed in Table 19-5.
 \end_layout
 
@@ -5477,8 +5504,22 @@ Experimental LSD properties of i7 Ivy Bridge
 
 \end_layout
 
+\begin_layout Standard
+Relatively easy to test limit of taken branches and number of micro-ops.
+ For mops, we created a loop of 
+\begin_inset Quotes eld
+\end_inset
+
+addl
+\begin_inset Quotes erd
+\end_inset
+
+ instructions, incrementing until LSD_OVERFLOW indicated that the limit
+ is reached.
+\end_layout
+
 \begin_layout Subsection
-Chunk Fetches
+Bias from Chunk Fetch Limit
 \end_layout
 
 \begin_layout Standard
@@ -5635,7 +5676,7 @@ int main() {
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Loop spanning up to 13 chunks of 32 bytes when compiled with gcc -O0.
+Loop spanning up to 13 chunks of 32 bytes when compiled with gcc
 \end_layout
 
 \end_inset
@@ -5808,7 +5849,7 @@ align-loops option in gcc (which is enabled by default in O2 and O3) does
  In front of the first loop instruction, the following assembly directives
  are printed.
 \begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily}"
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -5840,19 +5881,18 @@ The first directive tries to align to four bits, inserting at most 10 bytes
 \end_layout
 
 \begin_layout Standard
-\noindent
-\begin_inset Box Frameless
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100col%"
-special "none"
-height "1in"
-height_special "totalheight"
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
 status open
+
+\begin_layout Plain Layout
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 \begin_inset Box Frameless
@@ -5869,12 +5909,14 @@ height_special "totalheight"
 status open
 
 \begin_layout Plain Layout
-fact.c
+
+\emph on
+fact.c:
 \end_layout
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\scriptsize\ttfamily}"
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -5909,12 +5951,21 @@ int fact(int n)
 \end_layout
 
 \begin_layout Plain Layout
-lsd.c
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\emph on
+lsd.c:
 \end_layout
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\scriptsize\ttfamily}"
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -6001,12 +6052,14 @@ height_special "totalheight"
 status open
 
 \begin_layout Plain Layout
-loop.c
+
+\emph on
+loop.c:
 \end_layout
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\scriptsize\ttfamily}"
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -6040,7 +6093,7 @@ int loop(int a)
 
 \begin_layout Plain Layout
 
-    register int b = i == 42 ? 1 : 0;
+    register int b = i==42 ? 1 : 0;
 \end_layout
 
 \begin_layout Plain Layout
@@ -6121,6 +6174,19 @@ int loop(int a)
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Program that differ by 2x in cycle count depending on link order.
+ Works on optimization level O3 on GCC.
 \end_layout
 
 \end_inset
