@@ -6754,7 +6754,7 @@ key "Vuduc:2000:CodegenFFTW"
  of context bias could be a realistic addition to FFTW.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Installation and Configuration
 \end_layout
 
@@ -6799,7 +6799,7 @@ status open
 
 \end_layout
 
-\begin_layout Paragraph*
+\begin_layout Subsubsection*
 Test Setup
 \end_layout
 
@@ -6845,26 +6845,12 @@ int main()
 
 \begin_layout Plain Layout
 
-    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
+    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex)*N);
 \end_layout
 
 \begin_layout Plain Layout
 
-    fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    for (int i = 0; i < N; ++i)
-\end_layout
-
-\begin_layout Plain Layout
-
-        in[i][0] = i, in[i][1] = i;
+    fftw_complex *out = fftw_malloc(sizeof(fftw_complex)*N);
 \end_layout
 
 \begin_layout Plain Layout
@@ -7199,7 +7185,11 @@ void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride os,
 \end_layout
 
 \begin_layout Standard
-Conflicting memory accesses within n1fv_16 are causing bias effects.
+Conflicting memory accesses within 
+\family typewriter
+n1fv_16
+\family default
+ are causing bias effects.
  Looking at the generated assembly, we find three areas of memory whose
  address suffixes can potentially overlap.
  
@@ -7210,7 +7200,11 @@ Heap allocated input and output buffers, parameters
 \begin_inset Quotes eld
 \end_inset
 
+
+\family typewriter
 ri
+\family default
+
 \begin_inset Quotes erd
 \end_inset
 
@@ -7218,95 +7212,49 @@ ri
 \begin_inset Quotes eld
 \end_inset
 
+
+\family typewriter
 ro
+\family default
+
 \begin_inset Quotes erd
 \end_inset
 
  respectively.
- These are pointers previously returned by calls to fftw_malloc, addresses
- in general unpredictable by the kernel, except for some alignment constraints.
+ These are pointers previously returned by calls to 
+\family typewriter
+fftw_malloc
+\family default
+, addresses in general unpredictable by the kernel, except for some alignment
+ constraints.
 \end_layout
 
 \begin_layout Itemize
 Stack allocated function parameters and local automatic variables.
  Although the six first arguments reside in registers 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %rdi
-\end_layout
-
-\end_inset
-
+\family default
 , 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %rsi
-\end_layout
-
-\end_inset
-
+\family default
 , 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %rdx
-\end_layout
-
-\end_inset
-
+\family default
 , 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %rcx
-\end_layout
-
-\end_inset
-
+\family default
 , 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %r8
-\end_layout
-
-\end_inset
-
+\family default
  and 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 %r9
-\end_layout
-
-\end_inset
-
+\family default
 , the remaining three are pushed on stack.
  
 \end_layout
@@ -7323,8 +7271,23 @@ Statically allocated constants in memory.
 Under synthetic testing with address randomization (ASLR) disabled, all
  parameters are fixed and deterministic.
  For our particular test, the heap allocated input and output buffers always
- reside in virtual addresses 0x602040 and 0x601c0 respectively -- on the
- low end of a 4K segment of suffixes between 0x000 and 0xfff.
+ reside in virtual addresses 
+\family typewriter
+0x602040
+\family default
+ and 
+\family typewriter
+0x601c0
+\family default
+ respectively -- on the low end of a 4K segment of suffixes between 
+\family typewriter
+0x000
+\family default
+ and 
+\family typewriter
+0xfff
+\family default
+.
 \end_layout
 
 \begin_layout Standard
@@ -7353,9 +7316,28 @@ Position of stack can be aligned anywhere within the space of virtual addresses
 \begin_inset Formula $\bmod$
 \end_inset
 
- 0x1000.
- With ASLR disabled, the last 12 bits of ri and ro are 0x040 and 0x1c0 respectiv
-ely.
+ 
+\family typewriter
+0x1000
+\family default
+.
+ With ASLR disabled, the last 12 bits of 
+\family typewriter
+ri
+\family default
+ and 
+\family typewriter
+ro
+\family default
+ are 
+\family typewriter
+0x040
+\family default
+ and 
+\family typewriter
+0x1c0
+\family default
+ respectively.
 \end_layout
 
 \end_inset
@@ -7408,17 +7390,23 @@ reference "fig:fftw-stack-bias"
 \end_inset
 
 .
- Once fftw_execute is called, the only thing we can control is placement
- of stack allocated variables.
+ Once 
+\family typewriter
+fftw_execute
+\family default
+ is called, the only thing we can control is placement of stack allocated
+ variables.
  
 \end_layout
 
 \begin_layout Standard
 An interesting observation is that stack addresses are often specified relative
  to the stack pointer, as opposed to base pointer.
- Some examples include 
+\end_layout
+
+\begin_layout Quote
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
+lstparams "basicstyle={\normalsize\ttfamily},breaklines=true"
 inline true
 status open
 
@@ -7429,7 +7417,10 @@ vmovapd %ymm14, -120(%rsp)
 
 \end_inset
 
- and 
+
+\end_layout
+
+\begin_layout Quote
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily},breaklines=true"
 inline true
@@ -7442,8 +7433,14 @@ vaddpd -56(%rsp), %ymm7, %ymm12
 
 \end_inset
 
-.
- This suggests that merely offseting the rsp register within the n1fv_16
+
+\end_layout
+
+\begin_layout Standard
+This suggests that merely offseting the rsp register within the 
+\family typewriter
+n1fv_16
+\family default
  kernel itself should impact the placement of local temporary variables.
  
 \end_layout
@@ -7480,7 +7477,11 @@ low
 \end_inset
 
  addresses, a reasonable placement of stack is in the other side of the
- spectrum, close to 0xfff and expanding towards lower addresses.
+ spectrum, close to 
+\family typewriter
+0xfff
+\family default
+ and expanding towards lower addresses.
 \end_layout
 
 \end_inset
@@ -7496,9 +7497,12 @@ low
 \begin_layout Standard
 Looking at the call graph again, we have several options for where to programmat
 ically align stack on a suitable address.
- In the end, we found that aligning in apply_extra_iter made the most sense,
- and also provided a slight gain compared to doing it within the kernel
- itself.
+ In the end, we found that aligning in 
+\family typewriter
+apply_extra_iter
+\family default
+ made the most sense, and also provided a slight gain compared to doing
+ it within the kernel itself.
  As the name suggests, this function actually calls the kernel twice.
  
 \end_layout
@@ -7600,9 +7604,21 @@ name "alg:apply-extra-iter"
 
 \end_inset
 
-Modified apply_extra_iter, aligning stack to a 4K boundary.
- The hidden function body makes two calls to the n1fv_16 kernel.
- Implementation is located in the file dft/direct.c.
+Modified 
+\family typewriter
+apply_extra_iter
+\family default
+, aligning stack to a 4K boundary.
+ The hidden function body makes two calls to the 
+\family typewriter
+n1fv_16
+\family default
+ kernel.
+ Implementation is located in the file 
+\family typewriter
+dft/direct.c
+\family default
+.
 \end_layout
 
 \end_inset
@@ -7623,8 +7639,11 @@ reference "alg:apply-extra-iter"
 
 \end_inset
 
- will zero out the last 12 bits of the %rsp register, effectively subtracting
- some number between 0 and 0xfff.
+ will zero out the last 12 bits of the 
+\family typewriter
+%rsp
+\family default
+ register, effectively subtracting some number between 0 and 4096.
  Recall that the stack grows downwards, thus subtracting any (reasonably
  small) amount will not overwrite other data.
  We run the same benchmark again, results shown in Figure 
@@ -7722,6 +7741,8 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Min
 \end_layout
 
@@ -7731,6 +7752,8 @@ Min
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Median
 \end_layout
 
@@ -7740,6 +7763,8 @@ Median
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Mean
 \end_layout
 
@@ -7749,6 +7774,8 @@ Mean
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Max
 \end_layout
 
@@ -7807,7 +7834,9 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-Modified apply_extra_iter
+Modified 
+\family typewriter
+apply_extra_iter
 \end_layout
 
 \end_inset
@@ -7891,7 +7920,15 @@ Creating the Worst Case
 \begin_layout Standard
 Let's draw a picture of the 4K memory map when running this function.
  Allocating another buffer of 7400B using regular malloc before calling
- fftw_malloc, pushing in and out to 0x604da0 and 0x604f00 respectively.
+ fftw_malloc, pushing in and out to 
+\family typewriter
+0x604da0
+\family default
+ and 
+\family typewriter
+0x604f00
+\family default
+ respectively.
  
 \end_layout
 
@@ -8034,13 +8071,21 @@ reference "fig:fftw-worstcase-4k"
 \begin_inset Quotes eld
 \end_inset
 
+
+\family typewriter
 ri
+\family default
+
 \begin_inset Quotes erd
 \end_inset
 
 , no longer overlapping the heap segments.
  Given the somewhat discouraging results from our simple static fix, we
- did not attempt to implement a function like this for the n1fv_16 kernel.
+ did not attempt to implement a function like this for the 
+\family typewriter
+n1fv_16
+\family default
+ kernel.
  The added cost of additional dynamic instructions will quickly cancel out
  any speedup we might get.
  
@@ -8058,7 +8103,11 @@ In addition to heap addresses overlaping with stack, there is also a possibility
 \begin_inset Quotes eld
 \end_inset
 
+
+\family typewriter
 ri
+\family default
+
 \begin_inset Quotes erd
 \end_inset
 
@@ -8066,13 +8115,21 @@ ri
 \begin_inset Quotes eld
 \end_inset
 
+
+\family typewriter
 ro
+\family default
+
 \begin_inset Quotes erd
 \end_inset
 
  were close.
  However, we found that aligning input and output buffers did not cause
- any conflicts in itself for the n1fv_16 kernel.
+ any conflicts in itself for the 
+\family typewriter
+n1fv_16
+\family default
+ kernel.
  All alias seems to come from conflicting accesses between input/output
  and stack.
  
@@ -8598,12 +8655,128 @@ Find one example of alias (best case: pairwise alignment of heap areas).
  Speculate wildly about cause -- providing motivation for further investigation.
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int main()
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    const double alpha = 1.0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    const double beta  = 0.0;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    double *A = malloc(sizeof(double) * (M * N + 0x100));
+\end_layout
+
+\begin_layout Plain Layout
+
+    double *x = malloc(sizeof(double) * M);
+\end_layout
+
+\begin_layout Plain Layout
+
+    double *y = malloc(sizeof(double) * M);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    //A += 0x100;
+\end_layout
+
+\begin_layout Plain Layout
+
+    // y = Ax * alpha
+\end_layout
+
+\begin_layout Plain Layout
+
+    cblas_dgemv(CblasRowMajor, CblasTrans, M, N, alpha, A, M, x, 1, beta,
+ y, 1);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+BLAS function calculating 
+\begin_inset Formula $A=\alpha A\boldsymbol{x}$
+\end_inset
+
+, which is vulnerable to alias effect for aligned input data
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Conclusions and Future Work
 \end_layout
 
 \begin_layout Standard
 Sure this is an easy section.
+\end_layout
+
+\begin_layout Section
+Contributions
+\end_layout
+
+\begin_layout Section
+Future Work
 \end_layout
 
 \begin_layout Standard

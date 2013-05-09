@@ -2,14 +2,14 @@
 \lyxformat 413
 \begin_document
 \begin_header
-\textclass article
+\textclass report
 \use_default_options true
 \maintain_unincluded_children false
 \language english
 \language_package default
 \inputencoding auto
 \fontencoding global
-\font_roman default
+\font_roman lmodern
 \font_sans default
 \font_typewriter default
 \font_default_family default
@@ -17,17 +17,18 @@
 \font_sc false
 \font_osf false
 \font_sf_scale 100
-\font_tt_scale 100
+\font_tt_scale 90
 
 \graphics default
 \default_output_format default
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize default
+\paperfontsize 12
+\spacing single
 \use_hyperref false
-\papersize default
-\use_geometry false
+\papersize a4paper
+\use_geometry true
 \use_amsmath 1
 \use_esint 1
 \use_mhchem 1
@@ -48,8 +49,8 @@
 \paragraph_indentation default
 \quotes_language english
 \papercolumns 1
-\papersides 1
-\paperpagestyle default
+\papersides 2
+\paperpagestyle headings
 \tracking_changes false
 \output_changes false
 \html_math_output 0
@@ -61,6 +62,14 @@
 
 \begin_layout Title
 Ideas and Leftovers from Thesis
+\end_layout
+
+\begin_layout Abstract
+This is the abstract
+\end_layout
+
+\begin_layout Chapter
+First Chapter
 \end_layout
 
 \begin_layout Section
@@ -201,6 +210,123 @@ Fftw provides a wrapper around the provided malloc to ensure alignment.
  Found in kernel/kalloc.c in the source code.
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float algorithm
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int main() 
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_complex *in  = fftw_malloc(sizeof(fftw_complex) * N);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_complex *out = fftw_malloc(sizeof(fftw_complex) * N);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < N; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+        in[i][0] = i, in[i][1] = i;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_plan p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < X; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+        fftw_execute(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_destroy_plan(p);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fftw_free(in), fftw_free(out);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+C program snippet for computing the Fourier transform of N double precision
+ complex numbers X times.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Paragraph
 Stack Alignment
 \end_layout
@@ -210,6 +336,16 @@ Figure shows cycles for incrementing environment by one byte.
  A clear bias towards environment sizes outside of the 2000--3000 area.
  Plotting over a wider area shows that the bias is periodic over 4096 bytes,
  showing that alias on the last 16 bits is probably the cause again.
+ Testing typeriter (ctrl,shift+p).
+ A hex digit; 
+\family typewriter
+0x100
+\family default
+, or registers 
+\family typewriter
+%rsp
+\family default
+, might come in handy.
 \end_layout
 
 \begin_layout Paragraph
