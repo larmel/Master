@@ -73,6 +73,422 @@ First Chapter
 \end_layout
 
 \begin_layout Section
+Hardware Performance Counters
+\end_layout
+
+\begin_layout Standard
+To be able to tell anything about bias effects we need to have a reliable
+ way to gather various metrics.
+ There are many different approaches for measuring performance of software;
+ debuggers, profilers and the likes are widely used in both industry and
+ academia.
+ Unfortunately, measurement techniques relying on intervention from software
+ are prone to observer effect.
+ In addition, any measurement instrumentation that alters the executed program
+ per definition measures a 
+\emph on
+different
+\emph default
+ program -- making it difficult to accurately identify bias effects.
+\end_layout
+
+\begin_layout Standard
+Luckily, modern processors have support in hardware for measuring a plethora
+ of different metrics, called performance counters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Accuracy of Performance Counters
+\end_layout
+
+\begin_layout Standard
+Unfortunately, performance counters are not necessarily accurate or predictable.
+ Several papers have looked at the relationship between measured counts
+ and the 
+\begin_inset Quotes eld
+\end_inset
+
+right answer
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For certain metrics it is quite easy to verify wether the reported counts
+ are accurate.
+ One example is the number of retired instructions, for the perf utility
+ reported as instructions:u.
+ At least for small programs, we can easily count the number of dynamic
+ intructions and compare to reported counts.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Accuracy vs.
+ Precision
+\end_layout
+
+\begin_layout Standard
+For clarity, it is worth pointing out the difference between accuracy and
+ precision.
+ A series of measurements can be accurate, but not precise, and vice-versa.
+ Consider a bow-and-arrow contest after a series of arrows are fired at
+ the same target.
+ The archer is 
+\emph on
+accurate
+\emph default
+ if the arrows land close to the target, and 
+\emph on
+precise
+\emph default
+ if the arrows lands close together.
+ Note that accuracy does not entail precision, and vice-versa.
+\end_layout
+
+\begin_layout Standard
+For performance measurements, these are properties of the performance counters.
+ Ideally we want counters to be both precise and accurate.
+ Many papers have looked at the properties of performance counters, and
+ unfortunately very few seems to have the desired properties.
+ A counter that appears to be both accurate and precise is INSTR_RETIRED
+ -- which can be pretty easily verified by inspecting the source code.
+ Measuring the number of cucles accurately seems to be more of a challenge.
+ There will always be some overhead in setting up the counters and reading
+ the values after the program has run.
+ We can try to create an empty program -- but the cycle count reported by
+ perf will not be anywhere near zero.
+ Trying to measure the 
+\begin_inset Quotes eld
+\end_inset
+
+empty
+\begin_inset Quotes erd
+\end_inset
+
+ program yields about 2000 cycles in our setup.
+\end_layout
+
+\begin_layout Subsection
+Performance Counters in Linux
+\end_layout
+
+\begin_layout Standard
+The Linux kernel provides an interface to hardware performance counters
+ through the perf utility, which we will be using for our measurements.
+ 
+\end_layout
+
+\begin_layout Subsection
+Details from Intel Manual
+\end_layout
+
+\begin_layout Standard
+The current generations of Intel microarchitectures are called, from earliest
+ to newest, Sandy Bridge, Ivy Bridge and Haswell.
+ In the official documentation on hardware performance monitoring, Ivy Bridge
+ is 
+\begin_inset Quotes eld
+\end_inset
+
+generally the same
+\begin_inset Quotes erd
+\end_inset
+
+ as described for Sandy Bridge.
+ Ref 18.9 in Part 3B.
+ 
+\end_layout
+
+\begin_layout Standard
+Another note: Ivy Bridge is 
+\begin_inset Quotes eld
+\end_inset
+
+3rd generation Core
+\begin_inset Quotes erd
+\end_inset
+
+, while Haswell is 
+\begin_inset Quotes eld
+\end_inset
+
+Next generation
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="2">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sandy/Ivy Bridge
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of fixed counters per thread
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of general-purpose counters per core
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of programmable counters per thread
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4 (8 if a core is not shared by two threads)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+PMU (Performance Monitoring Unit) capabilities for 2nd and 3rd generation
+ Intel Core microarchitectures (Sandy Bridge and Ivy Bridge).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Quote from 18.11.5.2
+\end_layout
+
+\begin_layout Quote
+The performance-monitoring events listed in Chapter 19, “Performance-Monitoring
+ Events,” are intended to be used as guides for performance tuning.
+ The counter values reported are not guaranteed to be absolutely accurate
+ and should be used as a relative guide for tuning.
+ Known discrepancies are documented where applicable.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Fixed counters
+\end_layout
+
+\begin_layout Standard
+Can only count one event (?)
+\end_layout
+
+\begin_layout Paragraph*
+Generic counters
+\end_layout
+
+\begin_layout Standard
+Can count any event
+\end_layout
+
+\begin_layout Standard
+In case there are more events than counters, OS will multiplex and perf
+ do scaling (inaccurate).
+\end_layout
+
+\begin_layout Paragraph
+Software events
+\end_layout
+
+\begin_layout Standard
+Things like context switches.
+ (How is this counted?)
+\end_layout
+
+\begin_layout Paragraph
+Hardware events
+\end_layout
+
+\begin_layout Standard
+Cycles
+\end_layout
+
+\begin_layout Paragraph
+PMI
+\end_layout
+
+\begin_layout Standard
+Performance Monitor Interrupt
+\end_layout
+
+\begin_layout Paragraph
+At Retirement Events
+\end_layout
+
+\begin_layout Standard
+At-retirement counting provides a means counting only events that represent
+ work committed to architectural state and ignoring work that was performed
+ speculatively and later discarded.
+ (Quote from 18.11.6)
+\end_layout
+
+\begin_layout Standard
+Tagging of micro-operations enables counting at retirement.
+ Ex from manual: A micro-op can have several cache-misses during execution.
+ Tag to get counted only once.
+\end_layout
+
+\begin_layout Subsection
+Precise Event Based Sampling (PEBS) 
+\end_layout
+
+\begin_layout Standard
+Same support as Sandy Bridge, with events listed in Table 18-21.
+\end_layout
+
+\begin_layout Standard
+Allows PMU to collect architectural state and Instruction Pointer (IP) 
+\emph on
+after
+\emph default
+ instruction that caused event is completed.
+ Only 
+\begin_inset Quotes eld
+\end_inset
+
+at-retirement
+\begin_inset Quotes erd
+\end_inset
+
+ events.
+ PEBS buffer can contain all general purpose registers + IP for analyzing
+ later.
+ Used in V-tune.
+\end_layout
+
+\begin_layout Standard
+Supported in perfmon2 for some version number > x.
+ 
+\end_layout
+
+\begin_layout Standard
+Quote from forum post: http://software.intel.com/en-us/forums/topic/277553
+\end_layout
+
+\begin_layout Quote
+PEBS (Precise Event Based Sampling) is a feature available to a subset of
+ events which allows the hardware to collect additionalinformation very
+ close to the exact time the configured event overflowed.
+ This presents theanalysis tools whith susbstantially more accurate information
+ since the alternative is to wait for a software interrupt to collect this
+ information, typically hundreds of cycles later.The additional collected
+ information are stored in a special PEBS buffer and retrieved by the tool
+ (in this case perf_events) later.
+\end_layout
+
+\begin_layout Standard
+For use in perf: append :pp to event.
+ Needs to be used with perf record.
+\end_layout
+
+\begin_layout Section
 Measurement Bias Introduction
 \end_layout
 
