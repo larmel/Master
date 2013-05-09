@@ -213,6 +213,16 @@ In disciplines other than computer science, such as medicine and the social
  
 \end_layout
 
+\begin_layout Standard
+Performance cliffs
+\end_layout
+
+\begin_layout Standard
+Align to page, cache line, whatever.
+ Hardware not uniform.
+ Everything can happen.
+\end_layout
+
 \begin_layout Description
 Observer
 \begin_inset space ~
@@ -444,18 +454,10 @@ key "Mytkowicz:2009:WrongData"
 status open
 
 \begin_layout Plain Layout
-\begin_inset listings
-lstparams "basicstyle={\ttfamily}"
-inline true
-status open
 
-\begin_layout Plain Layout
-
+\family typewriter
 perf
-\end_layout
-
-\end_inset
-
+\family default
 : Linux profiling with performance counters, 
 \begin_inset CommandInset href
 LatexCommand href
@@ -470,9 +472,28 @@ target "https://perf.wiki.kernel.org/index.php/Main_Page"
 \end_inset
 
  to obtain accurate results.
- The program is compiled with gcc using all default options.
- The code should not appear particularly extraordinary in any way, yet its
- performance characteristics are quite peculiar.
+ The program is compiled with GCC
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+GCC, the GNU Compiler Collection.
+ 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://gcc.gnu.org/"
+target "http://gcc.gnu.org/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ using all default options.
+ The code should not appear particularly extraordinary, yet its performance
+ characteristics are quite peculiar.
  Even though the exact same binary executable file is run multiple times,
  the performance is clearly not the same for every environment size.
  Measurement bias is still an issue on the most recent architectures, and
@@ -601,6 +622,21 @@ key "Mytkowicz:2008:OE&MB"
 
 \end_inset
 
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+We have it easy, but do we have it right?
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:Easy"
+
+\end_inset
+
 .
  The authors draw parallels to the social and natural sciences, scientific
  fields where considerable care is taken to avoid observer effect and bias
@@ -612,7 +648,7 @@ key "Mytkowicz:2008:OE&MB"
  
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Observer effect 
 \end_layout
 
@@ -638,7 +674,7 @@ Mytkowitcz et al.
  invalidate research results if not properly considered.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Measurement bias
 \end_layout
 
@@ -690,8 +726,15 @@ Causes of Measurement Bias
 \end_layout
 
 \begin_layout Standard
-In a following paper by the same authors, the effects previously presented
- are reiterated, along with a more detailed analysis of measurement bias.
+In a following paper by the same authors 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, the effects previously presented are reiterated, along with a more detailed
+ analysis of measurement bias.
  In addition to pointing out sensitivity in large benchmark programs from
  the SPEC suite, the authors also provide a small, isolated C program with
  very high sensitivity to change in environment size.
@@ -700,7 +743,7 @@ In a following paper by the same authors, the effects previously presented
 \end_layout
 
 \begin_layout Standard
-For both changing environment variables and link order, the authors points
+For both changing environment variables and link order, the authors point
  to changes to the virtual memory layout being the real cause of bias.
 \end_layout
 
@@ -708,8 +751,8 @@ For both changing environment variables and link order, the authors points
 Changing environment variables has an effect on where the stack is placed
  in memory at runtime.
  A copy of the environment is loaded into virtual address space before the
- call stack starts.
- Thus, increasing the environment size offsets the stack start address.
+ call stack starts, thus increasing the environment size offsets the stack
+ start address.
  The authors suggests that altering the stack addresses of variables at
  runtime can have an impact on things like alignment in cache and accuracy
  of branch predictors.
@@ -720,8 +763,8 @@ Changing link order can change the virtual addresses of instructions.
  Using hardware simulators, the authors show that performance also depends
  on code alignment in memory.
  For instance, when a hot loop fits entirely in a single cache line, the
- number of accesses to instruction cache can be reduced.The authors speculate
- that the 
+ number of accesses to instruction cache can be reduced.
+ The authors speculate that the 
 \begin_inset Quotes eld
 \end_inset
 
@@ -734,20 +777,40 @@ Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
-Dispite demystifying the causes of bias somewhat, this paper provides no
- satisfactory explanation of exactly what mechanisms of the processor causes
- bias.
+Dispite demystifying the causes of bias to some degree, this paper provides
+ no satisfactory explanation of exactly how or what hardware mechanisms
+ causes bias.
  
 \end_layout
 
 \begin_layout Subsection
-Conclusion
+Dealing with Bias
 \end_layout
 
 \begin_layout Standard
-The conclusion reached in both papers is that both observer effect and measureme
-nt bias is unpredictable.
- Measures should be taken to mitigate rather than avoid
+The conclusion reached in both papers is that measurement bias is unpredictable
+ and difficult to avoid.
+ Instead, measures have to made to ensure the results obtained by performance
+ analysis are valid.
+ The authors provide some guidelines for how to conduct sound experiments;
+\end_layout
+
+\begin_layout Itemize
+Diversify benchmarks, using statistical methods over a set of diverse benchmarks
+ will help cancel out bias.
+ 
+\end_layout
+
+\begin_layout Itemize
+Randomize experimental setup, performing multiple measurements under different
+ configurations of variables that are known to cause bias.
+\end_layout
+
+\begin_layout Standard
+In literature survays, the authors find that almost no papers account for
+ measurement bias, which can draw doubts to the validity of results.
+ This should be a wake up call for the computer science community, hopefully
+ employing more sound methodologies.
 \end_layout
 
 \begin_layout Section
@@ -755,12 +818,10 @@ Exploiting Bias for Optimization
 \end_layout
 
 \begin_layout Standard
-Bias effects are hardware dependent -- need to optimize for specific architectur
-es.
-\end_layout
-
-\begin_layout Standard
-Support in GCC and other compilers.
+So far we have pointed out the problems bias causes for performance analysis.
+ A different perspective on bias effects is to look at it as a potential
+ for optimization.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -768,24 +829,75 @@ Blind Optimization
 \end_layout
 
 \begin_layout Standard
-In an attemt to circumvent the negative 
-\end_layout
+An optimizing compiler needs to have some sort of abstract model of the
+ target processor or machine in order to emit an 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-Giving up, treat everything as a black box.
- Use methods from AI to find local minima/maxima 
+optimal
+\begin_inset Quotes erd
+\end_inset
+
+ set of instructions.
+ As CPUs become more and more sophisticated, creating a good model for optimizat
+ion is difficult.
+ Additionally, with bias effects deemed 
+\emph on
+unpredictable
+\emph default
+, creating an accurate model becomes impossible.
+ In 
+\begin_inset Quotes eld
+\end_inset
+
+Blind Optimization for Exploiting Hardware Features
+\begin_inset Quotes erd
+\end_inset
+
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Knights:2009:BlindOpt"
 
 \end_inset
 
-.
+, the authors takes a different approach to optimization, disregarding the
+ model altogether.
+ Using automatically generated 
+\emph on
+program variants
+\emph default
+, finding an 
+\begin_inset Quotes eld
+\end_inset
+
+optimal
+\begin_inset Quotes erd
+\end_inset
+
+ program can be reduced to a searching problem within a variant space.
+ 
 \end_layout
 
 \begin_layout Standard
-Recognizing that properties such as link order can have large impact on
- performance
+The authors considers instruction alignment of functions and global variables
+ as the 
+\emph on
+variant space
+\emph default
+.
+ New program variants are generated by inserting alignment directives in
+ the assembly, changing the memory address of each function or variable
+ independently.
+ A subset of program variants are generated, and evaluated by measuring
+ execution time.
+ 
+\end_layout
+
+\begin_layout Standard
+Using blind optimization, the authors are able to achieve up to 12.6 % speedup
+ on some SPEC benchmarks, compared to compiler optimized code.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -793,7 +905,126 @@ Assembly-Level Optimizations
 \end_layout
 
 \begin_layout Standard
-MAO, paper from Google.
+Recognizing that current hardware models are lacking, Hundt et al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Hundt:2011:MAO"
+
+\end_inset
+
+ presents MAO, an 
+\begin_inset Quotes eld
+\end_inset
+
+Extensible Micro-Architectural Optimizer
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This is an assembly-to-assembly translator, containing architecture-specific
+ rules to optimize machine code emitted by the compiler for x86 and x86_64
+ architectures.
+ Many rules attempt to fix 
+\begin_inset Quotes eld
+\end_inset
+
+sloppy
+\begin_inset Quotes erd
+\end_inset
+
+ code generated by GCC (or other compilers), for instance redundant test
+ instructions.
+ The following example can be shortened by removing the last instruction,
+ as condition flags are set implicitly by the sub instruction.
+ 
+\end_layout
+
+\begin_layout Quote
+\begin_inset listings
+lstparams "basicstyle={\ttfamily},language={[x86masm]Assembler}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+sub   16, %rax
+\end_layout
+
+\begin_layout Plain Layout
+
+test  %rax, %rax
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Many more of these rules are encoded in MAO, resulting in reduced code size
+ and use of more efficient instructions.
+ 
+\end_layout
+
+\begin_layout Standard
+In addition to optimizing for the ISA, the code is also tuned for specific
+ properties of Intel microarchitectures.
+ As an example, MAO considers instruction address alignment for hot loops,
+ inserting additional alignment directives if neccessary.
+ By aligning frequently executed code segments to 16 byte boundaries, the
+ instructions are more likely to fit in decode 
+\begin_inset Quotes eld
+\end_inset
+
+chunks
+\begin_inset Quotes erd
+\end_inset
+
+, which are 16 B on the Intel Core 2.
+ In previous work on measurement bias by Mytkowitcz et al, the 
+\begin_inset Quotes eld
+\end_inset
+
+loop stream detector
+\begin_inset Quotes erd
+\end_inset
+
+ is suggested as a potential cause of bias.
+ The LSD is similarly dependent on code alignment in 16 B boundaries on
+ the Core 2 architecture.
+ MAO uses this knowledge to align code to fit in as few decode lines as
+ possible, allowing the LSD to kick in and avoid instruction fetch for some
+ hot loops.
+ Another interesting architecture specific optimization considers available
+ execution ports in the Core 2 when scheduling instructions.
+\end_layout
+
+\begin_layout Standard
+Inspired by the blind optimization technique introduced by Knights et al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Knights:2009:BlindOpt"
+
+\end_inset
+
+, MAO attempts to insert nop instructions at random.
+ This moves surrounding code around, possibly hitting 
+\begin_inset Quotes eld
+\end_inset
+
+performance cliffs
+\begin_inset Quotes erd
+\end_inset
+
+ not modeled or caught by any of the other optimizations.
+ 
+\end_layout
+
+\begin_layout Standard
+This paper is particularly interesting because it shows that modeling, and
+ successfully optimize for, complex hardware mechanisms is in fact feasible.
  
 \end_layout
 
