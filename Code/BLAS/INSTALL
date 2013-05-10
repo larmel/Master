@@ -1,0 +1,17 @@
+# From package manager
+
+libatlas-dev - Automatically Tuned Linear Algebra Software, C header files
+libatlas3gf-base - Automatically Tuned Linear Algebra Software, generic shared
+
+
+
+# Build ATLAS 3.10.1
+# Default dir: /usr/local/atlas
+# Configure from new directory (ex 'install') under source dir
+
+../configure --shared
+make build
+make check
+make ptcheck
+make time
+make install

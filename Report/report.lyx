@@ -8523,6 +8523,138 @@ BLAS function calculating
 
 \end_layout
 
+\begin_layout Standard
+With ATLAS dgemv, size 8192 double.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+cc -std=c99 -O3 -march=native atlas.c -o atlas -I/usr/local/atlas/include
+ -L/usr/local/atlas/lib -lsatlas
+\end_layout
+
+\begin_layout Plain Layout
+
+A, x, y : (0x7f63c983b010, 0x2089fc0, 0x2099fd0)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+ Performance counter stats for './atlas':
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       182,943,701 cycles:u                  #    0.000 GHz             
+       
+\end_layout
+
+\begin_layout Plain Layout
+
+            44,007 r0107:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+             4,332 cache-misses:u            #   29.423 % of all cache refs
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+            14,723 cache-references:u                                  
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.074079667 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+A, x, y : (0x7fa6297b0010, 0xeb7010, 0xec7020)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+ Performance counter stats for './atlas':
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       193,997,666 cycles:u                  #    0.000 GHz             
+       
+\end_layout
+
+\begin_layout Plain Layout
+
+        34,058,166 r0107:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+             4,422 cache-misses:u            #   30.723 % of all cache refs
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+            14,393 cache-references:u                                  
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.077720247 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Conclusions and Future Work
 \end_layout
