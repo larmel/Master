@@ -6,11 +6,17 @@ LABELS='Cycle count, cycles:u' 'Address alias, r0107:u' 'Resource stalls, r01a2:
 
 CFLAGS=-std=c99 -O3 -march=native
 
-.PHONY: clean bin/gemv-atlas-offset.eps
+.PHONY: clean
 
 
+# Link with serial ATLAS in /usr/local/atlas
 gemv-atlas: gemv.c
 	cc $(CFLAGS) $+ -o $@ -I/usr/local/atlas/include -L/usr/local/atlas/lib -lsatlas
+
+# Link with default BLAS
+gemv-blas: gemv.c
+	cc $(CFLAGS) $+ -o $@ -L/usr/lib/libblas -Wl,-rpath,/usr/lib/libblas -lblas 
+
 
 # Try allocating increasing amount on heap initially, pushing addresses of x and y vectors, 256x16 = 4K
 bin/gemv-atlas-offset.csv: gemv-atlas
@@ -25,17 +31,6 @@ bin/gemv-atlas-offset.eps: bin/gemv-atlas-offset.csv
 		--xlabel 'Additional heap-allocated bytes' --ylabel 'Event count (millions)' \
 		--stride 16 --ticks 1024
 
-# Link with serial ATLAS in /usr/local/atlas
-atlas: atlas.c
-	cc $(CFLAGS) $+ -o $@ -I/usr/local/atlas/include -L/usr/local/atlas/lib -lsatlas
-
-# Link with default BLAS
-blas: blas.c
-	cc $(CFLAGS) $+ -o $@ -L/usr/lib/libblas -Wl,-rpath,/usr/lib/libblas -lblas 
-
-test: atlas blas
-	perf stat -e cycles:u,r0107:u,cache-misses:u,cache-references:u ./blas
-	perf stat -e cycles:u,r0107:u,cache-misses:u,cache-references:u ./atlas
 
 clean:
-	rm -f blas atlas gemv-atlas
+	rm -f gemv-atlas gemv-blas

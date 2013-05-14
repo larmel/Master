@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <cblas.h>
 
-#define M (8192)
+#define M 8192
 #define N 1
-#define K (8192)
+#define K 8192
 
 /**
  * Matrix-matrix multiplication
  */
-void mm()
+int main(int argc, char **argv)
 {
     const double alpha = 1.0;
     const double beta  = 0.0;
@@ -38,43 +38,5 @@ void mm()
     );
 
     //free(A), free(B), free(C);
-}
-
-/**
- * Matrix-vector multiplication
- */
-void mv()
-{
-    const double alpha = 1.0;
-    const double beta  = 0.0;
-
-    char *fill = malloc(sizeof(char) * 0x1040);
-
-    double *A = malloc(sizeof(double) * (M * K + 0x100));
-    double *x = malloc(sizeof(double) * K);
-    double *y = malloc(sizeof(double) * K);
-    //char *foo = malloc(sizeof(char) * 0xfe0);
-
-    printf("A, x, y : (%p, %p, %p)\n", A, x, y);
-
-    // y = Ax * alpha
-    // As a relic from Fortran, BLAS prefers col-major order. 
-    // When CblasNoTrans is set, an additional copy operation of A is done.
-    for (int i = 0; i < 10; ++i)
-    cblas_dgemv(CblasColMajor, 
-        CblasNoTrans, // Transpose A
-        M, K, 
-        alpha, 
-        A, K, 
-        x, 1, 
-        beta, 
-        y, 1
-    );
-}
-
-int main()
-{
-    //mm();
-    mv();
     return 0;
 }
