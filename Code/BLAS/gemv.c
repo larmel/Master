@@ -2,12 +2,9 @@
 #include <stdio.h>
 #include <cblas.h>
 
-// A is M x K -> rows x cols.
+// A is M x N -> rows x cols.
 #define M 8192
-#define K 8192
-
-// Worstcase = 0x40, Bestcase = 0x400
-#define OFFSET 0x0
+#define N 8192
 
 /**
  * Matrix-vector multiplication, y = alpha*Ax + beta*y
@@ -16,31 +13,35 @@
  */
 int main(int argc, char **argv)
 {
-    int offset = argc > 1 ? atoi(argv[1]) : OFFSET;
+    int offset1 = argc > 1 ? atoi(argv[1]) : 0;
+    int offset2 = argc > 2 ? atoi(argv[2]) : 0;
+    int iters   = argc > 3 ? atoi(argv[3]) : 1;
 
     const double alpha = 1.0, beta = 0.0;
 
-    void *fill = malloc(sizeof(char) * offset);
+    if (offset1) malloc(sizeof(char) * offset1);
 
-    double *A = malloc(sizeof(double) * M * K);
-    double *x = malloc(sizeof(double) * K);
+    double *A = malloc(sizeof(double) * M * N);
+    double *x = malloc(sizeof(double) * N);
+
+    if (offset2) malloc(sizeof(char) * offset2);
+
     double *y = malloc(sizeof(double) * M);
 
     printf("A, x, y : (%p, %p, %p)\n", A, x, y);
 
-    //for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < iters; ++i)
     cblas_dgemv(CblasColMajor, 
         CblasNoTrans, // Transpose A
-        M, K, 		  // rows, cols
+        M, N,         // rows, cols
         alpha, 
-        A, M, 		  // lda (offset to next column with same row index)
+        A, M,         // lda (offset to next column with same row index)
         x, 1, 
         beta, 
         y, 1
     );
-	
-	free(A), free(x), free(y), free(fill);
 
-	return 0;
+    free(A), free(x), free(y);
+
+    return 0;
 }
-

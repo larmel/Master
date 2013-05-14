@@ -8573,17 +8573,81 @@ Even though we did not find any apparent heap-heap conflicts, fftw_malloc
  could help by ?
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 BLAS
 \end_layout
 
 \begin_layout Standard
-Find one example of alias (best case: pairwise alignment of heap areas).
- Speculate wildly about cause -- providing motivation for further investigation.
+Basic Linear Algebra Subroutines (BLAS), is the de-facto standard API for
+ high performance linear algebra routines 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+BLAS (Basic Linear Algebra Subprograms) 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.netlib.org/blas/"
+target "http://www.netlib.org/blas/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ The functionality is divided into three categories: 
+\end_layout
+
+\begin_layout Description
+Level
+\begin_inset space ~
+\end_inset
+
+1 Scalar and vector operations, such as dot product and vector addition.
+\end_layout
+
+\begin_layout Description
+Level
+\begin_inset space ~
+\end_inset
+
+2 Matrix-vector operations
+\end_layout
+
+\begin_layout Description
+Level
+\begin_inset space ~
+\end_inset
+
+3 Matrix-matrix operations, including the widely applied 
+\family typewriter
+gemm
+\family default
+ matrix multiplication.
+ 
+\end_layout
+
+\begin_layout Standard
+Many highly optimized implementations of BLAS exists.
+ We will look at ATLAS, which like FFTW uses automatic tuning to optimize
+ for the underlying hardware.
+ Specifically vendor tuned implementations also exists, such as MKL from
+ Intel.
+ 
 \end_layout
 
 \begin_layout Subsection
-Alias in Matrix-Vector Multiplication
+Alias Effects in Matrix-Vector Multiplication
 \end_layout
 
 \begin_layout Standard
@@ -8597,7 +8661,7 @@ Consider matrix-vector multiplication of the form
 \end_inset
 
  be of size 
-\begin_inset Formula $M\times K$
+\begin_inset Formula $M\times N$
 \end_inset
 
 , where 
@@ -8605,11 +8669,6 @@ Consider matrix-vector multiplication of the form
 \end_inset
 
  is the number of rows.
- Each element in the result vector is given as 
-\begin_inset Formula $y_{i}=a_{i,0}x_{0}+a_{i,1}x_{1}+\ldots+a_{i,K}x_{K}$
-\end_inset
-
-.
  
 \end_layout
 
@@ -8617,16 +8676,16 @@ Consider matrix-vector multiplication of the form
 \begin_inset Formula 
 \[
 \left[\begin{array}{ccccc}
-a_{0,0} & a_{0,1} &  &  & a_{0,K}\\
+a_{0,0} & a_{0,1} &  &  & a_{0,N}\\
 a_{1,0}\\
  &  &  & \ddots\\
-a_{M,0} &  &  &  & a_{M,K}
+a_{M,0} &  &  &  & a_{M,N}
 \end{array}\right]\left[\begin{array}{c}
 x_{0}\\
 x_{1}\\
 \vdots\\
 \\
-x_{K}
+x_{N}
 \end{array}\right]=\left[\begin{array}{c}
 y_{0}\\
 y_{1}\\
@@ -8641,15 +8700,19 @@ y_{M}
 \end_layout
 
 \begin_layout Standard
-The corresponding BLAS function is 
+The corresponding BLAS function is the level 2 
 \family typewriter
 gemv
 \family default
-, computing the general matrix-vector product 
-\begin_inset Formula $\boldsymbol{y}=\alpha A\boldsymbol{x}+\beta\boldsymbol{y}$
+ routine, computing the more general matrix-vector product given as 
+\begin_inset Formula 
+\[
+\boldsymbol{y}=\alpha\text{op}\left(A\right)\boldsymbol{x}+\beta\boldsymbol{y}
+\]
+
 \end_inset
 
- for constants 
+Here, 
 \begin_inset Formula $\alpha$
 \end_inset
 
@@ -8657,36 +8720,49 @@ gemv
 \begin_inset Formula $\beta$
 \end_inset
 
-.
- In Listing 
+ are constants, and 
+\begin_inset Formula $\text{op}\left(A\right)$
+\end_inset
+
+ is an optional transpose or complex conjugate of the matrix.
+ A typical invocation of this routine is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:blas-gemv"
 
 \end_inset
 
-, a typical invocation of this routine is shown.
- 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
- is represented as regular heap allocated arrays, and we set 
+.
+ We set 
 \begin_inset Formula $\alpha=1$
 \end_inset
 
- and 
+, 
 \begin_inset Formula $\beta=0$
 \end_inset
 
- to make the example as simple as possible.
+ and 
+\begin_inset Formula $\text{op}\left(A\right)=A$
+\end_inset
+
+ to reduce the formula to 
+\begin_inset Formula $\boldsymbol{y}=A\boldsymbol{x}$
+\end_inset
+
+.
+ Note that 
+\begin_inset Formula $A$
+\end_inset
+
+ is declared as 
+\begin_inset Quotes eld
+\end_inset
+
+CblasColMajor
+\begin_inset Quotes erd
+\end_inset
+
+, meaning we impose a column major ordering of the data.
  
 \end_layout
 
@@ -8714,17 +8790,17 @@ status open
 
 \begin_layout Plain Layout
 
-    double *A = malloc(sizeof(double) * M * K);
+    double *A = malloc(sizeof(double) * M * N);
 \end_layout
 
 \begin_layout Plain Layout
 
-    double *x = malloc(sizeof(double) * K);
+    double *x = malloc(sizeof(double) * N);
 \end_layout
 
 \begin_layout Plain Layout
 
-    double *y = malloc(sizeof(double) * K);
+    double *y = malloc(sizeof(double) * M);
 \end_layout
 
 \begin_layout Plain Layout
@@ -8733,17 +8809,17 @@ status open
 
 \begin_layout Plain Layout
 
-    cblas_dgemv(CblasRowMajor, 
+    cblas_dgemv(CblasColMajor, 
 \end_layout
 
 \begin_layout Plain Layout
 
-        CblasNoTrans, // Do not transpose A
+        CblasNoTrans,
 \end_layout
 
 \begin_layout Plain Layout
 
-        M, K, 
+        M, N,
 \end_layout
 
 \begin_layout Plain Layout
@@ -8753,7 +8829,7 @@ status open
 
 \begin_layout Plain Layout
 
-        A, K, 
+        A, M,
 \end_layout
 
 \begin_layout Plain Layout
@@ -8791,11 +8867,13 @@ name "alg:blas-gemv"
 
 \end_inset
 
-Computing double precision matrix-vector multiplication using 
+Computing double precision matrix-vector multiplication 
+\begin_inset Formula $\boldsymbol{y}=A\boldsymbol{x}$
+\end_inset
+
+ using 
 \family typewriter
-gemv
-\family default
-.
+dgemv
 \end_layout
 
 \end_inset
@@ -8829,44 +8907,17 @@ reference "tab:blas-dgemv-perf"
 
 \end_inset
 
- shows a difference in cycle count of 6 % for two executions of the same
- program
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/blas/gemv-atlas-offset.eps
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-One period for 8192x8192 matrix.
+ shows performance counter statistics for three independent executions with
  
-\end_layout
-
+\begin_inset Formula $N=M=8196$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-
+, and varying memory addresses for each heap area.
+ As might be suspected, the worst case configuration is observed when all
+ arrays align closely on the last 12 bits.
+ Between the best and worst configuration, there is a potential for 7.4x
+ speedup.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -8878,147 +8929,24 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="8" columns="3">
+<lyxtabular version="3" rows="4" columns="5">
 <features tabularvalignment="middle">
-<column alignment="right" valignment="top" width="0">
-<column alignment="right" valignment="top" width="0">
-<column alignment="right" valignment="top" width="0">
+<column alignment="right" valignment="top" width="20text%">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="15text%">
+<column alignment="center" valignment="top" width="15text%">
 <row>
-<cell alignment="right" valignment="top" usebox="none">
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-
-\family typewriter
-&A
+(&A, &x, &y)
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0x7f63c983b010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0x7fa6297b0010
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-&x
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0x2089fc0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0xeb7010
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-&y
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0x2099fd0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family typewriter
-0xec7020
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" bottomline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" bottomline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9027,56 +8955,16 @@ Cycles
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-182,943,701
+Address alias
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-193,997,666
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Address Alias
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-44,007
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-34,058,166
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9085,20 +8973,105 @@ L3 cache misses
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-4,332
+L3 cache references
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-4,422
+0x2aaaac292010 0x605010 0x615020
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+194,224,356
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+34,108,038
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6,633
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15,267
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac292010 0x605010 0x6150b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+186,370,424
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5,723,056
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7,271
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17,773
 \end_layout
 
 \end_inset
@@ -9109,25 +9082,43 @@ L3 cache misses
 \begin_inset Text
 
 \begin_layout Plain Layout
-L3 cache references
+0x2aaaac292010 0x6053d0 0x6153e0
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-14,723
+180,791,072
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-14,393
+37,079
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6,230
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15,328
 \end_layout
 
 \end_inset
@@ -9155,8 +9146,12 @@ Performance counter statistics for automatically tuned ATLAS implementation
 \family typewriter
 dgemv
 \family default
-, with 
-\begin_inset Formula $M=K=8192$
+, calculating 
+\begin_inset Formula $\boldsymbol{y}=A\boldsymbol{x}$
+\end_inset
+
+ with matrix size 
+\begin_inset Formula $8192\times8192$
 \end_inset
 
 .
@@ -9173,8 +9168,118 @@ dgemv
 \end_layout
 
 \begin_layout Standard
-We rule out cache efficiency as being the reason here, as the relevant performan
-ce counters do not show a change.
+We conclude that the most probable cause of bias must be falsely predicted
+ dependencies due to address aliasing.
+ For the 
+\begin_inset Quotes eld
+\end_inset
+
+worst case
+\begin_inset Quotes erd
+\end_inset
+
+, alias count is about 18 % of cycle count, indicating many missed opportunities
+ for out of order execution.
+ Supporting this hypothesis, we find no apparent correlation between cycle
+ count and cache efficiency.
+ The L3 performance counters shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:blas-dgemv-perf"
+
+\end_inset
+
+ shows little variation, and does not explain the performance variations.
+ 
+\end_layout
+
+\begin_layout Standard
+The bias effects can be amplified by calling dgemv multiple times in a loop,
+ avoiding overhead from malloc.
+ With repeated invocations on the same data, we are able to get more than
+ 30x speedup between the worst and best case.
+ 
+\end_layout
+
+\begin_layout Subsection
+Dealing With Bias
+\end_layout
+
+\begin_layout Standard
+Users of BLAS packages are probably more willing to invest in hand optimizing
+ hot spots where bias might occur.
+ It is not unlikely that one or more matrix-vector operations are part of
+ a hot loop.
+ Bias from address alias can heavily impact performance, and will probably
+ be worth considering in some cases.
+ 
+\end_layout
+
+\begin_layout Standard
+For the particular case we investigated, aligning heap segments 
+\begin_inset Quotes eld
+\end_inset
+
+far apart
+\begin_inset Quotes erd
+\end_inset
+
+ within the 4 KiB area of 12 bit suffixes is a good heuristic.
+ More specifically, it appears that address suffixes of 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+ are the most important to separate.
+ A possible run time solution can be realized as follows:
+\end_layout
+
+\begin_layout Enumerate
+Allocate some extra space for one of the vectors when calling malloc, for
+ instance 
+\family typewriter
+sizeof(double) * (M + 0x100)
+\family default
+ for 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Check the returned pointers for potential alias, i.e.
+ the difference between 
+\family typewriter
+&A
+\family default
+ and 
+\family typewriter
+&y
+\family default
+.
+ Offset using pointer arithmetic into the array with extra padding at the
+ end, i.e.
+ 
+\family typewriter
+y += 0x100
+\family default
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In many cases it will be possible to accurately predict the address of larger
+ matrices such as 
+\begin_inset Formula $A$
+\end_inset
+
+.
+ For larger requests, malloc will call mmap and always align to page boundary.
+ Perhaps this can simplify the calculations somewhat.
  
 \end_layout
 
