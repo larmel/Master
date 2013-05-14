@@ -1034,7 +1034,8 @@ Intel Microarchitecture
 
 \begin_layout Standard
 Information in Intel 64 and IA-32 Architectures Optimization Reference Manual.
- 
+ Need some familiarity with the processor architecture.
+ Lots of features and mechanisms involved when executing code.
 \end_layout
 
 \begin_layout Standard
@@ -1045,15 +1046,20 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-Image of memory system, showing MOB etc.
- Might be useful.
+\align center
+\begin_inset Graphics
+	filename Img/intel/pipeline.eps
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Intel Core Microarchitecture
+Sandy/Ivy Bridge Pipeline
 \end_layout
 
 \end_inset
@@ -1067,7 +1073,7 @@ Intel Core Microarchitecture
 \end_layout
 
 \begin_layout Subsection
-MOB
+Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
