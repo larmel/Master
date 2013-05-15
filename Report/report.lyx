@@ -7627,14 +7627,9 @@ Performance after stack fix is added to apply_extra_iter
 \begin_layout Standard
 Over two 4K periods, the modified version is much less sensitive to stack
  placement, removing almost all the bias from previously.
- We also gain a 
-\emph on
-very
-\emph default
- slight speedup on average, with mean cycle count reduced from 31,051,690
- to 30,947,460.
- More interestingly however, is the worst case performance, where we see
- a reduction in cycle count by 11.8 %.
+ There is a reduction in cycle count for the worst case by 11.8 %, however
+ there is no significant speedup on average.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -7833,11 +7828,9 @@ Cycle count statistics over 512 runs, sampling uniformly over two 4KiB periods
 Even though we are able to remove most of the alias effects, performance
  did not improve as much as we had hoped.
  The constant overhead added by inserting the extra instructions in apply_extra_
-iter appears to be significant.
- Measuring instructions:u using perf, we see that about 1 million additional
- dynamic instructions are executed in the modified version, an increase
- of 1.3 %.
- 
+iter consumes any aliasing improvement.
+ About 1 million additional dynamic instructions are added to our example
+ in the modified version, an increase of 1.3 %.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -7845,9 +7838,13 @@ Creating the Worst Case
 \end_layout
 
 \begin_layout Standard
-Let's draw a picture of the 4K memory map when running this function.
- Allocating another buffer of 7400B using regular malloc before calling
- fftw_malloc, pushing in and out to 
+With the static alignment in place, it is not hard to imagine where the
+ modified version will fail.
+ If input and ouput buffers happen to reside on the opposite of the 4 KiB
+ segment, we should see consistently bad performance for all environment
+ sizes.
+ By allocating another buffer of 7400B using regular malloc before calling
+ fftw_malloc, the input and output buffers are pushed to 
 \family typewriter
 0x604da0
 \family default
@@ -7886,8 +7883,7 @@ name "fig:fftw-worstcase-4k"
 
 \end_inset
 
-Offseting heap addresses; with fixed stack from before, stack and heap accesses
- will always overlap -- regardless of environment size.
+Offseting heap addresses to always overlap with fixed stack pointer
 \end_layout
 
 \end_inset
@@ -7898,6 +7894,20 @@ Offseting heap addresses; with fixed stack from before, stack and heap accesses
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+The effects of this forced overlap is illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-worstcase"
+
+\end_inset
+
+.
+ As expected, we see that a constant number of alias events are added across
+ all environment sizes.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -7943,7 +7953,7 @@ Bad heap alignment combined with stack fix results in aliasing consistently
 \end_layout
 
 \begin_layout Subsubsection*
-A General Solution
+A Generic Solution
 \end_layout
 
 \begin_layout Standard
@@ -7965,7 +7975,6 @@ ro
 \end_inset
 
  close to the lower end of a 4KiB range of address suffixes.
- In general however, all the parameters are unknown.
  A hypothetical complete solution would require a function at least these
  three parameters to calculate the optimal stack offset.
 \begin_inset Formula 
@@ -7979,86 +7988,26 @@ f\left(\text{ri},\text{ro},\text{\%rsp}\right)\rightarrow\text{offset}
 \end_layout
 
 \begin_layout Standard
-A plausible solution to the previous 
-\begin_inset Quotes eld
-\end_inset
-
-worst case
-\begin_inset Quotes erd
-\end_inset
-
- scenario from Figure 
+A plausible solution to the worst case scenario from Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:fftw-worstcase-4k"
 
 \end_inset
 
- would be to align stack to 
-\begin_inset Quotes eld
-\end_inset
-
-
+ would be to align stack to start at 
 \family typewriter
 ri
 \family default
-
-\begin_inset Quotes erd
-\end_inset
-
-, no longer overlapping the heap segments.
- Given the somewhat discouraging results from our simple static fix, we
- did not attempt to implement a function like this for the 
+, no longer overlapping any heap segments.
+ However, given the somewhat discouraging results from our simple static
+ fix, we did not attempt to implement a function like this for the 
 \family typewriter
 n1fv_16
 \family default
  kernel.
  The added cost of additional dynamic instructions will quickly cancel out
  any speedup we might get.
- 
-\end_layout
-
-\begin_layout Subsubsection*
-Heap-Heap Conflicts
-\end_layout
-
-\begin_layout Standard
-In addition to heap addresses overlaping with stack, there is also a possibility
- of input and output arrays overlapping themselves.
- We suspected that additional address conflicts would be generated when
- the last 12 bits of 
-\begin_inset Quotes eld
-\end_inset
-
-
-\family typewriter
-ri
-\family default
-
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-
-\family typewriter
-ro
-\family default
-
-\begin_inset Quotes erd
-\end_inset
-
- were close.
- However, we found that aligning input and output buffers did not cause
- any conflicts in itself for the 
-\family typewriter
-n1fv_16
-\family default
- kernel.
- All alias seems to come from conflicting accesses between input/output
- and stack.
  
 \end_layout
 
@@ -8571,9 +8520,6 @@ Allocating Alias-free
 \begin_layout Standard
 Even though we did not find any apparent heap-heap conflicts, fftw_malloc
  could help by ?
-\end_layout
-
-\begin_layout Standard
 \begin_inset Newpage pagebreak
 \end_inset
 
@@ -8639,8 +8585,15 @@ gemm
 
 \begin_layout Standard
 Many highly optimized implementations of BLAS exists.
- We will look at ATLAS, which like FFTW uses automatic tuning to optimize
- for the underlying hardware.
+ We will look at ATLAS, which similar to FFTW uses automatic tuning to optimize
+ for the underlying hardware 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Whaley:2000:ATLAS"
+
+\end_inset
+
+.
  Specifically vendor tuned implementations also exists, such as MKL from
  Intel.
  
@@ -8913,15 +8866,11 @@ reference "tab:blas-dgemv-perf"
 \end_inset
 
 , and varying memory addresses for each heap area.
- As might be suspected, the worst case configuration is observed when all
- arrays align closely on the last 12 bits.
- Between the best and worst configuration, there is a potential for 7.4x
- speedup.
- 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float table
+placement h
 wide false
 sideways false
 status open
@@ -8930,10 +8879,10 @@ status open
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="5">
-<features tabularvalignment="middle">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="right" valignment="top" width="20text%">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
 <column alignment="center" valignment="top" width="15text%">
 <column alignment="center" valignment="top" width="15text%">
 <row>
@@ -8941,7 +8890,19 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-(&A, &x, &y)
+Address of 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -8964,7 +8925,7 @@ Address alias
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9067,7 +9028,7 @@ L3 cache references
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9168,18 +9129,14 @@ dgemv
 \end_layout
 
 \begin_layout Standard
-We conclude that the most probable cause of bias must be falsely predicted
+As might be suspected, the worst case configuration is observed when all
+ arrays align closely on the last 12 bits.
+ Between the best and worst configuration, there is a potential for 1.074x
+ speedup.
+ We conclude that the most probable cause of bias must be falsely predicted
  dependencies due to address aliasing.
- For the 
-\begin_inset Quotes eld
-\end_inset
-
-worst case
-\begin_inset Quotes erd
-\end_inset
-
-, alias count is about 18 % of cycle count, indicating many missed opportunities
- for out of order execution.
+ For the worst case, the number of alias events is about 18 % of cycle count,
+ indicating many missed opportunities for out of order execution.
  Supporting this hypothesis, we find no apparent correlation between cycle
  count and cache efficiency.
  The L3 performance counters shown in Table 
@@ -9197,7 +9154,7 @@ reference "tab:blas-dgemv-perf"
 The bias effects can be amplified by calling dgemv multiple times in a loop,
  avoiding overhead from malloc.
  With repeated invocations on the same data, we are able to get more than
- 30x speedup between the worst and best case.
+ 1.30x speedup between the worst and best case.
  
 \end_layout
 
@@ -9216,7 +9173,8 @@ Users of BLAS packages are probably more willing to invest in hand optimizing
 \end_layout
 
 \begin_layout Standard
-For the particular case we investigated, aligning heap segments 
+For the particular case we investigated, a good heuristic is to alignin
+ heap segments 
 \begin_inset Quotes eld
 \end_inset
 
@@ -9224,7 +9182,7 @@ far apart
 \begin_inset Quotes erd
 \end_inset
 
- within the 4 KiB area of 12 bit suffixes is a good heuristic.
+ within the 4 KiB area of 12 bit suffixes.
  More specifically, it appears that address suffixes of 
 \begin_inset Formula $A$
 \end_inset
@@ -9370,7 +9328,7 @@ begin{small}
 
 \begin_inset Tabular
 <lyxtabular version="3" rows="8" columns="5">
-<features tabularvalignment="middle" tabularwidth="100text%">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="left" valignment="top" width="34text%">
@@ -9751,7 +9709,7 @@ instructions
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9846,7 +9804,7 @@ Last level cache references
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -9941,7 +9899,7 @@ C4
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -10138,7 +10096,7 @@ begin{small}
 
 \begin_inset Tabular
 <lyxtabular version="3" rows="18" columns="4">
-<features tabularvalignment="middle" tabularwidth="100text%">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="left" valignment="top" width="38text%">
@@ -10472,7 +10430,7 @@ Counts number of loops that can't stream from the instruction queue
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -10558,7 +10516,7 @@ Unhalted core cycles when the thread is in ring 0
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -10644,7 +10602,7 @@ A1
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -10905,7 +10863,7 @@ A1
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -10992,7 +10950,7 @@ A1
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11079,7 +11037,7 @@ A1
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11166,7 +11124,7 @@ A2
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11252,7 +11210,7 @@ A3
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11339,7 +11297,7 @@ A3
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout

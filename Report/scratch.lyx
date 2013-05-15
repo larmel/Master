@@ -1055,5 +1055,49 @@ Consider cases where heap addresses can collide.
  That way no modifications to the interface is needed either.
 \end_layout
 
+\begin_layout Subsubsection*
+Heap-Heap Conflicts
+\end_layout
+
+\begin_layout Standard
+In addition to heap addresses overlaping with stack, there is also a possibility
+ of input and output arrays overlapping themselves.
+ We suspected that additional address conflicts would be generated when
+ the last 12 bits of 
+\begin_inset Quotes eld
+\end_inset
+
+
+\family typewriter
+ri
+\family default
+
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+
+\family typewriter
+ro
+\family default
+
+\begin_inset Quotes erd
+\end_inset
+
+ were close.
+ However, we found that aligning input and output buffers did not cause
+ any conflicts in itself for the 
+\family typewriter
+n1fv_16
+\family default
+ kernel.
+ All alias seems to come from conflicting accesses between input/output
+ and stack.
+ 
+\end_layout
+
 \end_body
 \end_document
