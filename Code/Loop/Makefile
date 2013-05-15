@@ -9,7 +9,7 @@ PLOT_LEGEND=--legend 'upper right'
 # about 130 is added by perf.
 ENV_OFFSET=3200
 
-.PHONY: clean figure-alias figure-fixed figure-alias-all
+.PHONY: clean purge bin/motivation.eps figure-alias figure-fixed figure-alias-all
 
 loop: loop.c
 	cc loop.c -o loop
@@ -41,16 +41,22 @@ figure-alias: stat.csv
 figure-fixed: stat.fixed.csv
 	../lplot stat.fixed.csv -e $(COUNTERS) $(PLOT_AXIS_LABELS) $(PLOT_LEGEND) --title 'loop-alias-fixed'
 
+
+# Figure: Motivation
 # Illustration used in Motivation section of thesis. Small graph with just the spike showing only cycle count. 
-bin/motivation.eps: loop
-	../lperf ./loop -e $(COUNTERS) -o stat.motivation.csv -n 100 -r 10 \
-		--environment-offset $(ENV_OFFSET) --environment-increment 16
-	../lplot stat.motivation.csv -e cycles:u --title 'motivation' \
-		--xlabel '$(ENV_OFFSET) + n * 16 bytes added to environment' \
-		--ylabel 'Cycle count' \
-		--dimension 5 3
-	rm stat.motivation.csv
-	mv motivation.eps bin/motivation.eps
+bin/motivation.csv: loop
+	../lperf ./$+ -e $(COUNTERS) -o $@ -n 100 -r 100 \
+		--environment-offset $(ENV_OFFSET) --environment-increment 2
+
+bin/motivation.eps: bin/motivation.csv
+	../lplot $+ -e cycles:u --export $@ \
+		--xlabel 'Bytes added to environment' --ylabel 'Cycle count' \
+		--stride 2 \
+		--dimension 3.8 2.3
+
 
 clean:
 	rm -f loop loop-fixed stat.csv
+
+purge:
+	rm -f bin/*.csv

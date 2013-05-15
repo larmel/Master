@@ -1,3 +1,5 @@
 ps4_skeleton
 gemv-atlas
-bin
+gemv-blas
+bin/*.csv
+bin/*.eps
