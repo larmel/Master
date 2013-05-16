@@ -2034,7 +2034,7 @@ Cycle count from running the same program with different Unix environment
 \end_layout
 
 \begin_layout Subsection
-Analysis of Alias Effects
+Analysis of Micro-kernel
 \end_layout
 
 \begin_layout Standard
@@ -3194,6 +3194,22 @@ Hypothesis: address alias is the cause.
 \begin_layout Standard
 Detailed analysis with a clever drawing showing where the collision is.
  
+\end_layout
+
+\begin_layout Subsection
+Store Forwaring Limitations
+\end_layout
+
+\begin_layout Standard
+Limitations described in section 3.6.8.2 of optimization manual.
+ On load/store on multiples of 4KiB, code is effectively serialized.
+ 
+\end_layout
+
+\begin_layout Standard
+Point for later: The guidelines provided by intel does not cover effects
+ from ASLR.
+ Stack/static collisions can not easily be accounted for or predicted.
 \end_layout
 
 \begin_layout Subsection
@@ -5152,6 +5168,22 @@ reference "tab:malloc-impl-tuples"
 Most allocators focus on efficiency in a multithreaded environment, and
  we find that none of the alternatives tested attempts to solve the aliasing
  problem for aligned arrays.
+\end_layout
+
+\begin_layout Subsection
+Intel Optimization Guidelines
+\end_layout
+
+\begin_layout Standard
+User/Source Coding Rule 8.
+ (H impact, ML generality) Consider using a special memory allocation library
+ with address offset capability to avoid aliasing.
+ ..
+ 3-76 
+\end_layout
+
+\begin_layout Standard
+(Similar for LSD, compiler guideline).
 \end_layout
 
 \begin_layout Section

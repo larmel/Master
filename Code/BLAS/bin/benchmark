@@ -18,6 +18,13 @@ MISALIGN_MEM_REF.STORES
 DTLB_LOAD_MISSES.MISS_CAUSES_A_WALK
 EOF
 
+# Memory micro-ops, all retired loads and stores
+perf stat -x"$separator" -e r81d0:u,r82d0:u $program $args 0> temp
+cat << 'EOF' | paste -d"$separator" temp - >> $outfile
+MEM_UOPS_RETIRED.LOADS
+MEM_UOPS_RETIRED.STORES
+EOF
+
 # Micro-ops cache events
 perf stat -x"$separator" -e r01d1:u,r02d1:u,r04d1:u,r20d1:u $program $args 0> temp
 cat << 'EOF' | paste -d"$separator" temp - >> $outfile
@@ -31,13 +38,6 @@ EOF
 perf stat -x"$separator" -e r0151:u $program $args 0> temp
 cat << 'EOF' | paste -d"$separator" temp - >> $outfile
 L1D.REPLACEMENT
-EOF
-
-# Memory micro-ops, all retired loads and stores
-perf stat -x"$separator" -e r81d0:u,r82d0:u $program $args 0> temp
-cat << 'EOF' | paste -d"$separator" temp - >> $outfile
-MEM_UOPS_RETIRED.LOADS
-MEM_UOPS_RETIRED.STORES
 EOF
 
 # Prefetching
@@ -57,14 +57,14 @@ CYCLE_ACTIVITY.CYCLES_LDM_PENDING
 CYCLE_ACTIVITY.CYCLES_L1D_PENDING
 EOF
 
-# Dispatch ports
-perf stat -x"$separator" -e r04a1:u,r08a1:u,r10a1:u,r20a1:u $program $args 0> temp
-cat << 'EOF' | paste -d"$separator" temp - >> $outfile
-UOPS_DISPATCHED_PORT.PORT_2_LD
-UOPS_DISPATCHED_PORT.PORT_2_STA
-UOPS_DISPATCHED_PORT.PORT_3_LD
-UOPS_DISPATCHED_PORT.PORT_3_STA
-EOF
+# Dispatch ports (not interesting)
+#perf stat -x"$separator" -e r04a1:u,r08a1:u,r10a1:u,r20a1:u $program $args 0> temp
+#cat << 'EOF' | paste -d"$separator" temp - >> $outfile
+#UOPS_DISPATCHED_PORT.PORT_2_LD
+#UOPS_DISPATCHED_PORT.PORT_2_STA
+#UOPS_DISPATCHED_PORT.PORT_3_LD
+#UOPS_DISPATCHED_PORT.PORT_3_STA
+#EOF
 
 
 

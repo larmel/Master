@@ -1,6 +1,4 @@
-
 loop
 loop-fixed
-stat.csv
-stat.*.csv
-*.eps
+bin/*.csv
+bin/*.eps

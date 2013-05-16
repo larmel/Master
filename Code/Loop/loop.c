@@ -7,7 +7,7 @@
  *
  */
 
-static int i = 0, j = 0, k = 0;
+static int i, j, k;
 
 int main() {
     int g = 0, inc = 1;

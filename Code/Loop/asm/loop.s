@@ -43,7 +43,8 @@ main:
 	movq	$0xa, %rax 		# Newline
 	call write_char
 
-	leave
+	movl	$0, %eax
+	popq	%rbp
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
