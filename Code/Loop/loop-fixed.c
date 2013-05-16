@@ -7,14 +7,14 @@
  *
  */
 
-static int i = 0, j = 0, k = 0;
+static int i, j, k;
 
 int main() {
 	int g = 0, inc = 1;
 
-	int dummy = 0, t1 = g, t2 = inc;
 	if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) 
 	{
+		int dummy = 0, t1 = g, t2 = inc;
 		for (; t1 < 65536; t1++) {
 			i += t2;
 			j += t2;

@@ -1759,7 +1759,7 @@ Operating System
 \begin_inset Text
 
 \begin_layout Plain Layout
-Ubuntu 12.04 LTS (3.2.24)
+Ubuntu 12.04 LTS (3.2.0-41)
 \end_layout
 
 \end_inset
@@ -1779,7 +1779,7 @@ Toolchain
 \begin_inset Text
 
 \begin_layout Plain Layout
-GCC Version 4.6?
+GCC Version 4.6.3
 \end_layout
 
 \end_inset
@@ -2004,8 +2004,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/loop-alias-cycles.eps
-	scale 70
+	filename Img/loop/cycles.eps
 
 \end_inset
 
@@ -2065,7 +2064,7 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="17" columns="3">
+<lyxtabular version="3" rows="18" columns="3">
 <features tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="left" valignment="top" width="60text%">
 <column alignment="center" valignment="top" width="0">
@@ -2229,72 +2228,7 @@ bus-cycles:u
 \uwave off
 \noun off
 \color none
-0.9999993516
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-CYCLE_ACTIVITY.CYCLES_LDM_PENDING
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-r02a3:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9969137483
+0.9999957522
 \end_layout
 
 \end_inset
@@ -2359,7 +2293,7 @@ r0107:u
 \uwave off
 \noun off
 \color none
-0.9967140166
+0.9941211321
 \end_layout
 
 \end_inset
@@ -2424,113 +2358,7 @@ r01a2:u
 \uwave off
 \noun off
 \color none
-0.9965375371
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-task-clock:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9700350589
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-cpu-clock:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9699529964
+0.9922818774
 \end_layout
 
 \end_inset
@@ -2553,7 +2381,7 @@ cpu-clock:u
 \uwave off
 \noun off
 \color none
-CPU_CLK_THREAD_UNHALTED.REF_XCLK
+CYCLE_ACTIVITY.CYCLES_LDM_PENDING
 \end_layout
 
 \end_inset
@@ -2574,7 +2402,7 @@ CPU_CLK_THREAD_UNHALTED.REF_XCLK
 \uwave off
 \noun off
 \color none
-r013c:u
+r02a3:u
 \end_layout
 
 \end_inset
@@ -2595,72 +2423,7 @@ r013c:u
 \uwave off
 \noun off
 \color none
-0.960707912
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-CPU_CLK_UNHALTED.THREAD_P
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-r003c:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.960679448
+0.9879579406
 \end_layout
 
 \end_inset
@@ -2725,7 +2488,137 @@ r025c:u
 \uwave off
 \noun off
 \color none
-0.9605066987
+0.9844339013
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+CPU_CLK_THREAD_UNHALTED.REF_XCLK
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+r013c:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0.9803485824
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+CPU_CLK_UNHALTED.THREAD_P
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+r003c:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0.9803159751
 \end_layout
 
 \end_inset
@@ -2790,7 +2683,7 @@ r04a3:u
 \uwave off
 \noun off
 \color none
-0.9595685545
+0.9200557425
 \end_layout
 
 \end_inset
@@ -2802,18 +2695,6 @@ r04a3:u
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-CYCLE_ACTIVITY.STALLS_L2_PENDING
 \end_layout
 
 \end_inset
@@ -2834,7 +2715,7 @@ CYCLE_ACTIVITY.STALLS_L2_PENDING
 \uwave off
 \noun off
 \color none
-r05a3:u
+cpu-clock:u
 \end_layout
 
 \end_inset
@@ -2855,7 +2736,7 @@ r05a3:u
 \uwave off
 \noun off
 \color none
-0.9590751052
+0.9176326278
 \end_layout
 
 \end_inset
@@ -2866,7 +2747,125 @@ r05a3:u
 \begin_inset Text
 
 \begin_layout Plain Layout
-…
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+task-clock:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0.9176198754
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+UOPS_DISPATCHED_PORT.PORT_4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+r40a1:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0.7546588979
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2885,6 +2884,71 @@ r05a3:u
 
 \begin_layout Plain Layout
 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+UOPS_DISPATCHED_PORT.PORT_5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+r80a1:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.5346383723
 \end_layout
 
 \end_inset
@@ -2949,7 +3013,7 @@ r02a1:u
 \uwave off
 \noun off
 \color none
--0.9590123729
+-0.9308766294
 \end_layout
 
 \end_inset
@@ -3014,7 +3078,7 @@ r01a1:u
 \uwave off
 \noun off
 \color none
--0.9862913345
+-0.9707469127
 \end_layout
 
 \end_inset
@@ -3079,7 +3143,7 @@ r04a2:u
 \uwave off
 \noun off
 \color none
--0.9895979962
+-0.986720269
 \end_layout
 
 \end_inset
@@ -3109,7 +3173,7 @@ end{small}
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Performance counters with more than 90% positive or negative correlation
+Performance counters with more than 30% positive or negative correlation
  to cycle count
 \end_layout
 
@@ -3133,8 +3197,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/loop-alias.eps
-	scale 80
+	filename Img/loop/correlation.eps
 
 \end_inset
 
@@ -3145,16 +3208,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-wat.
- UnHalted Core Cycles.
-\begin_inset Newline newline
-\end_inset
-
-CYCLE_ACTIVITY.CYCLES_LDM_PENDING
-\begin_inset Newline newline
-\end_inset
-
-Note: Postscript files should be scaled by 75%.
+Correlation with other counters
 \end_layout
 
 \end_inset
@@ -3194,6 +3248,45 @@ Hypothesis: address alias is the cause.
 \begin_layout Standard
 Detailed analysis with a clever drawing showing where the collision is.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Symbol table '.symtab' contains 66 entries:
+\end_layout
+
+\begin_layout Plain Layout
+
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    42: 0000000000601028     4 OBJECT  LOCAL  DEFAULT   25 i
+\end_layout
+
+\begin_layout Plain Layout
+
+    43: 000000000060102c     4 OBJECT  LOCAL  DEFAULT   25 j
+\end_layout
+
+\begin_layout Plain Layout
+
+    44: 0000000000601030     4 OBJECT  LOCAL  DEFAULT   25 k
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -3239,8 +3332,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/loop-alias-fixed.eps
-	scale 80
+	filename Img/loop/fixed.eps
 
 \end_inset
 

@@ -15,6 +15,7 @@ def parse_arguments():
     parser.add_argument('-l', '--legend', \
         choices=['upper right', 'upper left', 'lower left', 'lower right', 'right', \
                  'center left', 'center right', 'lower center', 'upper center', 'center'])
+    parser.add_argument('--legendcols', type=int, default=1)
     parser.add_argument('--export', default='Figure 1')
     parser.add_argument('--labels', nargs='+')
     parser.add_argument('--ticks', type=int)
@@ -68,7 +69,7 @@ def plot(data, args):
     plt.grid(True)
 
     if args.legend != None:
-        plt.legend(loc=args.legend).draggable()
+        plt.legend(loc=args.legend, ncol=args.legendcols).draggable()
 
 # Plot data from a list of .csv files in a 2-column layout
 def grid(args):
