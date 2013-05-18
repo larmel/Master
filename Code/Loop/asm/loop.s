@@ -34,10 +34,10 @@ main:
 	cmpl	$65535, -8(%rbp)
 	jle	.L3
 
-	leaq	-4(%rbp), %rax 	# Address of g
+	leaq	-4(%rbp), %rax 	# Address of inc
 	call write_address
 
-	leaq	-8(%rbp), %rax 	# Address of inc
+	leaq	-8(%rbp), %rax 	# Address of g
 	call write_address
 
 	movq	$0xa, %rax 		# Newline

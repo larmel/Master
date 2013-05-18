@@ -1835,6 +1835,27 @@ Address Alias Effects (4K Aliasing)
 \end_layout
 
 \begin_layout Standard
+In a typical C program, multiple different areas of memory are accessed.
+\end_layout
+
+\begin_layout Description
+Stack Call frames for each function call, holding parameters and local automatic
+ variables
+\end_layout
+
+\begin_layout Description
+Heap Dynamically allocated memory
+\end_layout
+
+\begin_layout Description
+Static Data with storage allocation determined at compile time
+\end_layout
+
+\begin_layout Standard
+Alias conflicts can occur between any combination of these areas.
+\end_layout
+
+\begin_layout Standard
 In this section we show that the run time addresses of data, allocated staticall
 y, on stack or on heap, are significatn.
 \end_layout
@@ -1857,6 +1878,26 @@ random
 
  changes to the environment.
  
+\end_layout
+
+\begin_layout Subsubsection*
+Store Forwaring Limitations
+\end_layout
+
+\begin_layout Standard
+Limitations described in section 3.6.8.2 of optimization manual.
+ On load/store on multiples of 4KiB, code is effectively serialized.
+ 
+\end_layout
+
+\begin_layout Standard
+Point for later: The guidelines provided by intel does not cover effects
+ from ASLR.
+ Stack/static collisions can not easily be accounted for or predicted.
+\end_layout
+
+\begin_layout Standard
+The intel optimization manual mentions two performance counters
 \end_layout
 
 \begin_layout Subsection
@@ -1969,8 +2010,8 @@ C code with bias towards certain stack positions
 \end_layout
 
 \begin_layout Standard
-We begin by showing what exactly causes measurement bias for the micro kernel
- from 
+We begin by showing how address aliasing causes measurement bias for the
+ micro kernel from 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Mytkowicz:2009:WrongData"
@@ -3067,7 +3108,7 @@ MOB
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -3166,7 +3207,33 @@ It is difficult to observe the correct addresses for variables g and inc
  Simply adding a call to printf for instance, completely changes the program
  behaviour with repect to bias.
  Printing the addresses manually with assembly code however, does work.
- We find that the spike in cycle count occurs precisely when variables 
+ We find that the spike in cycle count occurs when the stack allocated variables
+ have the following addresses;
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+ g   :   0x7fffffffe028
+\end_layout
+
+\begin_layout Plain Layout
+
+ inc :   0x7fffffffe02c
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that the last twelve bits (three hexadecimal digits) for 
 \family typewriter
 g
 \family default
@@ -3174,18 +3241,16 @@ g
 \family typewriter
 inc
 \family default
- happens to be allocated to 
+ are the same as 
 \family typewriter
-0x7fffffffe02c
+i
 \family default
-, 
+ and 
 \family typewriter
-0x7fffffffe028
+j
 \family default
 .
- Observe that the last twelve bits (three hexadecimal digits) are the same
- as j and i.
- This is reffered to as 
+ This is referred to as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -3197,36 +3262,222 @@ inc
 \end_layout
 
 \begin_layout Subsubsection*
-Store Forwaring Limitations
-\end_layout
-
-\begin_layout Standard
-Limitations described in section 3.6.8.2 of optimization manual.
- On load/store on multiples of 4KiB, code is effectively serialized.
- 
-\end_layout
-
-\begin_layout Standard
-Point for later: The guidelines provided by intel does not cover effects
- from ASLR.
- Stack/static collisions can not easily be accounted for or predicted.
-\end_layout
-
-\begin_layout Subsubsection*
 Run-time Solutions to Address Aliasing
 \end_layout
 
 \begin_layout Standard
 In general, the address of stack variables cannot be determined statically.
- It seems like there are two ways to approack the problem of mitigating
- or avoiding aliasing in practice.
- One approach could be to amploy some clever compile-time heuristics to
- pad variables in some way -- hopefully reducing conflicts without hurting
- performance.
- Another approach would be to do some run-time analysis of the variables
- addresses, and execute alternative code paths once a conflict is found.
- This is in principle a feasible solution.
- In the previous example, we can 
+ In addition to being offset by environment variables, the stack can also
+ be perturbed by other factors, such as address layout randomization.
+ Because of this, effects from 4K aliasing is observed as measurement bias.
+\end_layout
+
+\begin_layout Standard
+It is possible to rewrite the program to avoid aliasing, regardless of initial
+ stack position.
+ The collisions between (
+\family typewriter
+g
+\family default
+, 
+\family typewriter
+i
+\family default
+) and (
+\family typewriter
+inc
+\family default
+, 
+\family typewriter
+j
+\family default
+) can be checked before executing the loop, introducing an alternate code
+ path with no address conflicts.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+static int i, j, k;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    int g = 0, inc = 1;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) 
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        int dummy = 0, t1 = g, t2 = inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        for (; t1 < 65536; t1++) {
+\end_layout
+
+\begin_layout Plain Layout
+
+            i += t2;
+\end_layout
+
+\begin_layout Plain Layout
+
+            j += t2;
+\end_layout
+
+\begin_layout Plain Layout
+
+            k += t2;
+\end_layout
+
+\begin_layout Plain Layout
+
+        }
+\end_layout
+
+\begin_layout Plain Layout
+
+        g = t1;
+\end_layout
+
+\begin_layout Plain Layout
+
+        goto skip;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (; g < 65536; g++) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        i += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        j += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        k += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+skip:
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:loop-micro-kernel-fixed"
+
+\end_inset
+
+Modified code with explicit check for aliasing between inc and j.
+ The alternative loop contains no aliasing.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Only one pari of variables needs to be checked in this case, as both static
+ and stack variables are allocated concecutively.
+ Running the same tests again, we are able to remove all aliasing from this
+ particular program.
+ In most cases, assuming a uniform random distrubution of initial stack
+ addresses, the program performs slighly worse because of the additional
+ overhead and extra instructions executed.
+ However, on average over all execution contexts, in this case stack positions,
+ introducing this check yields a speedup.
 \end_layout
 
 \begin_layout Standard
@@ -3263,29 +3514,24 @@ No change to performance based on environment size.
 
 \end_layout
 
+\begin_layout Standard
+This example shows that 4K aliasing can potentially be fixed at runtime.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Heap address conflicts
 \end_layout
 
 \begin_layout Standard
-Dynamic memory allocation can also trigger alias effects.
- Observations:
-\end_layout
-
-\begin_layout Standard
-Malloc appears to be deterministic, once the ASLR has placed heap start
- address somewhere.
- On x86_64, the heap is typically located around virtual address 0x600000,
- right above program text and data segments (see illustration).
- Some metadata for each allocated area is used to handle free requests etc.
- The pointer returned from malloc seems to be aligned to a single byte,
- meaning returned addresses always end with 0x0.
-\end_layout
-
-\begin_layout Standard
-For slightly larger requests (how large?), malloc uses mmap, which aligns
- to page size; i.e.
- 0x1000.
+Consider the following function, computing the convolution between an input
+ array and a fixed kernel, disregarding endpoints for simplicity.
 \end_layout
 
 \begin_layout Standard
@@ -3296,296 +3542,6 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-\begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-#define N 0x7ffa // 65536 = 0x10000
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-static int inc = 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-int main(int argc, char **argv)
-\end_layout
-
-\begin_layout Plain Layout
-
-{
-\end_layout
-
-\begin_layout Plain Layout
-
-    int offset  = atoi(argv[1]), i;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *a    = malloc(N*sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *fill = malloc(offset*sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *b    = malloc(N*sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-    for (i = 0; i < N; ++i)
-\end_layout
-
-\begin_layout Plain Layout
-
-    {
-\end_layout
-
-\begin_layout Plain Layout
-
-        b[i] += inc;
-\end_layout
-
-\begin_layout Plain Layout
-
-        b[i]++;
-\end_layout
-
-\begin_layout Plain Layout
-
-        b[i]++;
-\end_layout
-
-\begin_layout Plain Layout
-
-        b[i]++;
-\end_layout
-
-\begin_layout Plain Layout
-
-        b[i]++;
-\end_layout
-
-\begin_layout Plain Layout
-
-        a[i]++;
-\end_layout
-
-\begin_layout Plain Layout
-
-    }
-\end_layout
-
-\begin_layout Plain Layout
-
-    return 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Micro-kernel with a simple loop reading and writing to arrays a and b.
- With the correct input argument, a and b will alias and the cycle count
- noticeably spikes.
- 
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection*
-Internals of malloc
-\end_layout
-
-\begin_layout Standard
-For the previous example, adding a single byte to the b array, suddently
- malloc will begin using mmap instead of brk after some amount of offset
- (fill array).
- 
-\end_layout
-
-\begin_layout Standard
-brk is a strange system call: It increases the boundary of the data segment,
- by simply pushing the 
-\begin_inset Quotes eld
-\end_inset
-
-break
-\begin_inset Quotes erd
-\end_inset
-
- address upwards.
- Break marks the end of the 
-\begin_inset Quotes eld
-\end_inset
-
-bss
-\begin_inset Quotes erd
-\end_inset
-
- segment -- uninitialized data.
- See man page.
- Is it actually used in malloc? Called only once perhaps?
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename Img/heap-step.svg
-	scale 30
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Adding a single float causes mmap to be called after a certain amount of
- offset.
- Very weird.
- 
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-mmap is a posix system call for mapping a file to contiguous memory.
- Using the ANONYMOUS parameter, memory can be mapped without a backing file.
- malloc uses mmap instead of brk for large allocations -- although the rules
- seems kind of complicated.
-\end_layout
-
-\begin_layout Subsection
-Malloc with Pthreads
-\end_layout
-
-\begin_layout Standard
-Knowign about the possibility of aliasing with aligned array, we can try
- to come up with plausible scenarios where bias can occur.
- An idea for provoking malloc alignment could be to use threading.
-\end_layout
-
-\begin_layout Standard
-Pthread malloc is probably another implementation, which does not use the
- low-address heap space.
- The high-addresses, apparantly up to 0x7fff'f0000000, are used in the pthread
- implementation.
- Two threads are allocated with heaps 0x7fff'
-\series bold
-e8
-\series default
-000000 and 0x7fff'
-\series bold
-f0
-\series default
-000000.
-\end_layout
-
-\begin_layout Standard
-Plan 2: Allocate enough space on each thread-specific are to fill them,
- causing subsequent calls to allocate on shared area.
- Now, allocate (_, 1, 2) + (_, 3) arrays, with arrays 1 and 2 colliding
- if the allocations happen 1, 3, 2 -- alternatively 1, 2, 3.
- The _ allocation is for eating up 
-\begin_inset Quotes eld
-\end_inset
-
-local
-\begin_inset Quotes erd
-\end_inset
-
- heap.
- The size of the local segment is ? 
-\end_layout
-
-\begin_layout Standard
-Does not work.
- Multiple threads have their own 
-\begin_inset Quotes eld
-\end_inset
-
-start
-\begin_inset Quotes erd
-\end_inset
-
- heap area -- when it overflows, mmap is used which aligns to 12 bit.
- Multiple threads do allocate different areas dependent on ordering, but
- with mmap alignment, there is not much to about it.
-\end_layout
-
-\begin_layout Subsection
-Example: Convolution
-\end_layout
-
-\begin_layout Standard
-To illustrate possible performance problems caused by address aliasing,
- consider the following simple 1D convolution function.
- This function computes the convolution between an input array and a fixed
- kernel, disregarding endpoints for simplicity.
-\end_layout
-
-\begin_layout Standard
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily},language=C"
 inline false
@@ -3655,11 +3611,27 @@ void convolve(int size, float *input, float *output)
 
 \end_layout
 
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Convolution kernel
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
-We use malloc to allocate two reasonably sized arrays (N = 0x100000), skipping
- initialization to save some cycles.
- Recall that for large allocation, mmap is likely used internally for malloc,
- meaning that input and output are most likely initialized to zero.
+We use malloc to allocate two reasonably sized arrays for input and output,
+ skipping initialization before calling convolve to save some cycles.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -3667,11 +3639,6 @@ We use malloc to allocate two reasonably sized arrays (N = 0x100000), skipping
 lstparams "basicstyle={\small\ttfamily},language=C"
 inline false
 status open
-
-\begin_layout Plain Layout
-
-int main(void) {
-\end_layout
 
 \begin_layout Plain Layout
 
@@ -3688,56 +3655,45 @@ int main(void) {
     convolve(N, input, result);
 \end_layout
 
-\begin_layout Plain Layout
-
-    return 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
-\end_layout
-
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-We use the perf utility to measure number of cycles, PARTIAL_ADDRESS_ALIAS
- and RESOURCE_STALLS.ALL.
- The program was compiled with GCC and optimization O3.
+The program is compiled with GCC and optimization O3.
+ The raw output from perf is shown below, measuring number of cycles, address
+ alias, resource stalls and number of instructions.
+ A large number of alias events and resource stalls are generated.
+ Considering this is compiled with the highest optimization level, the instructi
+on per cycle metric is not very impressive either.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\scriptsize}"
+lstparams "basicstyle={\small}"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-        12,391,475 cycles:u                  #    0.000 GHz             
-         ( +-  1.06% )
+        12,391,475 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         9,039,041 r0107:u                                             
-          ( +-  0.79% )
+         9,039,041 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         7,931,308 r01a2:u                                             
-          ( +-  0.17% )
+         7,931,308 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-        11,163,873 instructions:u            #    0.90  insns per cycle 
-         ( +-  0.00% )
+        11,163,873 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -3746,8 +3702,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.004906424 seconds time elapsed                                 
-         ( +-  1.33% )
+       0.004906424 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -3756,9 +3711,7 @@ status open
 \end_layout
 
 \begin_layout Standard
-As suspected, the code generates a huge number of address alias conflicts
- and resource stalls.
- For moderately large allocations, the input and output arrays will 
+For moderately large allocations, the input and output arrays will 
 \emph on
 always
 \emph default
@@ -3808,7 +3761,7 @@ status open
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="5" columns="8">
-<features tabularvalignment="middle">
+<features tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
@@ -3816,7 +3769,7 @@ status open
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -3959,7 +3912,7 @@ x
 \begin_inset Text
 
 \begin_layout Plain Layout
-Not very interesting, but some savings from offseting a little.
+
 \end_layout
 
 \end_inset
@@ -4258,26 +4211,22 @@ status open
 
 \begin_layout Plain Layout
 
-         5,719,361 cycles:u                  #    0.000 GHz             
-         ( +-  1.30% )
+         5,719,361 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-             1,094 r0107:u                                             
-          ( +-  2.19% )
+             1,094 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         1,351,256 r01a2:u                                             
-          ( +-  1.43% )
+         1,351,256 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-        11,163,873 instructions:u            #    1.95  insns per cycle 
-         ( +-  0.00% )
+        11,163,873 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -4286,8 +4235,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.002919409 seconds time elapsed                                 
-         ( +-  1.03% )
+       0.002919409 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5185,6 +5133,13 @@ User/Source Coding Rule 8.
 (Similar for LSD, compiler guideline).
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 The Loop Stream Detector
 \end_layout
@@ -5255,12 +5210,11 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="4" columns="4">
-<features tabularvalignment="middle">
+<lyxtabular version="3" rows="4" columns="3">
+<features booktabs="true" tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0pt">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="left" valignment="top" width="50text%">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -5280,20 +5234,11 @@ HT off
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 HT on
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Comment
 \end_layout
 
 \end_inset
@@ -5318,22 +5263,11 @@ Chunk fetches
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 12
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Executed chunks of instruction addresses must fit in at most 12 chunks aligned
- to 0x20 (32 byte).
- 
 \end_layout
 
 \end_inset
@@ -5358,28 +5292,11 @@ Micro-ops
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 28
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Overflows after 52 addl 0x1 instructions.
- 4 extra instructions for text/compare as well, before the jump instruction.
- 56 entries seems to be correct for Ivy Bridge as well as Sandy Bridge.
-\end_layout
-
-\begin_layout Plain Layout
-With HT on, the LSD_OVERFLOW counter becomes non-zero on 27 instructions,
- then zero on 28, and nonzero from there.
- 28 is probably the right value -- half of 56.
 \end_layout
 
 \end_inset
@@ -5404,34 +5321,11 @@ Taken branches
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 12
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Handles up to 17 branches (+1 for loop) with a single statement 
-\begin_inset Quotes eld
-\end_inset
-
-a++, b++
-\begin_inset Quotes erd
-\end_inset
-
-.
- Triggers LSD_OVERFLOW event.
-\end_layout
-
-\begin_layout Plain Layout
-Some weird things with HT on, but it seems like 12 is right.
- Might be too many instructions though..
 \end_layout
 
 \end_inset
@@ -5473,6 +5367,54 @@ addl
 
  instructions, incrementing until LSD_OVERFLOW indicated that the limit
  is reached.
+\end_layout
+
+\begin_layout Subsubsection*
+Chunk fetches 
+\end_layout
+
+\begin_layout Standard
+Executed chunks of instruction addresses must fit in at most 12 chunks aligned
+ to 0x20 (32 byte).
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Micro-ops
+\end_layout
+
+\begin_layout Standard
+Overflows after 52 addl 0x1 instructions.
+ 4 extra instructions for text/compare as well, before the jump instruction.
+ 56 entries seems to be correct for Ivy Bridge as well as Sandy Bridge.
+\end_layout
+
+\begin_layout Standard
+With HT on, the LSD_OVERFLOW counter becomes non-zero on 27 instructions,
+ then zero on 28, and nonzero from there.
+ 28 is probably the right value -- half of 56.
+\end_layout
+
+\begin_layout Subsubsection*
+Taken branches
+\end_layout
+
+\begin_layout Standard
+Handles up to 17 branches (+1 for loop) with a single statement 
+\begin_inset Quotes eld
+\end_inset
+
+a++, b++
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Triggers LSD_OVERFLOW event.
+\end_layout
+
+\begin_layout Standard
+Some weird things with HT on, but it seems like 12 is right.
+ Might be too many instructions though..
 \end_layout
 
 \begin_layout Subsection

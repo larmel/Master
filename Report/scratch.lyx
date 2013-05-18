@@ -568,6 +568,317 @@ Idea: Version of shell (bash or sh or tch etc) matters because of environment
  size variable etc)
 \end_layout
 
+\begin_layout Subsection
+Heap conflicts
+\end_layout
+
+\begin_layout Standard
+Dynamic memory allocation can also trigger alias effects.
+ Observations:
+\end_layout
+
+\begin_layout Standard
+Malloc appears to be deterministic, once the ASLR has placed heap start
+ address somewhere.
+ On x86_64, the heap is typically located around virtual address 0x600000,
+ right above program text and data segments (see illustration).
+ Some metadata for each allocated area is used to handle free requests etc.
+ The pointer returned from malloc seems to be aligned to a single byte,
+ meaning returned addresses always end with 0x0.
+\end_layout
+
+\begin_layout Standard
+For slightly larger requests (how large?), malloc uses mmap, which aligns
+ to page size; i.e.
+ 0x1000.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#define N 0x7ffa // 65536 = 0x10000
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+static int inc = 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main(int argc, char **argv)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+    int offset  = atoi(argv[1]), i;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *a    = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *fill = malloc(offset*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *b    = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i = 0; i < N; ++i)
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i] += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        b[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+        a[i]++;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Micro-kernel with a simple loop reading and writing to arrays a and b.
+ With the correct input argument, a and b will alias and the cycle count
+ noticeably spikes.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Internals of malloc
+\end_layout
+
+\begin_layout Standard
+For the previous example, adding a single byte to the b array, suddently
+ malloc will begin using mmap instead of brk after some amount of offset
+ (fill array).
+ 
+\end_layout
+
+\begin_layout Standard
+brk is a strange system call: It increases the boundary of the data segment,
+ by simply pushing the 
+\begin_inset Quotes eld
+\end_inset
+
+break
+\begin_inset Quotes erd
+\end_inset
+
+ address upwards.
+ Break marks the end of the 
+\begin_inset Quotes eld
+\end_inset
+
+bss
+\begin_inset Quotes erd
+\end_inset
+
+ segment -- uninitialized data.
+ See man page.
+ Is it actually used in malloc? Called only once perhaps?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Img/heap-step.svg
+	scale 30
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Adding a single float causes mmap to be called after a certain amount of
+ offset.
+ Very weird.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+mmap is a posix system call for mapping a file to contiguous memory.
+ Using the ANONYMOUS parameter, memory can be mapped without a backing file.
+ malloc uses mmap instead of brk for large allocations -- although the rules
+ seems kind of complicated.
+\end_layout
+
+\begin_layout Subsection
+Malloc with Pthreads
+\end_layout
+
+\begin_layout Standard
+Knowign about the possibility of aliasing with aligned array, we can try
+ to come up with plausible scenarios where bias can occur.
+ An idea for provoking malloc alignment could be to use threading.
+\end_layout
+
+\begin_layout Standard
+Pthread malloc is probably another implementation, which does not use the
+ low-address heap space.
+ The high-addresses, apparantly up to 0x7fff'f0000000, are used in the pthread
+ implementation.
+ Two threads are allocated with heaps 0x7fff'
+\series bold
+e8
+\series default
+000000 and 0x7fff'
+\series bold
+f0
+\series default
+000000.
+\end_layout
+
+\begin_layout Standard
+Plan 2: Allocate enough space on each thread-specific are to fill them,
+ causing subsequent calls to allocate on shared area.
+ Now, allocate (_, 1, 2) + (_, 3) arrays, with arrays 1 and 2 colliding
+ if the allocations happen 1, 3, 2 -- alternatively 1, 2, 3.
+ The _ allocation is for eating up 
+\begin_inset Quotes eld
+\end_inset
+
+local
+\begin_inset Quotes erd
+\end_inset
+
+ heap.
+ The size of the local segment is ? 
+\end_layout
+
+\begin_layout Standard
+Does not work.
+ Multiple threads have their own 
+\begin_inset Quotes eld
+\end_inset
+
+start
+\begin_inset Quotes erd
+\end_inset
+
+ heap area -- when it overflows, mmap is used which aligns to 12 bit.
+ Multiple threads do allocate different areas dependent on ordering, but
+ with mmap alignment, there is not much to about it.
+\end_layout
+
 \begin_layout Section
 FFTW
 \end_layout
