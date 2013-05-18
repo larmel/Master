@@ -1692,6 +1692,10 @@ System load is kept at a minimum to avoid interference with other processes
  and tasks.
 \end_layout
 
+\begin_layout Itemize
+Automatic CPU frequency scaling is disabled, keeping the clock speed constant.
+\end_layout
+
 \begin_layout Standard
 \begin_inset Float table
 wide false
@@ -1779,7 +1783,7 @@ Toolchain
 \begin_inset Text
 
 \begin_layout Plain Layout
-GCC Version 4.6.3
+GCC 4.6.3
 \end_layout
 
 \end_inset
@@ -1827,81 +1831,64 @@ key "Hunter:2007"
 \end_layout
 
 \begin_layout Section
-Memory Disambiguation
+Address Alias Effects (4K Aliasing)
 \end_layout
 
 \begin_layout Standard
-Predict if load can proceed dispite unknown stores (shameless copy from
- paper atm)
-\end_layout
-
-\begin_layout Description
-predict
-\begin_inset space ~
-\end_inset
-
-colliding: Block and wait if store address is unknown
-\end_layout
-
-\begin_layout Description
-Predict
-\begin_inset space ~
-\end_inset
-
-not
-\begin_inset space ~
-\end_inset
-
-colliding: - Let load proceed, even if unknown store address, - If actually
- colliding, restart the load and all successice instructions
-\end_layout
-
-\begin_layout Section
-Address Alias Effects
+In this section we show that the run time addresses of data, allocated staticall
+y, on stack or on heap, are significatn.
 \end_layout
 
 \begin_layout Standard
-In 
+Relevant performance counter is PARTIAL.ADDRESS_ALIAS.
+\end_layout
+
+\begin_layout Standard
+Store forwaring introduction.
+ Refer to intel guidelines, trying to avoid aliasing on bit 0..11.
+ This is not always possible, and will manifest as measurement bias from
+ 
 \begin_inset Quotes eld
 \end_inset
 
-Producing Wrong Data Without Doing Anything Obviously Wrong!
+random
 \begin_inset Quotes erd
 \end_inset
 
+ changes to the environment.
  
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
+\end_layout
 
-\end_inset
+\begin_layout Subsection
+Bias from Stack Alignment
+\end_layout
 
-, the authors present an intriguing little C program with extreme sensitivity
- to environment bias.
- They show that by adding bytes to the Unix environment, the cycle count
- periodically increases by about 33%, and some times by almost 300%.
- Their measurements are done on an older Intel Core 2 architecture, providing
- this an excellent example to start our investigation of the newer Core
- i7 architecture.
+\begin_layout Standard
+As we saw in the Introduction chapter, changing the Unix environment variables
+ can significantly affects the cycle count of this program.
+ It is typically not the content of environment variables that are important,
+ but rather the effect their size has on stack position.
+ When programs are mapped into virtual memory, the environment variables
+ are allocated before the stack, offseting the top of stack address.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement H
+placement h
 wide false
 sideways false
 status open
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily}"
+lstparams "basicstyle={\small\ttfamily},language=C"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-static int i = 0, j = 0, k = 0;
+static int i, j, k;
 \end_layout
 
 \begin_layout Plain Layout
@@ -1968,7 +1955,7 @@ name "alg:loop-micro-kernel"
 
 \end_inset
 
-C code for micro-kernel
+C code with bias towards certain stack positions
 \end_layout
 
 \end_inset
@@ -1978,20 +1965,50 @@ C code for micro-kernel
 
 \end_inset
 
-The micro-kernel from Listing 
+
+\end_layout
+
+\begin_layout Standard
+We begin by showing what exactly causes measurement bias for the micro kernel
+ from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, reproduced in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:loop-micro-kernel"
 
 \end_inset
 
- does in fact show clear bias effects also on the newer architecture.
- We use perf and an automated script to run samples, with increasing environment
- size using a dummy variable.
- The program is compiled using cc and no optimization (-O0).
- The results are plotted for each environment size, incrementing by one
- between each run.
- A very distinct spike can be observed, starting at an offset of 3400? bytes.
+.
+ This example is interesting for several reasons:
+\end_layout
+
+\begin_layout Itemize
+The bias effects are significant and easily reproducible
+\end_layout
+
+\begin_layout Itemize
+The example code is simple and easy to analyze
+\end_layout
+
+\begin_layout Itemize
+No satisfactory explanaition as to what causes bias was given in the original
+ paper
+\end_layout
+
+\begin_layout Standard
+We use perf and an automated script to collect performance counter statistics
+ over a series of runs, with increasing environment size using a dummy variable
+ between each execution.
+ The program is compiled using GCC with all default options.
+ Note that any optimization would likely disregard most of the function
+ as redundant code, and reduce it to return zero immediately.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2015,11 +2032,8 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Cycle count from running the same program with different Unix environment
- size.
- Horizontal axis shows number of bytes added to an empty environment.
- Tests were run with an empty initial environment and address randomization
- disabled, for reproducible results.
+Performance variations from offseting stack position by changing environment
+ size
 \end_layout
 
 \end_inset
@@ -2030,16 +2044,26 @@ Cycle count from running the same program with different Unix environment
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsection
-Analysis of Micro-kernel
 \end_layout
 
 \begin_layout Standard
-How we found out what caused the strange behaviour.
- Correlation for all counters (note, not really all, but should cover interestin
-g cases).
+Collecting the cycle count performance counter, we observe a distinct spike
+ over a period of 16 (verify!) bytes.
+ The difference is over 20 % between the worst and best case.
+ A good starting point in trying to analyze the potential cause for these
+ effects, is to look at all the data provided by various performance counters.
+ The set of counters that most closely follows the cycle count is shown
+ in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:loop-all-counters"
+
+\end_inset
+
+.
+ We have used a simple linear correlation to filter out what metrics might
+ be of interest.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2064,11 +2088,11 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="18" columns="3">
-<features tabularvalignment="middle" tabularwidth="100text%">
+<lyxtabular version="3" rows="14" columns="3">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="left" valignment="top" width="60text%">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="decimal" decimal_point="." valignment="top" width="0">
 <row>
 <cell alignment="left" valignment="top" usebox="none">
 \begin_inset Text
@@ -2092,7 +2116,7 @@ Perf code
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" usebox="none">
+<cell alignment="decimal" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2147,7 +2171,7 @@ cycles:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2212,7 +2236,7 @@ bus-cycles:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2277,7 +2301,7 @@ r0107:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2342,7 +2366,7 @@ r01a2:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2407,7 +2431,7 @@ r02a3:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2472,7 +2496,7 @@ r025c:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2489,136 +2513,6 @@ r025c:u
 \noun off
 \color none
 0.9844339013
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-CPU_CLK_THREAD_UNHALTED.REF_XCLK
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-r013c:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9803485824
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-CPU_CLK_UNHALTED.THREAD_P
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-r003c:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9803159751
 \end_layout
 
 \end_inset
@@ -2667,7 +2561,7 @@ r04a3:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2684,112 +2578,6 @@ r04a3:u
 \noun off
 \color none
 0.9200557425
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-cpu-clock:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9176326278
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-task-clock:u
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0.9176198754
 \end_layout
 
 \end_inset
@@ -2838,7 +2626,7 @@ r40a1:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2861,7 +2649,7 @@ r40a1:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2879,7 +2667,7 @@ r40a1:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2890,7 +2678,7 @@ r40a1:u
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2932,7 +2720,7 @@ r80a1:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2997,7 +2785,7 @@ r02a1:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3062,7 +2850,7 @@ r01a1:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3127,7 +2915,7 @@ r04a2:u
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="decimal" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -3173,6 +2961,12 @@ end{small}
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:loop-all-counters"
+
+\end_inset
+
 Performance counters with more than 30% positive or negative correlation
  to cycle count
 \end_layout
@@ -3185,6 +2979,90 @@ Performance counters with more than 30% positive or negative correlation
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Among all the performance counters supported on our architecture, only a
+ few shows significant correlation to cycle count in this case.
+ Other interesting counters include resource stalls and loads pending, both
+ strongly correlating to cycle count.
+ 
+\end_layout
+
+\begin_layout Standard
+When presenting similar results for the Core 2, the authors mentions the
+ performance counter LOAD_BLOCK.OVERLAP_STORE as a potential explanation.
+ There is no counter by that name for the Ivy Bridge 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+, but one that seems 
+\begin_inset Quotes eld
+\end_inset
+
+close
+\begin_inset Quotes erd
+\end_inset
+
+ is LD_BLOCKS.STORE_FORWARD.
+ However, this counter does not correlate with cycle count in our case.
+ Instead, we are looking at 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+LD_BLOCKS_PARTIAL.
+ ADDRESS_ALIAS as the most likely indication of what happens.
+ 
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+The official documentation for the address alias counter state
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+False dependencies in MOB due to partial compare on address.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, 
+\begin_inset Quotes eld
+\end_inset
+
+MOB
+\begin_inset Quotes erd
+\end_inset
+
+ refers to Memory Order Buffer, a collection of caches for read and write
+ operations that are not yet committed to the L1 cache, but can be read
+ speculatively and out of order.
+ It appears that a read/write dependency is falsely detected, causing the
+ pipeline to wait for the previous memory operations to complete.
 \end_layout
 
 \begin_layout Standard
@@ -3208,7 +3086,8 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Correlation with other counters
+Cycle count correlating with resource stalls, pending memory loads and address
+ alias performance counter events.
 \end_layout
 
 \end_inset
@@ -3219,39 +3098,31 @@ Correlation with other counters
 \end_inset
 
 
-\end_layout
-
-\begin_layout Itemize
-Used already provided kernel from paper -- no detailed explanation provided,
- other than a reference to certain counters.
-\end_layout
-
-\begin_layout Itemize
-Developed script to run a large numbe of performance counters on the same
- program under controlled environment.
- With varying stack offset.
-\end_layout
-
-\begin_layout Itemize
-Calculated correlation between cycle count and all counters to find a subset
- that stood out.
- Observe that schedule pipe0-4 are utilized differently.
- Lots of interesting stuff.
- => Read various intel docs.
-\end_layout
-
-\begin_layout Itemize
-Hypothesis: address alias is the cause.
- Test by observing address.
 \end_layout
 
 \begin_layout Standard
-Detailed analysis with a clever drawing showing where the collision is.
+The statically allocated variables have their virtual addresses determined
+ at compile time.
+ Inspecting the symbol table section of the ELF object file reveals that
+ the addresses of i, j and k are 
+\family typewriter
+0x601028
+\family default
+, 
+\family typewriter
+0x60102c
+\family default
+ and 
+\family typewriter
+0x601030
+\family default
+, respectively.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -3289,7 +3160,43 @@ Symbol table '.symtab' contains 66 entries:
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Standard
+It is difficult to observe the correct addresses for variables g and inc
+ without introducing observer effects.
+ Simply adding a call to printf for instance, completely changes the program
+ behaviour with repect to bias.
+ Printing the addresses manually with assembly code however, does work.
+ We find that the spike in cycle count occurs precisely when variables 
+\family typewriter
+g
+\family default
+ and 
+\family typewriter
+inc
+\family default
+ happens to be allocated to 
+\family typewriter
+0x7fffffffe02c
+\family default
+, 
+\family typewriter
+0x7fffffffe028
+\family default
+.
+ Observe that the last twelve bits (three hexadecimal digits) are the same
+ as j and i.
+ This is reffered to as 
+\begin_inset Quotes eld
+\end_inset
+
+4K aliasing
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
 Store Forwaring Limitations
 \end_layout
 
@@ -3305,7 +3212,7 @@ Point for later: The guidelines provided by intel does not cover effects
  Stack/static collisions can not easily be accounted for or predicted.
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection*
 Run-time Solutions to Address Aliasing
 \end_layout
 
