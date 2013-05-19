@@ -449,27 +449,6 @@ key "Mytkowicz:2009:WrongData"
  The graph shows the number of cycles over a large number of runs, where
  characters are appended to a dummy environment variable between each.
  Cycle counts were measured with hardware performance counters using perf
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-
-\family typewriter
-perf
-\family default
-: Linux profiling with performance counters, 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://perf.wiki.kernel.org"
-target "https://perf.wiki.kernel.org/index.php/Main_Page"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
  to obtain accurate results.
  The program is compiled with GCC
 \begin_inset Foot
@@ -1058,7 +1037,14 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Sandy/Ivy Bridge Pipeline
+Sandy/Ivy Bridge Pipeline, adapted from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+ (wrong manual?)
 \end_layout
 
 \end_inset
@@ -1094,6 +1080,613 @@ Loop Stream Detecor
 \begin_layout Standard
 Front end optimization.
  Hinted to being a possible source of bias in Google tech talk (reference).
+\end_layout
+
+\begin_layout Subsection
+Performance Counters
+\end_layout
+
+\begin_layout Standard
+Intel architectures has supported extensive hardware performance monitoring
+ for several processor generations.
+ Dedicated Performance Monitoring Unit (PMU) hardware can be programmed
+ to count various events during program execution.
+ Common metrics available include cycle count, cache misses, branch mispredicts,
+ and number of retired instructions.
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begingroup
+\backslash
+tabcolsep=3pt
+\backslash
+begin{small}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="4">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="center" valignment="bottom" width="8text%">
+<column alignment="center" valignment="bottom" width="8text%">
+<column alignment="left" valignment="bottom" width="34text%">
+<column alignment="left" valignment="top" width="35text%">
+<row>
+<cell alignment="center" valignment="bottom" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Event
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="bottom" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Umask
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="bottom" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Mnemonic
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Description
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x3C
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+UnHalted Core Cycles
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+C0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instruction Retired
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+A2 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RESOURCE_STALLS.ANY
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycles Allocation is stalled due to Resource Related reason
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{small}
+\backslash
+endgroup
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Some performance counters available on Ivy Bridge
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The set of performance counters is divided into two categories; 
+\emph on
+architectural
+\emph default
+ counters, which are defined across families of micro-architectures, and
+ 
+\emph on
+non-architectural
+\emph default
+ counters, which are specific for each processor.
+ The official documentation of available performance counters and their
+ usage can be found in Volume 3B of the Software Developer's Manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+ A shorter reference is included in Appendix A, listing only counters that
+ are relevant to the discussion throughout the thesis.
+ 
+\end_layout
+
+\begin_layout Standard
+There are multiple ways of accessing the processor's performance monitoring
+ facilities from software.
+ Support is needed from the operating system, as kernel mode previliges
+ are needed to manage the low level PMU hardware.
+ On Linux, there is the perf_event kernel interface, along with the perf
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+perf
+\family default
+: Linux profiling with performance counters, 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://perf.wiki.kernel.org"
+target "https://perf.wiki.kernel.org/index.php/Main_Page"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ tool.
+\end_layout
+
+\begin_layout Subsubsection
+Using 
+\family typewriter
+perf
+\end_layout
+
+\begin_layout Standard
+Perf is a utility program for interfacing performance counters from user
+ code on Linux.
+ On Ubuntu, it is available as linux-tools-{version}, substituting for the
+ correct kernel version.
+ Perf supports many counters by mnemonics, such as 
+\begin_inset Quotes eld
+\end_inset
+
+cycles
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+instructions
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+branch-misses
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The following command reports the total cycle count from executing a.out.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+perf stat -e cycles ./a.out
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Counters are configured by writing the 8 bit 
+\begin_inset Quotes eld
+\end_inset
+
+unit mask
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+event code
+\begin_inset Quotes erd
+\end_inset
+
+ to special model specific registers.
+ These values can be found in the documentation, for example (
+\family typewriter
+0x3C
+\family default
+, 
+\family typewriter
+0x00
+\family default
+) for un-halted core cycles.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/intel/msr.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:msr"
+
+\end_inset
+
+Performance event select register.
+ Adapted from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:msr"
+
+\end_inset
+
+ illustrates the bit field for initializing counters on Ivy Bridge.
+ In addition to unit mask and event code, the remaining bits can be set
+ to impose various constraints on what is counted.
+ We will typically toggle OS mode and user mode such that statistics is
+ reported from code executing in user mode only.
+ This is done automatically by appending 
+\family typewriter
+:u
+\family default
+ to an event in perf, as in 
+\family typewriter
+cycles:u
+\family default
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Arbitrary performance counters can be specified by using the appropriate
+ event number and unit mask hexadecimal values.
+ The following command counts resource stalls in user mode.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+perf stat -e r01a2:u ./a.out
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There are also additional constraints and special cases for various counters.
+ Refer to the manual for detailes on specific counters.
 \end_layout
 
 \begin_layout Section
@@ -5198,6 +5791,14 @@ Creating simple loops and compiling with gcc.
  Binary is inspected to check what instructions are executed, and their
  address layout.
  
+\end_layout
+
+\begin_layout Standard
+Note that we suspect that the reference for Ivy Bridge provided by Intel
+ (as of March 2013) is in fact not complete.
+ For instance, no counter concerning the loop stream detector is listed
+ in the official documentation (Table 19-5), but the event listed for previous
+ generations seem to work regardless.
 \end_layout
 
 \begin_layout Standard
@@ -11724,31 +12325,6 @@ List of Performance Counters
 \end_layout
 
 \begin_layout Standard
-The set of performance counters is divided into two categories; 
-\emph on
-architectural
-\emph default
- counters, which are defined across families of micro-architectures, and
- 
-\emph on
-non-architectural
-\emph default
- counters, which are specific for each processor.
- The official documentation of available performance counters and their
- usage can be found in Volume 3B of the Software Developer's Manual 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
-
-\end_inset
-
-.
- We include a shorter reference here, including counters that are relevant
- to the discussion throughout the thesis.
- 
-\end_layout
-
-\begin_layout Standard
 \noindent
 \begin_inset Float table
 placement h
@@ -14016,98 +14592,6 @@ Interesting non-architectural performance counters
 \end_inset
 
 
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Note that we suspect that the reference for Ivy Bridge provided by Intel
- (as of March 2013) is in fact not complete.
- For instance, no counter concerning the loop stream detector is listed
- in the official documentation (Table 19-5), but the event listed for previous
- generations seem to work regardless.
-\end_layout
-
-\begin_layout Section*
-Using 
-\family typewriter
-perf
-\end_layout
-
-\begin_layout Standard
-Perf supports a small subset of counters by mnemonics, such as 
-\begin_inset Quotes eld
-\end_inset
-
-cycles
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-instructions
-\begin_inset Quotes erd
-\end_inset
-
-, and 
-\begin_inset Quotes eld
-\end_inset
-
-branch-misses
-\begin_inset Quotes erd
-\end_inset
-
-.
- Any counter can be specified by concatinating Umask value and Event num.
- For example, the UnHalted Core Cycles counter can be specified by either
- 
-\begin_inset Quotes eld
-\end_inset
-
-cycles
-\begin_inset Quotes erd
-\end_inset
-
- or by id 
-\begin_inset Quotes eld
-\end_inset
-
-0003
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-Counters have different modes.
- We are usually interested in counts only when the CPU executes in user-mode,
- appending a trailing 
-\begin_inset Quotes eld
-\end_inset
-
-:u
-\begin_inset Quotes erd
-\end_inset
-
-.
- To count cycles and LD_BLOCKS_PARTIAL.ADDRESS_ALIAS in user mode:
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-perf stat -e cycles:u,r0203:u ./a.out
 \end_layout
 
 \end_inset
