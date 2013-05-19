@@ -73,6 +73,78 @@ First Chapter
 \end_layout
 
 \begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+Optimizing for performance often consist of 
+\begin_inset Quotes eld
+\end_inset
+
+high level
+\begin_inset Quotes erd
+\end_inset
+
+ tasks such as reducing algorithmic complexity, change data structures and
+ ..., but also trying to eliminate branch misses and reduce the number of cache
+ misses.
+ As programmers, we are usually content as soon as we are able to measure
+ a speedup.
+ We will often be using simple techniques for observing performance metrics,
+ such as incrementing counter variables for each invocation of function
+ X, or inserting printf's in strategic places.
+ 
+\end_layout
+
+\begin_layout Standard
+In disciplines other than computer science, such as medicine and the social
+ sciences, the notions of measurement bias and observer effect is more often
+ considered.
+ 
+\end_layout
+
+\begin_layout Standard
+Performance cliffs
+\end_layout
+
+\begin_layout Standard
+Align to page, cache line, whatever.
+ Hardware not uniform.
+ Everything can happen.
+\end_layout
+
+\begin_layout Description
+Observer
+\begin_inset space ~
+\end_inset
+
+effect The phenomena is changed (or even disappears) merely by observing
+ it.
+\end_layout
+
+\begin_layout Description
+Measurement
+\begin_inset space ~
+\end_inset
+
+bias Properties of the experimental setup or environment, external and independe
+t of what is being measured, is affecting the outcome of the experiment.
+ 
+\end_layout
+
+\begin_layout Standard
+Seemingly innocious properties properties of the experimental setup, external
+ to the program being measured, can bias performance measurements.
+ There are many potential sources of bias that could come from the environment.
+ In the widest sense, properties like the time of day, or temperature of
+ the room should be considered relevant variables of the execution environment.
+ This is actually not as far fetched as it may sound -- electronic circuits
+ might very well operate more efficiently in lower temperatures, and programs
+ we benchmark might use some API to ask for the time of day and execute
+ different code paths dependent on that information.
+\end_layout
+
+\begin_layout Section
 Hardware Performance Counters
 \end_layout
 

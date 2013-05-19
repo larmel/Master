@@ -109,36 +109,34 @@ k_sarnath - Intel forums.
 \end_layout
 
 \begin_layout Abstract
-Carefully controlling observer effect and measurement bias when conducting
- experiments, is taken very seriously in other scientific fields such as
- medical research.
- These issues are also relevant when doing performance analysis, for instance
- when evaluating the efficiency of some new algorithm or compiler optimization.
- A computer program does not necessarily have the same performance across
- all machines.
- Running the same program multiple times does not always yield the same
- performance either.
- For accurate analysis of performance, it is important to sample a representativ
-e set of tests -- this is true also in computer science.
- Seemingly trivial properties of the environment can bias programs towards
- certain configurations -- memory layout being the primary source of variation,
- but other sources such as room temperature and time of day could also be
- considered in the broadest sense.
+Performance analysis of software is subject to measurement bias.
+ Seemingly innocious properties of the environment, such as the location
+ of variables in memory, or even room temperature, can impact the performance
+ of computer programs.
+ Features and restrictions of the underlying hardware introduces performance
+ cliffs; on one machine a piece of code might fit within a single cache
+ line, while on another the alignment in memory fragments it in two.
+ Effects like these have been shown to be significant, but unpredictable
+ and difficult to deal with.
 \end_layout
 
 \begin_layout Abstract
-In this thesis we will study a small set of very distinct bias effects,
- that can be experienced by innocuous changes to the Unix environment, or
- changing the link order of a program.
+In this thesis we will study bias effects that can be experienced by changing
+ the Unix environment variables, or altering the program link order.
+ In effect, both of these leads to different virtual memory layouts, which
+ is what actually triggers the performance cliffs.
  Through experimentation and careful measurement using hardware performance
- counters, we locate the source of what causes performance deviations.
+ counters, we identify several potential sources of bias.
+ Limitations imposed by the Loop Stream Detector hardware optimization is
+ modeled, along with effects from 4K address aliasing.
  We show that environment bias is in fact not completely unpredictable,
- and discuss measures can be made to try to avoid problems caused by bias.
+ and discuss measures can be made to try to avoid it.
 \end_layout
 
 \begin_layout Abstract
-Lastly we provide a brief case study of FFTW, showing how to account for
- hardware optimizations and avoid bias effects in performance critical software.
+Finally, we show that even highly optimized FFT and linear algebra libraries
+ are prone to bias.
+ 
 \end_layout
 
 \begin_layout Section*
@@ -149,14 +147,7 @@ Problem Description
 Variations in execution context has been shown to affect performance of
  programs on recent CPUs.
  Previous work has looked at offsetting the stack and changing link order
- -- biasing performance measurements towards certain configurations 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2008:Easy,Mytkowicz:2009:WrongData,Mytkowicz:2008:OE&MB"
-
-\end_inset
-
-.
+ -- biasing performance measurements towards certain configurations.
  Variables such as the placement of stack, heap and text segments in memory,
  combined with memory access instructions, can impact program performance
  quite significantly.
@@ -168,8 +159,15 @@ The goal of this project is to model some of these effects for common use
  cases, and methods for avoiding them, in order to avoiding bias and achieving
  peak performance.
  These effects might be highly platform dependent, so to limit the scope
- we will focus on a particular architecture, the Intel Core i7 "Ivy Bridge".
- Case studies will include small isolated programs, and ideally also "real"
+ we will focus on a particular architecture, the Intel Core i7 'Ivy Bridge'.
+ Case studies will include small isolated programs, and ideally also 
+\begin_inset Quotes eld
+\end_inset
+
+real
+\begin_inset Quotes erd
+\end_inset
+
  applications such as FFT algorithms.
 \end_layout
 
@@ -187,71 +185,13 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Optimizing for performance often consist of 
-\begin_inset Quotes eld
-\end_inset
-
-high level
-\begin_inset Quotes erd
-\end_inset
-
- tasks such as reducing algorithmic complexity, change data structures and
- ..., but also trying to eliminate branch misses and reduce the number of cache
- misses.
- As programmers, we are usually content as soon as we are able to measure
- a speedup.
- We will often be using simple techniques for observing performance metrics,
- such as incrementing counter variables for each invocation of function
- X, or inserting printf's in strategic places.
+Analyzing performance is common activity for people in the field of conputer
+ science.
  
 \end_layout
 
 \begin_layout Standard
-In disciplines other than computer science, such as medicine and the social
- sciences, the notions of measurement bias and observer effect is more often
- considered.
- 
-\end_layout
-
-\begin_layout Standard
-Performance cliffs
-\end_layout
-
-\begin_layout Standard
-Align to page, cache line, whatever.
- Hardware not uniform.
- Everything can happen.
-\end_layout
-
-\begin_layout Description
-Observer
-\begin_inset space ~
-\end_inset
-
-effect The phenomena is changed (or even disappears) merely by observing
- it.
-\end_layout
-
-\begin_layout Description
-Measurement
-\begin_inset space ~
-\end_inset
-
-bias Properties of the experimental setup or environment, external and independe
-t of what is being measured, is affecting the outcome of the experiment.
- 
-\end_layout
-
-\begin_layout Standard
-Seemingly innocious properties properties of the experimental setup, external
- to the program being measured, can bias performance measurements.
- There are many potential sources of bias that could come from the environment.
- In the widest sense, properties like the time of day, or temperature of
- the room should be considered relevant variables of the execution environment.
- This is actually not as far fetched as it may sound -- electronic circuits
- might very well operate more efficiently in lower temperatures, and programs
- we benchmark might use some API to ask for the time of day and execute
- different code paths dependent on that information.
+This problem is known as measurement bias.
 \end_layout
 
 \begin_layout Section
@@ -275,7 +215,7 @@ key "Mytkowicz:2009:WrongData"
 \end_inset
 
 , the authors show how simple changes to the execution environment can heavily
- impact performance of SPEC 2006 benchmarks.
+ impact program performance.
  Two variables are studied; size of the Unix environment variables, and
  link order of object files.
  Both are found to be significant with respect to measured performance of
@@ -562,17 +502,13 @@ name "chap:Background"
 \end_inset
 
 In this chapter, we begin by presenting some of the previous work done on
- measurement bias in computer science.
+ measurement bias in performance analysis.
  An introduction to virtual memory, linking and loading on x86_64 Linux
  architectures is provided as background material -- explaining what we
- mean by the 
-\emph on
-environment
-\emph default
- of a program.
- Lastly, we include a brief overview of the Intel Core i7 architecture,
- highlighting some of the features and hardware optimizations that can cause
- problems.
+ mean by the program environment.
+ A brief overview of the Intel Core i7 architecture is included, introducing
+ performance counters, and highlighting some of the features and hardware
+ optimizations that can cause performance cliffs.
  
 \end_layout
 
@@ -633,8 +569,8 @@ Observer effect
 \begin_layout Standard
 The set of relevant metrics in performance analysis is diverse; a database
  application might be interested in the number of transactions per second,
- while for a sorting algorithm implementation, the cycle count and cache
- misses might be more relevant.
+ while the cycle count and cache misses might be more relevant for a sorting
+ algorithm implementation.
  Many low level metrics such as cycle count and cache misses, can be aquired
  with minimal overhead by performance counters in hardware.
  In other cases we might need to add instrumentation to the program being
@@ -659,7 +595,7 @@ Measurement bias
 \begin_layout Standard
 The performance characteristics of software changes also from external propertie
 s of the experimental setup.
- The authors consider two, seemingly irrelevant, properties of the environment:
+ The authors consider two, seemingly innocious, properties of the environment:
 \end_layout
 
 \begin_layout Itemize
@@ -1007,7 +943,21 @@ This paper is particularly interesting because it shows that modeling, and
 \end_layout
 
 \begin_layout Section
-Intel Microarchitecture
+Hardware Performance Monitoring
+\end_layout
+
+\begin_layout Standard
+Bias effects often depend on specific hardware features, and to limit the
+ scope of our thesis we will only consider on the Intel Ivy Bridge line
+ of CPUs.
+ Any comprehensive introduction to the inner working of any processor is
+ way beyond the scope of this thesis.
+ For the most part, we will be looking at the metrics given by the means
+ of hardware performance counters.
+\end_layout
+
+\begin_layout Subsection
+Ivy Bridge Microarchitecture
 \end_layout
 
 \begin_layout Standard
@@ -1057,12 +1007,41 @@ key "Intel:2013:Volume3B"
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Standard
+Figure [] shows a very crude high level overview of the processor pipeline.
+ For our purposes, a general idea of what happens during program execution
+ is sufficient.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Instruction-level parallelism
+\end_layout
+
+\begin_layout Standard
+One of the key features of modern processors is instruction level parallelism.
+ A great amount of logic is dedicated to be able to issue multiple instructions
+ per cycle, increasing the throughput.
+ The Ivy Bridge has six execution ports, giving a theoretical maximum of
+ six micro-operations executed per cycle.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Macro fusion
+\end_layout
+
+\begin_layout Standard
+Common instruction pairs are combined to a single micro-operation.
+ This effectively doubles the instructions per cycle when applied.
+\end_layout
+
+\begin_layout Paragraph
 Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
-The Intel architecure enables speculative loads and stores based on predictions.
+Load and store operations can be issued speculatively based on predictions.
  Separate buffers are used to provide speculative memory operations, and
  instructions are restarted if conflicts are discovered at retirement.
  
@@ -1073,7 +1052,7 @@ Memory disambiguation: Information in 2.2.4.5.
  Predicts conflict of loads, issue speculatively.
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Loop Stream Detecor
 \end_layout
 
@@ -1504,7 +1483,7 @@ target "https://perf.wiki.kernel.org/index.php/Main_Page"
  tool.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Using 
 \family typewriter
 perf
