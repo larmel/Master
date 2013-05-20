@@ -16,8 +16,9 @@ chunks: clean
 	done
 
 micro-ops: clean
-	cc micro-ops.c -O3 -falign-loops=32 -S
-	for N in {6..60}; do \
+	@echo "Testing LSD micro-ops limit"
+	@cc micro-ops.c -O3 -falign-loops=32 -S
+	@for N in {6..60}; do \
 		sed -i '10a\\taddl\t$$1, %ebx' micro-ops.s; \
 		cc micro-ops.s -o micro-ops; \
 		printf " %3d " "$$N"; \
@@ -29,15 +30,15 @@ micro-ops: clean
 				fi; \
 				echo "{ $${words[@]} } "; \
 			); \
-		rm -f micro-ops; \
 	done
-	rm -f micro-ops.s
+	@rm -f micro-ops.s
 
 branches: clean
-	cat branches.c > branches-tmp.c
-	for N in {1..20}; do \
-		sed -i '7a\        if (i) i = 1;' branches-tmp.c; \
-		cc branches-tmp.c -o branches; \
+	@echo "Testing LSD taken branches limit"
+	@cat branches.c > branches-tmp.c
+	@for N in {1..20}; do \
+		sed -i '6a\        if (n) n = 0;' branches-tmp.c; \
+		cc branches-tmp.c -O3 -falign-loops=32 -o branches; \
 		printf " %3d " "$$N"; \
 		perf stat -x" " -e cycles:u,r0120:u,r01a8:u ./branches 0>&1 >/dev/null | sed ':a;N;$$!ba;s/\n/ /g' | \
 			(read -a words; \
@@ -47,9 +48,8 @@ branches: clean
 				fi; \
 				echo "{ $${words[@]} } "; \
 			); \
-		rm -f branches; \
 	done
-	rm -f branches-tmp.c
+	#@rm -f branches-tmp.c
 
 clean:
 	@rm -f chunks micro-ops branches

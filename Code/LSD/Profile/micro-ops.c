@@ -1,4 +1,4 @@
-volatile int i;
+volatile static int i;
 
 int main()
 {

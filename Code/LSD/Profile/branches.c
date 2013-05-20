@@ -1,10 +1,9 @@
-volatile int i;
+volatile static int n;
 
 int main()
 {
-    i = 1;
-    register int n = 0;
+    register int i = 0;
     do {
-    } while (n++ < 0x1234567);
+    } while (i++ < 0x1234567);
     return 0;
 }
