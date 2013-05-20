@@ -943,32 +943,95 @@ This paper is particularly interesting because it shows that modeling, and
 \end_layout
 
 \begin_layout Section
-Hardware Performance Monitoring
+Hardware and Performance Monitoring
 \end_layout
 
 \begin_layout Standard
-Bias effects often depend on specific hardware features, and to limit the
- scope of our thesis we will only consider on the Intel Ivy Bridge line
- of CPUs.
- Any comprehensive introduction to the inner working of any processor is
- way beyond the scope of this thesis.
- For the most part, we will be looking at the metrics given by the means
- of hardware performance counters.
+Bias effects often depend on specific hardware features, and 'performance
+ cliffs' caused by them.
+ A rudimentary understanding of the underlying hardware is necessary to
+ be able to understand why performance varies during different execution
+ contexts.
+ We limit our study to the Intel Core 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+, but the architecture borrows many features from previous CPU generations
+ as well.
+ Of course, a comprehensive introduction to the inner working of any processor
+ is way beyond the scope of this thesis.
+ Instead, we will provide a brief overview of some architectural features,
+ and in particular those that migth cause bias due to differences in virtual
+ memory layout.
+ 
+\end_layout
+
+\begin_layout Standard
+To gain accurate measurements and diagnostics, we will use hardware performance
+ counters.
+ The Intel architecture has comprehensive monitoring capabilities, and we
+ give a brief overview of how it can be used.
 \end_layout
 
 \begin_layout Subsection
-Ivy Bridge Microarchitecture
+Ivy Bridge
 \end_layout
 
 \begin_layout Standard
-Information in Intel 64 and IA-32 Architectures Optimization Reference Manual.
- Need some familiarity with the processor architecture.
- Lots of features and mechanisms involved when executing code.
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+third generation
+\begin_inset Quotes erd
+\end_inset
+
+ Intel Core microarchitecture, succeeding 
+\begin_inset Quotes eld
+\end_inset
+
+Sandy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+, and eventually followed by 
+\begin_inset Quotes eld
+\end_inset
+
+Haswell
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Many of the architectural features found in Ivy Bridge can also be found
+ in Sandy Bridge and earlier Core architectures.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:pipeline"
+
+\end_inset
+
+ shows a high level overview of the processor pipeline.
+ For our purposes, a general idea of what happens during program execution
+ is sufficient.
+ Some of the more interesting features is summarized below.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -987,15 +1050,16 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:pipeline"
+
+\end_inset
+
 Sandy/Ivy Bridge Pipeline, adapted from 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Intel:2013:Volume3B"
-
-\end_inset
-
- (wrong manual?)
-\end_layout
+key "Intel:2013:Volume1"
 
 \end_inset
 
@@ -1007,11 +1071,9 @@ key "Intel:2013:Volume3B"
 
 \end_layout
 
-\begin_layout Standard
-Figure [] shows a very crude high level overview of the processor pipeline.
- For our purposes, a general idea of what happens during program execution
- is sufficient.
- 
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1041,9 +1103,41 @@ Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
-Load and store operations can be issued speculatively based on predictions.
- Separate buffers are used to provide speculative memory operations, and
- instructions are restarted if conflicts are discovered at retirement.
+To further increase parallelism, loads and stores are scheduled speculatively
+ and out of order 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficientPerformance"
+
+\end_inset
+
+.
+ During normal execution, the data dependencies between memory operations
+ must be preserved.
+ This poses some restrictions to the out of order issuing of instructions.
+ A load that depends on a previous store must naturally wait until the store
+ is complete.
+ In cases where the addresses are unknown, the hardware must use conservative
+ heuristics and can not reorder instructions easily.
+ With memory disambiguation, the hardware makes a prediction on wether a
+ conflict will occur.
+ Loads can then be issued before stores that migth conflict, with the effect
+ of increasing parallelism and hiding latency.
+ The predictions are later verified before retirement, re-executing operations
+ that actually had conflicts.
+\end_layout
+
+\begin_layout Standard
+Loads and store buffers hold the values of speculatively executed memory
+ operations, sometimes collectively reffered to as 
+\begin_inset Quotes eld
+\end_inset
+
+Memory Order Buffer
+\begin_inset Quotes erd
+\end_inset
+
+.
  
 \end_layout
 
@@ -12289,7 +12383,6 @@ Future Work
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-btprint "btPrintAll"
 bibfiles "references"
 options "bibtotoc,acm"
 

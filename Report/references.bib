@@ -3,6 +3,15 @@
 
 @string { IntelCore = "{Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark}}" }
 
+@manual { Intel:2013:Volume1,
+    title        = {Intel\textsuperscript{\textregistered} 64 and IA-32 Architectures 
+                    Software Developer's Manual, Volume 1: Basic Architecture},
+    month        = {March},
+    year         = {2013},
+    organization = {Intel Corporation},
+    number       = {253665-046US}
+}
+
 @manual { Intel:2013:Volume3B,
     title        = {Intel\textsuperscript{\textregistered} 64 and IA-32 Architectures 
                     Software Developer's Manual, Volume 3B: System Programming Guide, Part 2},
@@ -12,7 +21,16 @@
     number       = {253669-045US}
 }
 
-@article { Intel:2006:SNSEEP,
+@manual { Intel:2012:OptimizationManual,
+    author       = {{Intel Corporation}},
+    title        = {{Intel\textsuperscript{\textregistered} 64 and IA-32 Architectures 
+                    Optimization Reference Manual}},
+    year         = {2012},
+    month        = {April},
+    number       = {248966-026},
+}
+
+@article { Intel:2006:InsideICM:EnergyEfficientPerformance,
     title        = "Inside " # IntelCore # " Microarchitecture: Setting New Standards for 
                     Energy-Efficient Performance",
     author       = {Ofri Wechsler},
@@ -20,7 +38,7 @@
     year         = {2006}
 }
 
-@misc { Intel:2006:M&SMA,
+@misc { Intel:2006:InsideICM:SmartMemoryAccess,
     title        = "Inside " # IntelCore # " Microarchitecture and Smart Memory Access: 
                    An In-Depth Look at {Intel} Innovations for Accelerating Execution of 
                    Memory-Related Instructions",
