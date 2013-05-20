@@ -1,3 +1,5 @@
-
 *.a
 *.so
+Profile/chunks
+Profile/micro-ops
+Profile/branches

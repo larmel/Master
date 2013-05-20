@@ -5811,38 +5811,132 @@ The Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
-The Loop Stream Detector (LSD) is a front-end hardware optimization introduced
- in the intel Core microarchitecture.
- Measuring the utilization of LSD is supported by the LSD.UOPS and LSD.OVERFLOW
- performance counters.
- Note that this counter is not listed in Table 19-5.
+Typical software spends most of the time executing the same instructions
+ repeatedly in a loop.
+ For each iteration, the same branch predictions are made, and the same
+ instructions are fetched and decoded.
+ The Loop Stream Detector (LSD) is a front-end hardware optimization that
+ is able to detect small software loops 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Ramesh:i7PerformanceMonitoring"
+
+\end_inset
+
+.
+ Instead of repeatedly fetching and decoding the same instructions, loops
+ can be streamed directly from a queue of already decoded micro operations.
+ Normal operations is resumed once the inevetable branch mispredict occurs.
+ 
 \end_layout
 
 \begin_layout Standard
-The requirements for a loop to fit into the LSD cache is stated in the manual
- as the following:
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/intel/lsd.eps
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Itemize
-Up to eight chunk fetches of 32 (0x20) instruction-bytes (0x100).
- Online docs for 32 nm i7 states four 16-byte fetches.
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Loop Stream Detector circumvents branch prediction, fetch and decode for
+ hot loops
 \end_layout
 
-\begin_layout Itemize
-Up to 28 micro-ops (~28 instructions).
- For Ivy Bridge with HT disabled, each core gets 56 entries in micro-op
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This optimization is affecting both performance and power efficiency.
+ Power savings come from disabling the branch prediction, fetch and decode
+ components when the LSD is active.
+ In cases where instruction fetch is the bottleneck, streaming already decoded
+ micro-operations can also increase performance.
+ 
+\end_layout
+
+\begin_layout Standard
+In the documentation, we find two hardware performance counters that can
+ measure the utilization of the LSD 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+LSD.UOPS Counts the number of micro-ops delivered by loop stream detector.
+\end_layout
+
+\begin_layout Description
+LSD.OVERFLOW Counts number of loops that can't stream from the instruction
  queue.
  
 \end_layout
 
+\begin_layout Standard
+Note that none of these are listed in the non-architectural counters supported
+ by Ivy Bridge.
+ However, we find that using the event codes given for previous architectures
+ seems to work regardless, and gives reasonable results.
+ We suspect that the official reference is either not complete or misleading
+ in this case.
+\end_layout
+
+\begin_layout Subsection
+Properties of the Loop Stream Detector
+\end_layout
+
+\begin_layout Standard
+A set of restrictions is given on what loops can be recognized by the loop
+ stream detector.
+ The Architectures Optimization Reference Manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+ states the following requirements for a loop to be recognized by the LSD:
+\end_layout
+
 \begin_layout Itemize
-All micro-ops are also resident in the Decoded ICache.
+Up to eight chunk fetches of 32 instruction-bytes
+\end_layout
+
+\begin_layout Itemize
+Up to 28 micro-ops (~28 instructions)
+\end_layout
+
+\begin_layout Itemize
+All micro-ops are also resident in the Decoded ICache
 \end_layout
 
 \begin_layout Itemize
 Can contain no more than eight taken branches and none of them can be a
- CALL or RET.
- Online docs for 32 nm i7 states 4 branches.
+ CALL or RET
 \end_layout
 
 \begin_layout Itemize
@@ -5855,23 +5949,22 @@ Cannot have mismatched stack operations.
 Loops should have at least 64 iterations.
 \end_layout
 
-\begin_layout Subsection
-Properties Of The Loop Stream Detector
-\end_layout
-
 \begin_layout Standard
-Creating simple loops and compiling with gcc.
- Binary is inspected to check what instructions are executed, and their
- address layout.
+The capabilities of the LSD is changing between processor generations.
+ In particular, the limits to chunk fetches, maximum number of micro-ops
+ and taken branches seems to continuously increase 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Ramesh:i7PerformanceMonitoring,Intel:OnlinePCReference"
+
+\end_inset
+
+.
+ It is not clear whether the stated limitations are valid for the Ivy Bridge,
+ as it is not explicitly stated in the manual.
+ We create a series of micro benchmarks to manually verify what the actual
+ limitations are.
  
-\end_layout
-
-\begin_layout Standard
-Note that we suspect that the reference for Ivy Bridge provided by Intel
- (as of March 2013) is in fact not complete.
- For instance, no counter concerning the loop stream detector is listed
- in the official documentation (Table 19-5), but the event listed for previous
- generations seem to work regardless.
 \end_layout
 
 \begin_layout Standard
@@ -6016,12 +6109,133 @@ Taken branches
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Experimental LSD properties of i7 Ivy Bridge
+Properties of the i7 Ivy Bridge LSD, determined empirically by a series
+ of micro benchmarks
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Chunk fetches 
+\end_layout
+
+\begin_layout Standard
+The documentation states that a maximum number of eight 32 byte 
+\begin_inset Quotes eld
+\end_inset
+
+chunks
+\begin_inset Quotes erd
+\end_inset
+
+ of instruction data can be fetched in each loop.
+ Our interpretation of this is that instructions are read from instruction
+ cache in blocks of 32 bytes at a time, and each chunk is aligned to multiples
+ of 0x20 in virtual address space.
+ 
+\end_layout
+
+\begin_layout Standard
+To test this limit, we need loops that execute instructions spanning a variable
+ amount of chunks.
+ The micro kernel we used is shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-chunks"
+
+\end_inset
+
+; multiple identical conditional statements are executed, but always evaluated
+ to false to skip through to the next chunk.
+ The example code is tuned such that each of the if statements occupy exactly
+ 32 instruction bytes when compiled with 
+\family typewriter
+gcc -O3
+\family default
+.
+ Additionally, the compiler flag 
+\family typewriter
+-falign-loops
+\family default
+ is set to 32, explicitly forcing the first loop instruction to a multiple
+ of 0x20.
+ Notice in the example object dump below, the first instruction starts on
+ address 
+\family typewriter
+0x400500
+\family default
+.
+ The first 10 bytes of the generated assembly consist of three instructions;
+ a 
+\family typewriter
+mov
+\family default
+, loading variable 
+\family typewriter
+i
+\family default
+ to a register, a 
+\family typewriter
+test
+\family default
+, and a conditional jump.
+ The conditional will always evaluate to false, thus the remaining 22 bytes
+ is dead code.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+400500: 8b 15 12 0b 20 00    mov    0x200b12(%rip),%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+400506: 85 d2                test   %edx,%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+400508: 75 16                jne    400520 <loop+0x40>
+\end_layout
+
+\begin_layout Plain Layout
+
+40050a: 8b 15 08 0b 20 00    mov    0x200b08(%rip),%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+400510: 8b 0d 02 0b 20 00    mov    0x200b02(%rip),%ecx
+\end_layout
+
+\begin_layout Plain Layout
+
+400516: 0f af d1             imul   %ecx,%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+400519: 0f af d7             imul   %edi,%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+40051c: 8d 44 10 01          lea    0x1(%rax,%rdx,1),%eax
 \end_layout
 
 \end_inset
@@ -6030,8 +6244,191 @@ Experimental LSD properties of i7 Ivy Bridge
 \end_layout
 
 \begin_layout Standard
-Relatively easy to test limit of taken branches and number of micro-ops.
- For mops, we created a loop of 
+After some number of repeated if statements, the increment, test and jump
+ occupies another 27 bytes.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+400680: 8b 15 92 09 20 00    mov    0x200992(%rip),%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+400686: 8d 4a 01             lea    0x1(%rdx),%ecx
+\end_layout
+
+\begin_layout Plain Layout
+
+400689: 81 fa 66 45 23 01    cmp    $0x1234566,%edx
+\end_layout
+
+\begin_layout Plain Layout
+
+40068f: 89 0d 83 09 20 00    mov    %ecx,0x200983(%rip)
+\end_layout
+
+\begin_layout Plain Layout
+
+400695: 0f 8e 65 fe ff ff    jle    400500 <loop+0x20>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For every loop iteration, a total of 
+\begin_inset Formula $3N+5$
+\end_inset
+
+ instructions are executed, spanning 
+\begin_inset Formula $N+1$
+\end_inset
+
+ chunks of 32 bytes.
+ We find that the LSD.UOPS counter reports high values through 
+\begin_inset Formula $N=11$
+\end_inset
+
+, meaning the loop stream detector on Ivy Bridge actually supports up to
+ 12 chunk fetches.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+volatile int i = 42;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int loop(int a) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    register int b = i == 42 ? 1 : 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    do {
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) b += i*i*a + 1; // 22 out of 32 byte dead code
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (!i) b += i*i*a + 1;
+\end_layout
+
+\begin_layout Plain Layout
+
+        (...)
+\end_layout
+
+\begin_layout Plain Layout
+
+    } while (i++ < 0x1234567); // 27 bytes for increment and test
+\end_layout
+
+\begin_layout Plain Layout
+
+    return b;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    i = loop(10);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:lsd-chunks"
+
+\end_inset
+
+Micro kernel for testing LSD chunk fetch limit.
+ Additional if statements are inserted until LSD.UOPS shows the LSD is inactive.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Micro-ops
+\end_layout
+
+\begin_layout Standard
+For mops, we created a loop of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -6041,24 +6438,7 @@ addl
 
  instructions, incrementing until LSD_OVERFLOW indicated that the limit
  is reached.
-\end_layout
-
-\begin_layout Subsubsection*
-Chunk fetches 
-\end_layout
-
-\begin_layout Standard
-Executed chunks of instruction addresses must fit in at most 12 chunks aligned
- to 0x20 (32 byte).
- 
-\end_layout
-
-\begin_layout Subsubsection*
-Micro-ops
-\end_layout
-
-\begin_layout Standard
-Overflows after 52 addl 0x1 instructions.
+ Overflows after 52 addl 0x1 instructions.
  4 extra instructions for text/compare as well, before the jump instruction.
  56 entries seems to be correct for Ivy Bridge as well as Sandy Bridge.
 \end_layout

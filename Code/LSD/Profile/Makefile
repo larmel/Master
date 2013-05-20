@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 
 chunks: clean
-	for N in {1..16}; do \
+	@echo "Testing LSD chunk fetch limit"
+	@for N in {1..16}; do \
 		cc chunks.c -O3 -falign-loops=32 -DN=$$N -o chunks; \
 		printf " %3d " "$$N"; \
 		perf stat -x" " -e cycles:u,r01a8:u ./chunks 0>&1 >/dev/null | sed ':a;N;$$!ba;s/\n/ /g' | \
@@ -12,7 +13,6 @@ chunks: clean
 				fi; \
 				echo "{ $${words[@]} } "; \
 			); \
-		rm -f chunks; \
 	done
 
 micro-ops: clean
@@ -52,9 +52,4 @@ branches: clean
 	rm -f branches-tmp.c
 
 clean:
-	rm -f chunks
-	rm -f micro-ops
-	rm -f branches
-
-
-
+	@rm -f chunks micro-ops branches
