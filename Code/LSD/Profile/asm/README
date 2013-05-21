@@ -1,0 +1,6 @@
+
+Assembly versions of LSD corner cases
+
+chunks.s : 11 jumps + loop back. Each block occupies exactly 32 byte.
+
+

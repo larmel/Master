@@ -6209,80 +6209,92 @@ status open
 
 \begin_layout Plain Layout
 
-volatile int i = 42;
+    .section .text
 \end_layout
 
 \begin_layout Plain Layout
 
+    .globl main
 \end_layout
 
 \begin_layout Plain Layout
 
-int loop(int a) {
+main:
 \end_layout
 
 \begin_layout Plain Layout
 
-    register int b = i == 42 ? 1 : 0;
+    mov $0x1234567, %rax 
 \end_layout
 
 \begin_layout Plain Layout
 
-    do {
+    mov $0, %rbx
 \end_layout
 
 \begin_layout Plain Layout
 
-        if (!i) b += i*i*a + 1;
+    .p2align 5
 \end_layout
 
 \begin_layout Plain Layout
 
-        if (!i) b += i*i*a + 1;
+.l0:
 \end_layout
 
 \begin_layout Plain Layout
 
-        (...)
+    cmp $0, %ebx
 \end_layout
 
 \begin_layout Plain Layout
 
-    } while (i++ < 0x1234567);
+    je .l1
 \end_layout
 
 \begin_layout Plain Layout
 
-    return b;
+    lea 0x100(%rsp),%ecx; lea 0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-}
+    lea 0x100(%rsp),%ecx; add $0x100, %ecx
 \end_layout
 
 \begin_layout Plain Layout
 
+.l1:
 \end_layout
 
 \begin_layout Plain Layout
 
-int main() {
+    (...)
 \end_layout
 
 \begin_layout Plain Layout
 
-    i = loop(10);
+.l11:
 \end_layout
 
 \begin_layout Plain Layout
 
-    return 0;
+    lea 0x100(%rsp),%ecx; lea 0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-}
+    add $0x100, %ecx; sub $1, %eax
+\end_layout
+
+\begin_layout Plain Layout
+
+    cmp $0, %eax
+\end_layout
+
+\begin_layout Plain Layout
+
+    jne	.l0
 \end_layout
 
 \end_inset
@@ -6396,42 +6408,32 @@ status open
 
 \begin_layout Plain Layout
 
-400500: 8b 15 12 0b 20 00    mov    0x200b12(%rip),%edx
+400500: 83 fb 00             cmp    $0x0,%ebx
 \end_layout
 
 \begin_layout Plain Layout
 
-400506: 85 d2                test   %edx,%edx
+400503: 74 1b                je     400520 <.l1>
 \end_layout
 
 \begin_layout Plain Layout
 
-400508: 75 16                jne    400520 <loop+0x40>
+400505: 8d 8c 24 00 01 00 00 lea    0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-40050a: 8b 15 08 0b 20 00    mov    0x200b08(%rip),%edx
+40050c: 8d 8c 24 00 01 00 00 lea    0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-400510: 8b 0d 02 0b 20 00    mov    0x200b02(%rip),%ecx
+400513: 8d 8c 24 00 01 00 00 lea    0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-400516: 0f af d1             imul   %ecx,%edx
-\end_layout
-
-\begin_layout Plain Layout
-
-400519: 0f af d7             imul   %edi,%edx
-\end_layout
-
-\begin_layout Plain Layout
-
-40051c: 8d 44 10 01          lea    0x1(%rax,%rdx,1),%eax
+40051a: 81 c1 00 01 00 00    add    $0x100,%ecx
 \end_layout
 
 \end_inset
@@ -6440,9 +6442,10 @@ status open
 \end_layout
 
 \begin_layout Standard
-After some number of repeated if statements, the increment, test and jump
- occupies another 27 bytes.
- 
+After some number of repeated blocks like these, the counter is incremented
+ before jumping back to the top.
+ The sub, cmp and jne instructions occupy 12 byte, so we can insert another
+ 20 byte of padding wo completely fill the last chunk.
 \end_layout
 
 \begin_layout Standard
@@ -6453,27 +6456,32 @@ status open
 
 \begin_layout Plain Layout
 
-400680: 8b 15 92 09 20 00    mov    0x200992(%rip),%edx
+400660: 8d 8c 24 00 01 00 00 lea    0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-400686: 8d 4a 01             lea    0x1(%rdx),%ecx
+400667: 8d 8c 24 00 01 00 00 lea    0x100(%rsp),%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-400689: 81 fa 66 45 23 01    cmp    $0x1234566,%edx
+40066e: 81 c1 00 01 00 00    add    $0x100,%ecx
 \end_layout
 
 \begin_layout Plain Layout
 
-40068f: 89 0d 83 09 20 00    mov    %ecx,0x200983(%rip)
+400674: 83 e8 01             sub    $0x1,%eax
 \end_layout
 
 \begin_layout Plain Layout
 
-400695: 0f 8e 65 fe ff ff    jle    400500 <loop+0x20>
+400677: 83 f8 00             cmp    $0x0,%eax
+\end_layout
+
+\begin_layout Plain Layout
+
+40067a: 0f 85 80 fe ff ff    jne    400500 <.l0>
 \end_layout
 
 \end_inset
@@ -6483,7 +6491,7 @@ status open
 
 \begin_layout Standard
 For every loop iteration, a total of 
-\begin_inset Formula $3N+5$
+\begin_inset Formula $2N+3$
 \end_inset
 
  instructions are executed, spanning 
@@ -6491,6 +6499,8 @@ For every loop iteration, a total of
 \end_inset
 
  chunks of 32 bytes.
+ cmp and je instructions should be fused to a single micro-op, so there
+ should not be hitting the instruction limit.
  We find that the LSD.UOPS counter reports high values through 
 \begin_inset Formula $N=11$
 \end_inset
