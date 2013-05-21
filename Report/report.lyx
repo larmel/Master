@@ -1056,7 +1056,7 @@ name "fig:pipeline"
 
 \end_inset
 
-Sandy/Ivy Bridge Pipeline, adapted from 
+Sandy/Ivy Bridge pipeline, adapted from 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume1"
@@ -1077,7 +1077,50 @@ key "Intel:2013:Volume1"
 \end_layout
 
 \begin_layout Subsubsection
-Instruction-level parallelism
+Front End
+\end_layout
+
+\begin_layout Standard
+Next instruction is first searched for in Decoded ICache, which holds up
+ to 1536 already decoded instructions (micro-operations).
+ If not found there, go through the decode stack.
+ To fill 
+\begin_inset Quotes eld
+\end_inset
+
+holes
+\begin_inset Quotes erd
+\end_inset
+
+ in the instruction stream, a micro-op queue sits between the front end
+ and the rest of the pipeline.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Macro-Fusion
+\end_layout
+
+\begin_layout Standard
+Common instruction pairs can be fused together into a single micro-op, increasin
+g the instructions perf cycle (IPC).
+\end_layout
+
+\begin_layout Paragraph
+Loop Stream Detector
+\end_layout
+
+\begin_layout Standard
+The Loop Stream Detector (LSD) is, with some restrictions, able to detect
+ software loops in the micro-op stream.
+ To save fetch and decode-logic, the LSD locks micro-ops in the queue, thereby
+ saving fetch and decode logic prior in the pipeline.
+ This saves power, but can also give a performance gain in cases where the
+ front end is the bottleneck.
+\end_layout
+
+\begin_layout Subsubsection
+Out-of-Order Engine and Execution Core
 \end_layout
 
 \begin_layout Standard
@@ -1089,13 +1132,30 @@ One of the key features of modern processors is instruction level parallelism.
  
 \end_layout
 
-\begin_layout Paragraph
-Macro fusion
+\begin_layout Subsubsection
+Cache Hierarchy
 \end_layout
 
 \begin_layout Standard
-Common instruction pairs are combined to a single micro-operation.
- This effectively doubles the instructions per cycle when applied.
+L1 data cache supports out of order operations via load and store buffers
+ (collectively known as 
+\begin_inset Quotes eld
+\end_inset
+
+memory order buffer
+\begin_inset Quotes erd
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Paragraph
+Store Forwarding
+\end_layout
+
+\begin_layout Standard
+A load that happens after a store which is not yet committed, can have the
+ store data forwarded directly from the store operations.
 \end_layout
 
 \begin_layout Paragraph
@@ -1103,8 +1163,8 @@ Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
-To further increase parallelism, loads and stores are scheduled speculatively
- and out of order 
+Loads are scheduled speculatively, even if there are potential conflicts
+ with preceeding stores 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficientPerformance"
@@ -1112,24 +1172,19 @@ key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficient
 \end_inset
 
 .
- During normal execution, the data dependencies between memory operations
- must be preserved.
- This poses some restrictions to the out of order issuing of instructions.
- A load that depends on a previous store must naturally wait until the store
- is complete.
- In cases where the addresses are unknown, the hardware must use conservative
- heuristics and can not reorder instructions easily.
+ A load coming after a store with unresolved address can potentially have
+ a dependency, and must wait until the store is complete.
  With memory disambiguation, the hardware makes a prediction on wether a
  conflict will occur.
- Loads can then be issued before stores that migth conflict, with the effect
- of increasing parallelism and hiding latency.
- The predictions are later verified before retirement, re-executing operations
- that actually had conflicts.
+ Loads that are predicted not to have any dependencies are allowed to read
+ data from L1 cache, before previous stores are resolved.
+ The predictions are later verified before retirement, re-executing instructions
+ that were affected by actual conflicts.
 \end_layout
 
 \begin_layout Standard
 Loads and store buffers hold the values of speculatively executed memory
- operations, sometimes collectively reffered to as 
+ operations, sometimes collectively referred to as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1144,15 +1199,6 @@ Memory Order Buffer
 \begin_layout Standard
 Memory disambiguation: Information in 2.2.4.5.
  Predicts conflict of loads, issue speculatively.
-\end_layout
-
-\begin_layout Subsubsection
-Loop Stream Detecor
-\end_layout
-
-\begin_layout Standard
-Front end optimization.
- Hinted to being a possible source of bias in Google tech talk (reference).
 \end_layout
 
 \begin_layout Subsection
@@ -2564,6 +2610,28 @@ Point for later: The guidelines provided by intel does not cover effects
 
 \begin_layout Standard
 The intel optimization manual mentions two performance counters
+\end_layout
+
+\begin_layout Description
+LD_BLOCKS_PARTIAL.ADDRESS_ALIAS False dependency in the Memory Order Buffer
+\end_layout
+
+\begin_layout Subsubsection*
+Cost of Address Alias
+\end_layout
+
+\begin_layout Standard
+Formula given in optimization manual.
+ Suggests that each alias event costs 5 cycles.
+ The portion of cycle time spent dealing with alias is then
+\begin_inset Formula 
+\[
+\text{4K Alias Cost}=\frac{\text{LD\_BLOCKS\_PARTIAL.ADDRESS\_ALIAS}\times5}{\text{CPU\_CLK\_UNHALTED.THREAD\_P}}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -6083,7 +6151,7 @@ Taken branches
 \begin_inset Text
 
 \begin_layout Plain Layout
-17 (+1)
+12
 \end_layout
 
 \end_inset
@@ -6534,7 +6602,21 @@ b++
 \begin_layout Standard
 The second requirement states that each loop can only contain a maximum
  of 28 micro-operations.
- We test this restriction by measuring LSD_OVERFLOW and LSD.UOPS for loops
+ This is no longer true for Ivy Bridge, because of changes to the Micro-op
+ Queue.
+ In previous generation(s), the micro-op queue was statically partitioned
+ with 28 entries for each logical core.
+ One of the Front-end enhancement in Ivy Bridge is that all 56 entries in
+ the queue can be used when only a single logical core is active, i.e.
+ hyperthreading is disabled 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ We verify this restriction by measuring LSD_OVERFLOW and LSD.UOPS for loops
  of increasing size, adding instructions one by one until the performance
  counter statistics report the LSD is inactive.
  Our micro-kernel is shown in Listing 
@@ -6620,14 +6702,16 @@ add
  instructions.
  With the additional four instructions and a jump, the correct answer is
  likely 56 micro-operations per loop.
- With hyperthreading enabled, the number is cut in half to 28.
- This seems reasonable, as the micro-ops buffer is probably shared between
- logical cores.
- 
+ With hyperthreading enabled, the number is cut in half to 28, as expected.
 \end_layout
 
 \begin_layout Subsubsection*
 Taken branches
+\end_layout
+
+\begin_layout Standard
+Branches with target within close range does not seem to work very well.
+ 
 \end_layout
 
 \begin_layout Standard
