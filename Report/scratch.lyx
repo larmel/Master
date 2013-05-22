@@ -1996,5 +1996,137 @@ add
  With hyperthreading enabled, the number is cut in half to 28, as expected.
 \end_layout
 
+\begin_layout Section
+Old LSD examples
+\end_layout
+
+\begin_layout Standard
+Compiling this using gcc and no optimization, we see that the loop stream
+ detector is not applied to this loop.
+ The address of the first instruction is 0x4004d3, and the last 0x400643.
+ If instructions are buffered in chunks of 32B, then chunks must be a multiple
+ of 0x20.
+ The first instruction is pretty far into the 0x4004
+\series bold
+c0
+\series default
+ chunk, while the last instruction is just inside the 0x4006
+\series bold
+40
+\series default
+ chunk.
+ A total of 13 chunks of 32 bytes is executed -- apparently too much for
+ the LSD.
+ We use the perf utility to measure total number of un-halted cycles, as
+ well as the LSD_OVERFLOW and LSD_UOPS events.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     7,640,342,761 cycles:u                  #    0.000 GHz             
+       
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+            10,974 r01a8:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       2.249628298 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Observe that by carefully aligning the first instruction, we can fit the
+ code into only 12 instruction chunks.
+ By inserting 13 nop instruction in the assembly code before the loop, addresses
+ of the first and last instructions are offset to, respectively, 0x4004e0
+ and 0x400650.
+ 0xe0 is at the very beginning of a chunk, and 0x50 leaves room for another
+ 16 bytes (6 of which are occupied by the very last jump instruction).
+ Running the same program with these 13 nop instructions results in a dramatic
+ improvement in performance.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     3,669,478,538 cycles:u                  #    0.000 GHz             
+       
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+     4,579,426,057 r01a8:u                                             
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       1.080381834 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To further strengthen the hypothesis that twelve 32B chunks is the limit,
+ we can add another 10 bytes at the very end of the loop and get similar
+ results.
+ With 11 extra bytes -- spilling instructions over to the next chunk --
+ LSD_UOPS is back at 11k.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Hyper-threading
+\end_layout
+
+\begin_layout Standard
+Experiments were repeated with hyperthreading turned on -- and we got the
+ same results.
+ It seems like HT does not affect the chunk fetch limit of the LSD.
+\end_layout
+
 \end_body
 \end_document
