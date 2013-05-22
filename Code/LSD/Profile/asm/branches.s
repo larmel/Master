@@ -5,7 +5,7 @@ main:
 	mov $0, %rbx
 	.p2align 5
 
-.loop:
+.l0:
 	xor %rbx, %rbx
 	cmpq $0, %rbx
 	je .l1
@@ -67,6 +67,6 @@ main:
 .l11:
 	subq $1, %rax
 	cmpq $0, %rax
-	jne	.loop
+	jne	.l0
 
 	ret

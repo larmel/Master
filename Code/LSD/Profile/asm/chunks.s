@@ -89,11 +89,11 @@ main:
     add $0x100, %ecx
 .l11:
     /* Final block, sub, cmp and jne takes 3+3+6 = 12 bytes 
-       32-12 = 20 bytes dead code max
+       32-12 = 20 bytes dead code max (removed for clarity)
+       lea 0x100(%rsp), %ecx
+       lea 0x100(%rsp), %ecx
+       add $0x100, %ecx;
     */
-    lea 0x100(%rsp), %ecx
-    lea 0x100(%rsp), %ecx
-    add $0x100, %ecx;
     sub $1, %eax
     cmp $0, %eax
     jne .l0
