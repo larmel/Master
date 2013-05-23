@@ -13,29 +13,33 @@
 // objdump -S shows that the last 12 bits of .so code addresses are statically determined :(
 // Static linking seems to be the same as link order. Everything is determined at link time.
 //
+// cc -O3 lsd.c loop-optimized.c fact.c -o c.out; perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./c.out
 
-#define B27 a = b, a = b, a = b, a = b, a = b, a = b, a = b, a = b, a = b
+#define B22(n) b += i*i*a + 1
 
-int loop()
+volatile int i = 42;
+
+int loop(int a)
 {
-    //uint64_t ip;
-    register int i = 0, a = 1, b = 1;
-    while (i++ < 0x12345678) // 0x12345678
-    {
-        // 3b + 2B cmp and je, 9*3B dead
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-        if (a != b) B27;
-    }
-    //asm("leaq (%%rip), %0;": "=r"(ip));
-    //printf("rip is 0x%016" PRIx64 "\n", ip);
-    return i;
+    register int b = i == 42 ? 1 : 0;
+    do {
+        if (!i) B22(1); // mov (6), test (2), jne (2) => 10
+        if (!i) B22(2);
+        if (!i) B22(3);
+        if (!i) B22(4);
+        if (!i) B22(5);
+        if (!i) B22(6);
+        if (!i) B22(7);
+        if (!i) B22(8);
+        if (!i) B22(9);
+        if (!i) B22(10);
+        if (!i) B22(11);
+        // 27 bytes for increment and test
+    } while (i++ < 0x12345678); // 0x12345678
+    return b;
 }
+/*
+int main()
+{
+    return loop(10);
+}*/

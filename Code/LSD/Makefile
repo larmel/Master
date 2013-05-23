@@ -1,42 +1,31 @@
 
-dynamic:
-	cc -c -fPIC loop.c -o loop.o
-	cc -shared -Wl,-soname,libloop.so -o libloop.so loop.o
-	cc lsd.c -Wl,-rpath . -L. -lloop -o dynamic
-
-static:
-	cc -c loop.c -o loop.o
-	ar rcs libloop.a loop.o
-	cc lsd.c -L. -static -lloop -o static
-
-a.out:
-	cc lsd.c fact.c loop.c -o a.out
-
-b.out:
-	cc lsd.c loop.c fact.c -o b.out
-
-test: a.out b.out
-	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./a.out
-	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./b.out
+.PHONY: linkorder observer
 
 
-# A single main function covering 13 chunks. Fixed by inserting nops
-loop-single.s: loop-single.c
-	cc -S loop-single.c -o loop-single.s
-loop-single: loop-single.s
-	cc loop-single.s -o loop-single
-test-single: loop-single
-	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./loop-single
+chunks.s: chunks.c
+	cc -S $+ -o $@
+
+chunks: chunks.s
+	cc $+ -o $@
+
+#
+# A single main function covering 13 chunks, fixed by inserting printf
+observer: chunks
+	perf stat -e cycles:u,r0120:u,r01a8:u ./chunks
 
 
-# Based on link order and O3
-c.out:
-	cc -O3 lsd.c loop-optimized.c fact-optimized.c -o c.out
-d.out:
-	cc -O3 lsd.c fact-optimized.c loop-optimized.c -o d.out
-test-optimized: c.out d.out
-	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./c.out
-	perf stat -e cycles:u,r0120:u,r01a8:u,branch-misses:u ./d.out
+main-loop-foo: main.c loop.c foo.c
+	cc -O3 main.c loop.c foo.c -o $@
+
+main-foo-loop: main.c loop.c foo.c
+	cc -O3 main.c foo.c loop.c -o $@
+
+#
+# Show bias from link order
+linkorder: main-loop-foo main-foo-loop
+	perf stat -e cycles:u,r0120:u,r01a8:u ./main-loop-foo
+	perf stat -e cycles:u,r0120:u,r01a8:u ./main-foo-loop
+
 
 clean:
-	rm -f static dynamic a.out b.out c.out d.out
+	rm -f chunks main-foo-loop main-loop-foo

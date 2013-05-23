@@ -1,5 +1,7 @@
-*.a
-*.so
+chunks
+main-loop-foo
+main-foo-loop
+*.s
 Profile/chunks
 Profile/micro-ops
 Profile/branches
