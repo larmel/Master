@@ -3,8 +3,8 @@ volatile static int color;
 
 int main()
 {
-    //printf("Offseting loop a bit");
-    for (int i = 0; i < 1000000; ++i) {
+    printf("Fixing colors");
+    for (int i = 0; i < 10000000; ++i) {
         if (color == 0x000)
             color = 0xaaa;
         else if (color == 0xaaa)

@@ -7178,7 +7178,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "49col%"
+width "45col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -7282,14 +7282,14 @@ int main()
 
     printf("Loop: %d
 \backslash
-n", i);
+n",i);
 \end_layout
 
 \begin_layout Plain Layout
 
     printf("Foo : %d
 \backslash
-n", f);
+n",f);
 \end_layout
 
 \begin_layout Plain Layout
@@ -7458,8 +7458,8 @@ name "alg:lsd-link-O3"
 
 \end_inset
 
-Program that differ by 2x in cycle count depending on link order, using
- GCC and optimization level O3
+Program with measurement bias from link order, when compiling with GCC and
+ optimization level O3
 \end_layout
 
 \end_inset
@@ -7692,21 +7692,12 @@ Decoded ICache Limitations
 
 \begin_layout Standard
 Any property of the Loop Stream Detector that depends on the code layout
- in memory can potentially be triggered by different link orders.
- This is not limited to the chunk fetch limit, but also includes properties
- of the Decoded ICache.
+ in memory, can potentially be triggered by different link orders.
+ This is not limited to the number of chunk fetches, but also includes propertie
+s of the Decoded ICache.
  One of the requirements states that all micro-ops must be present in the
- ICache.
- The manual describes several restrictions to what micro-ops can be stored
- in this cache, imposing limitations to the position of branches and other
- alignment properties 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-.
+ ICache, which stores instructions that have already been decoded for quick
+ lookup later.
  
 \end_layout
 
@@ -7744,7 +7735,12 @@ int main() {
 
 \begin_layout Plain Layout
 
-    for (int i = 0; i < 0x1000000; ++i) {
+    printf("Fixing colors");
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < 10000000; ++i) {
 \end_layout
 
 \begin_layout Plain Layout
@@ -7822,7 +7818,39 @@ Loop using LSD only for certain alignments when compiled with GCC and no
 \end_layout
 
 \begin_layout Standard
-The Loop Stream Detector 
+Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-color"
+
+\end_inset
+
+ shows another, perhaps more realistic example.
+ Compiling with 
+\family typewriter
+cc -std=c99
+\family default
+ and counting LSD.UOPS, we see that the Loop Stream Detector is not in use.
+ However, by removing the printf statement we move the loop alignment from
+ 0x400517 to 0x4004c1, and the LSD is suddently working.
+ We did not investigate the actual cause of this any further, but speculate
+ that specific alignments prevents all micro-ops to reside in ICache simultaneou
+sly.
+ 
+\end_layout
+
+\begin_layout Standard
+The manual describes several restrictions to what micro-ops can be stored
+ in this cache, imposing limitations to the position of branches and other
+ alignment properties 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Subsection
