@@ -1,7 +1,10 @@
 chunks
+color
+icache
 main-loop-foo
 main-foo-loop
-*.s
+loop.s
+chunks.s
 Profile/chunks
 Profile/micro-ops
 Profile/branches

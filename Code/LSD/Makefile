@@ -1,5 +1,5 @@
 
-.PHONY: linkorder observer
+.PHONY: linkorder observer icache
 
 
 chunks.s: chunks.c
@@ -14,6 +14,10 @@ observer: chunks
 	perf stat -e cycles:u,r0120:u,r01a8:u ./chunks
 
 
+# Inspect alignment forced by O3
+loop.s: loop.c
+	cc -O3 -S loop.c -o $@
+
 main-loop-foo: main.c loop.c foo.c
 	cc -O3 main.c loop.c foo.c -o $@
 
@@ -27,5 +31,11 @@ linkorder: main-loop-foo main-foo-loop
 	perf stat -e cycles:u,r0120:u,r01a8:u ./main-foo-loop
 
 
+#
+# Small example that only uses LSD on certain alignments
+icache: icache.s
+	cc $+ -o $@ && perf stat -e cycles:u,r0120:u,r01a8:u ./$@
+
+
 clean:
-	rm -f chunks main-foo-loop main-loop-foo
+	rm -f chunks main-foo-loop main-loop-foo icache loop.s chunks.s

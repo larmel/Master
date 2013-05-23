@@ -5920,7 +5920,7 @@ status open
 
 \begin_layout Plain Layout
 Loop Stream Detector circumvents branch prediction, fetch and decode for
- hot loops
+ hot loops, streaming directly from the micro-op queue
 \end_layout
 
 \end_inset
@@ -7113,7 +7113,8 @@ name "fig:lsd-chunks-12-13"
 
 \end_inset
 
-Depending on alignment, code can span either 12 or 13 chunks of memory
+Depending on alignment, code can span either 12 or 13 chunks of 32 byte
+ instruction memory
 \end_layout
 
 \end_inset
@@ -7132,12 +7133,26 @@ Bias from Link Order
 
 \begin_layout Standard
 Link order of object files was discussed in the background as one of the
- potential sources of bias that has been studied.
+ potential sources of bias.
  Different link orders basically determines the relative position of code
- and static data within the resulting compiled program.
- As we have seen, the Loop Stream Detector is sensitive to alignment and
- virtual addresses of code, variables that can vary between different link
- orders.
+ and static data within the final compiled binary file.
+ The Loop Stream Detector is sensitive to alignment and virtual addresses
+ of code, which can explain bias effects triggered by link order in some
+ cases.
+ 
+\end_layout
+
+\begin_layout Standard
+With a few modifications to our previous example, we can create a program
+ that utilizes the LSD only for certain link orders.
+ Our example is shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-link-O3"
+
+\end_inset
+
+, containing three files; main.c, foo.c and loop.c.
  
 \end_layout
 
@@ -7221,7 +7236,7 @@ int foo(int n)
 \begin_layout Plain Layout
 
 \emph on
-lsd.c:
+main.c:
 \end_layout
 
 \begin_layout Plain Layout
@@ -7331,10 +7346,6 @@ status open
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\begin_layout Plain Layout
-
 volatile int i = 42;
 \end_layout
 
@@ -7344,12 +7355,7 @@ volatile int i = 42;
 
 \begin_layout Plain Layout
 
-int loop(int a)
-\end_layout
-
-\begin_layout Plain Layout
-
-{
+int loop(int a) {
 \end_layout
 
 \begin_layout Plain Layout
@@ -7452,8 +7458,8 @@ name "alg:lsd-link-O3"
 
 \end_inset
 
-Program that differ by 2x in cycle count depending on link order.
- Works on optimization level O3 with GCC.
+Program that differ by 2x in cycle count depending on link order, using
+ GCC and optimization level O3
 \end_layout
 
 \end_inset
@@ -7471,9 +7477,16 @@ Optimization
 \end_layout
 
 \begin_layout Standard
-In the previous example we exploited weak alignment guarantees from GCC
- to spill to loop over 13 chunks.
- One might suspect that with the proper optimization flags, compilers will
+In the example from Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-chunks-c"
+
+\end_inset
+
+, we exploited weak alignment guarantees from GCC, sometimes spilling loop
+ code over 13 chunks.
+ One might hope that with the proper optimization flags, compilers will
  fix such alignment flaws.
  There is an 
 \begin_inset Quotes eld
@@ -7483,14 +7496,58 @@ align-loops
 \begin_inset Quotes erd
 \end_inset
 
- option in gcc, enabled by default in O2 and O3, which does align loops
+ flag in GCC
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Optimize Options -- Using the GNU Compiler Collection (GCC), 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html"
+target "http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, enabled by default in O2 and O3, which does align loops to some extent
  by inserting 
 \family typewriter
 .palign
 \family default
- directives in the assembly.
- On optimization O3, the following assembly directives are inserted before
- the first loop instruction.
+ directives in the assembly
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+The GNU Assembler, 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://tigcc.ticalc.org/doc/gnuasm.html"
+target "http://tigcc.ticalc.org/doc/gnuasm.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ On optimization O3, the following directives are inserted before the first
+ loop instruction generated from 
+\family typewriter
+loop.c
+\family default
+, compiled with 
+\family typewriter
+cc -O3 -S loop.c
+\family default
+.
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
 inline false
@@ -7512,21 +7569,260 @@ status open
 \end_layout
 
 \begin_layout Standard
-The first directive tries to align to four bits, inserting at most 10 bytes
- for padding.
+The first directive tries to align to four address bits, inserting at most
+ 10 bytes for padding.
  If that does not work, the next directive forces loops to be aligned to
- three bytes -- meaning addresses ends in 0x0 or 0x8.
- Within a 32B instruction block, the first loop instruction can end up having
- one of the four suffixes 0x00, 0x08, 0x10 or 0x18.
- Using this knowledge, we can construct another example that overflows the
- 12 blocks for certain alignment.
+ three bits -- meaning addresses ending in 0x0 or 0x8.
+ Within a 32 byte instruction block, the first loop instruction can end
+ up being offset by 0x00, 0x08, 0x10 or 0x18.
+ The loop itself spans 379 instruction bytes when compiled in our example,
+ just shy of the 
+\begin_inset Formula $12\times32=384$
+\end_inset
+
+ bytes that can maximally fit in the LSD.
+ Out of the four possible alignments, only zero offset into a chunk will
+ work in our case.
+ 
+\end_layout
+
+\begin_layout Itemize
+Link order 
+\emph on
+main.c, loop.c, foo.c
+\emph default
+: The first loop instruction is aligned to 
+\family typewriter
+0x400590
+\family default
+, an offset of 0x10 into the 0x4005
+\series bold
+80
+\series default
+ chunk.
+ Covering 13 chunks, the Loop Stream Detector can not be utilized.
+ 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+7,636,791,251 cycles:u                                                 
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+       10,946 r01a8:u 
+\end_layout
+
+\begin_layout Plain Layout
+
+                              
+\end_layout
+
+\begin_layout Plain Layout
+
+  2.251854012 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Link order 
+\emph on
+main.c, foo.c, loop.c
+\emph default
+: The first loop instruction is aligned to 
+\family typewriter
+0x4005
+\series bold
+a0
+\family default
+\series default
+, right at the start of a chunk.
+ Cycle count is reduced by more than 50%.
+ 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+3,665,879,867 cycles:u  
+\end_layout
+
+\begin_layout Plain Layout
+
+8,246,353,284 r01a8:u 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  1.080532586 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Measurement bias from link order can be explained by hitting the chunk fetch
+ limit of the Loop Stream Detector.
+ Even when compiling with sensible optimization flags, GCC does not always
+ hit the optimal loop alignment, causing code to spill over additional chunks.
+ A possible solution could be to manually specify the loop alignment to
+ 32 byte with -falign-loops=32.
+\end_layout
+
+\begin_layout Subsubsection*
+Decoded ICache Limitations
+\end_layout
+
+\begin_layout Standard
+Any property of the Loop Stream Detector that depends on the code layout
+ in memory can potentially be triggered by different link orders.
+ This is not limited to the chunk fetch limit, but also includes properties
+ of the Decoded ICache.
+ One of the requirements states that all micro-ops must be present in the
+ ICache.
+ The manual describes several restrictions to what micro-ops can be stored
+ in this cache, imposing limitations to the position of branches and other
+ alignment properties 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
  
 \end_layout
 
 \begin_layout Standard
-Compiling these using two different link orders yields the same speedup
- of 2x for the one with fact.c linked before loop.c.
- 
+\begin_inset Float algorithm
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#include <stdio.h>
+\end_layout
+
+\begin_layout Plain Layout
+
+volatile static int color;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (int i = 0; i < 0x1000000; ++i) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (color == 0x000)
+\end_layout
+
+\begin_layout Plain Layout
+
+            color = 0xaaa;
+\end_layout
+
+\begin_layout Plain Layout
+
+        else if (color == 0xaaa)
+\end_layout
+
+\begin_layout Plain Layout
+
+            color = 0xfff;
+\end_layout
+
+\begin_layout Plain Layout
+
+        else if (color == 0xfff)
+\end_layout
+
+\begin_layout Plain Layout
+
+            color = 0x000;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:lsd-color"
+
+\end_inset
+
+Loop using LSD only for certain alignments when compiled with GCC and no
+ optimization, likely hitting limitations in ICache
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Loop Stream Detector 
 \end_layout
 
 \begin_layout Subsection
