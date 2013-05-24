@@ -4,6 +4,8 @@
 static int a;      // .bss
 static int b = 42; // .data
 
+int this_is_an_external_variabjhaskfjhsakdfjhaskdfjhskfhjaskdfjhskfjhaskdfjhaskdfjhaskfjhaskdfhjaskdjfhaskfhjaskdjfhaskfhjskajdfhaskjfhaskdfhjsakdjfhskdfjhle = 1;
+
 int main()
 {
     int c = 0; // .stack

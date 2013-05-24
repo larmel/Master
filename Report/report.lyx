@@ -1834,6 +1834,10 @@ To understand why some of the bias effects occur, it is necessary to understand
 \end_layout
 
 \begin_layout Subsection
+Object Files
+\end_layout
+
+\begin_layout Subsection
 Virtual Memory
 \end_layout
 
@@ -6754,19 +6758,22 @@ Hitting the Chunk Fetch Limit
 \begin_layout Standard
 Knowing the parameters, we can construct programs that are on the limit
  of what the Loop Stream Detector accepts.
- In Listing 
+ Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:lsd-chunks-c"
 
 \end_inset
 
-, we show a simple loop that generates code much like the micro kernel used
+ shows a simple loop that generates code much like the micro kernel used
  to test chunk fetch limit.
  Each of the if statements occupies exacly 32 byte in instruction memory
  when compiled with gcc and no optimization.
- Counting the instructions needed to compare and increment i as well, the
- loop code covers almost 12 chunks in the compiled binary.
+ Including the instructions needed to compare and increment variable 
+\family typewriter
+i
+\family default
+, the loop code covers almost 12 chunks in the compiled binary.
  
 \end_layout
 
@@ -6957,60 +6964,16 @@ status open
 
 \begin_layout Standard
 Inspecting the compiled binary, we see that the loop instructions span virtual
- addresses 
-\family typewriter
-0x4004d3
-\family default
- through 
-\family typewriter
-0x400648
-\family default
-.
- 32 byte chunks have addresses ending in 
-\family typewriter
-0x00
-\family default
-, 
-\family typewriter
-0x20
-\family default
-, 
-\family typewriter
-0x40
-\family default
-, 
-\family typewriter
-0x60
-\family default
-, 
-\family typewriter
-0x80
-\family default
-, 
-\family typewriter
-0xa0
-\family default
-, 
-\family typewriter
-0xc0
-\family default
- or 
-\family typewriter
-0xe0
-\family default
-, meaning the first instruction belongs to the 
-\family typewriter
-0x4004
+ addresses 0x4004d3 through 0x400648.
+ The first byte in a chunk have address ending in 0x00, 0x20, 0x40, 0x60,
+ 0x80, 0xa0, 0xc0 or 0xe0, meaning the first instruction belongs to the
+ 0x4004
 \series bold
 c0
-\family default
 \series default
- chunk, and the last is just within the 
-\family typewriter
-0x4006
+ chunk, and the last is just within the 0x4006
 \series bold
 40
-\family default
 \series default
  chunk.
  Dispite covering less than 
@@ -7062,15 +7025,7 @@ status open
 
 \begin_layout Standard
 Looking at the binary again, we find that the loop now only covers 12 chunks,
- spanning addresses 0x4005
-\series bold
-29
-\series default
- through 0x4006
-\series bold
-9e
-\series default
-.
+ spanning addresses 0x400529 through 0x40069e.
  The difference between the two configurations is illustrated in Figure
  
 \begin_inset CommandInset ref
@@ -7136,16 +7091,19 @@ Link order of object files was discussed in the background as one of the
  potential sources of bias.
  Different link orders basically determines the relative position of code
  and static data within the final compiled binary file.
- The Loop Stream Detector is sensitive to alignment and virtual addresses
- of code, which can explain bias effects triggered by link order in some
- cases.
+ The Loop Stream Detector is sensitive to alignment and address layout of
+ code, which can explain bias effects triggered by link order in some cases.
  
+\end_layout
+
+\begin_layout Subsubsection
+Chunk fetches
 \end_layout
 
 \begin_layout Standard
 With a few modifications to our previous example, we can create a program
  that utilizes the LSD only for certain link orders.
- Our example is shown in Figure 
+ Our program is shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:lsd-link-O3"
@@ -7458,8 +7416,8 @@ name "alg:lsd-link-O3"
 
 \end_inset
 
-Program with measurement bias from link order, when compiling with GCC and
- optimization level O3
+Program with measurement bias from link order, favoring (main, foo, loop)
+ over (main, loop, foo) when compiled with GCC and optimization level O3
 \end_layout
 
 \end_inset
@@ -7470,10 +7428,6 @@ Program with measurement bias from link order, when compiling with GCC and
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsubsection*
-Optimization
 \end_layout
 
 \begin_layout Standard
@@ -7514,12 +7468,9 @@ target "http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html"
 
 \end_inset
 
-, enabled by default in O2 and O3, which does align loops to some extent
- by inserting 
-\family typewriter
-.palign
-\family default
- directives in the assembly
+, enabled by default in O2 and O3, which allows the assembler align loops
+ by inserting necessary padding .
+ On optimization O3, the following assembly directives
 \begin_inset Foot
 status open
 
@@ -7537,13 +7488,7 @@ target "http://tigcc.ticalc.org/doc/gnuasm.html"
 
 \end_inset
 
-.
- On optimization O3, the following directives are inserted before the first
- loop instruction generated from 
-\family typewriter
-loop.c
-\family default
-, compiled with 
+ are inserted before the first loop instruction, compiled with 
 \family typewriter
 cc -O3 -S loop.c
 \family default
@@ -7646,7 +7591,7 @@ a0
 \family default
 \series default
 , right at the start of a chunk.
- Cycle count is reduced by more than 50%.
+ Cycle count is reduced by more than 50% from utilizing the LSD.
  
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
@@ -7682,22 +7627,31 @@ Measurement bias from link order can be explained by hitting the chunk fetch
  limit of the Loop Stream Detector.
  Even when compiling with sensible optimization flags, GCC does not always
  hit the optimal loop alignment, causing code to spill over additional chunks.
- A possible solution could be to manually specify the loop alignment to
- 32 byte with -falign-loops=32.
+ A possible solution in this scenario could be to manually specify the loop
+ alignment to 32 byte, with -falign-loops=32.
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsubsection
 Decoded ICache Limitations
 \end_layout
 
 \begin_layout Standard
 Any property of the Loop Stream Detector that depends on the code layout
- in memory, can potentially be triggered by different link orders.
+ in memory can potentially be triggered by different link orders.
  This is not limited to the number of chunk fetches, but also includes propertie
 s of the Decoded ICache.
- One of the requirements states that all micro-ops must be present in the
- ICache, which stores instructions that have already been decoded for quick
- lookup later.
+ One of the LSD requirements states that all micro-ops must be present in
+ the Decoded ICache.
+ The manual describes several restrictions to what micro-ops can be stored
+ in this cache, imposing limitations to the number of branches per block,
+ and other alignment properties 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
  
 \end_layout
 
@@ -7804,7 +7758,7 @@ name "alg:lsd-color"
 \end_inset
 
 Loop using LSD only for certain alignments when compiled with GCC and no
- optimization, likely hitting limitations in ICache
+ optimization, likely hitting limitations in Decoded ICache
 \end_layout
 
 \end_inset
@@ -7818,20 +7772,22 @@ Loop using LSD only for certain alignments when compiled with GCC and no
 \end_layout
 
 \begin_layout Standard
-Listing 
+Consider the small C program from Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:lsd-color"
 
 \end_inset
 
- shows another, perhaps more realistic example.
+.
  Compiling with 
 \family typewriter
 cc -std=c99
 \family default
- and counting LSD.UOPS, we see that the Loop Stream Detector is not in use.
- However, by removing the printf statement we move the loop alignment from
+ and no optimization, the binary code generated by this function clearly
+ spans far less than 12 chunks.
+ Counting LSD.UOPS, we see that the Loop Stream Detector is not in use.
+ However, by removing the printf statement the loop alignment is moved from
  0x400517 to 0x4004c1, and the LSD is suddently working.
  We did not investigate the actual cause of this any further, but speculate
  that specific alignments prevents all micro-ops to reside in ICache simultaneou
@@ -7840,70 +7796,43 @@ sly.
 \end_layout
 
 \begin_layout Standard
-The manual describes several restrictions to what micro-ops can be stored
- in this cache, imposing limitations to the position of branches and other
- alignment properties 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-.
+On a final note, it is not too difficult to come up with smaller programs
+ like this that hits some limitation of the LSD for certain alignments.
+ It appears that this particular hardware feature is a very likely cause
+ of bias from link order.
  
 \end_layout
 
 \begin_layout Subsection
-Bias effects from trivial source code changes
+Bias from Trivial Code Changes
 \end_layout
 
 \begin_layout Standard
-If we consider link order to be a possible source of bias, then what about
- other seemingly trivial changes to the program source itself? Keeping in
- mind that alignment and memory address of instructions can have huge impacts
- on performance -- in what ways can this be altered?
-\end_layout
+The Loop Stream Detector can in some cases provide significant speedup.
+ On the flip side, subtle changes to code layout sometimes prevents this
+ optimization to be utilized.
+ As we have seen, simply adding a printf statement or changing the link
+ order, can result in wildly different performance characteristics.
+ Programmers rarely care, or even know, about intricate details such as
+ the addresses and alignment of code.
+ We expect, and probably rightfully so, that sensible compilers and linkers
+ will organize code somewhat optimally.
+ In cases where this is not true, weird effects that might be categorized
+ as 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-Useful commands for analysing binary files: 
-\end_layout
+bias
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Standard
-ldd a.out : Print shared library dependencies
-\end_layout
-
-\begin_layout Standard
-nm (-u) a.out : List symbols
-\end_layout
-
-\begin_layout Standard
-readelf -a a.out : List ELF info
-\end_layout
-
-\begin_layout Standard
-objdump -D a.out : Disassemble
-\end_layout
-
-\begin_layout Standard
-strip a.out : Removes .symtab and .strtab.
- See thread for more info: http://stackoverflow.com/questions/9401217/is-the-elf-
-notes-section-really-needed
-\end_layout
-
-\begin_layout Standard
-elfedit: GNU utility to edit some fields.
- Very limited properties, doesn't look like arbitrary big strings can be
- inserted.
-\end_layout
-
-\begin_layout Standard
-ht: Downloaded and built from source.
- Too complex :p
-\end_layout
-
-\begin_layout Standard
-patchelf: Works for changing dynamic linker.
- Nice explanation on homepage.
+ occurs.
+ For developers, it is useful to be aware of the fact that 
+\emph on
+any
+\emph default
+ change to instruction addresses can potentially have a huge impact on performan
+ce.
  
 \end_layout
 
@@ -7912,8 +7841,11 @@ The order of functions within a source file
 \end_layout
 
 \begin_layout Standard
-Given a program with functions foo and bar, listing foo before bar and vice
- versa generates two 
+As with link order, the order of functions within a source file usually
+ determines their relative position in the text segment of the compiled
+ binary.
+ Given a program with functions foo and bar, listing foo before bar and
+ vice versa generates two 
 \begin_inset Quotes eld
 \end_inset
 
@@ -7921,17 +7853,17 @@ different
 \begin_inset Quotes erd
 \end_inset
 
- programs given that equality is based on absolute memory layout.
- Gcc prints functions to the text segment in the order they appear in the
+ programs with respect to memory layout.
+ GCC prints functions to the text segment in the order they appear in the
  source code.
 \end_layout
 
-\begin_layout Paragraph*
-Long function names
+\begin_layout Subsubsection*
+Length of external symbols
 \end_layout
 
 \begin_layout Standard
-Function names are placed in the .strtab section in the ELF file.
+unction names are placed in the .strtab section in the ELF file.
  When running readelf or objdump, the names are used to print nice output.
  However, function names of external symbols resolved at run-time does affect
  code layout.
@@ -7940,47 +7872,7 @@ Function names are placed in the .strtab section in the ELF file.
  before text.
  This includes dynsym, dynstr, gnu.version and rela sections in an executable
  made with GCC.
-\end_layout
-
-\begin_layout Paragraph
-Using strip
-\end_layout
-
-\begin_layout Standard
-Various sections of the ELF binary is not necessarily needed for normal
- execution.
- Quite a lot of extra information is included to aid in debugging etc.
- The strip command gets rid of symbol table and stringtable.
- These sections are non-allocable, so itdoes not affect code layout.
- Printing with objdump for example will not be as nice.
- Text segment is not marked with functions (internally resolved symbols).
- 
-\end_layout
-
-\begin_layout Standard
-It is possible to specify specific segments to remove using the -R parameter.
- Removing the .note sections for example, will probably not prevent the program
- from running correctly.
- Even though they are located (and allocated) before the .text segment, stripping
- them out will not offset code.
- This makes sense, as any reordering would require offseting every jump
- address accordingly.
-\end_layout
-
-\begin_layout Subsubsection*
-Changing Interpreter
-\end_layout
-
-\begin_layout Standard
-In principle, anything that can change the memory layout of the code or
- data in a program can cause bias.
- Looking at the ELF file generated with cc, we find several segments that
- preceeds .text, where code is.
- By altering the size of any of thezse increasing the size of 
-\end_layout
-
-\begin_layout Standard
-Details for each of the ELF sections on GNU platform can be found in the
+ Details for each of the ELF sections on GNU platform can be found in the
  man pages 
 \begin_inset Foot
 status open
@@ -8001,13 +7893,25 @@ target "http://linux.die.net/man/5/elf"
 .
 \end_layout
 
-\begin_layout Standard
-TODO: Create example with injecting loader triggers lsd.
+\begin_layout Subsubsection*
+Changing interpreter
 \end_layout
 
-\begin_layout Description
-.interp ELF interpreter/linker to be loaded.
- Default on our system is 
+\begin_layout Standard
+When executing an ELF binary, the first thing that happens is to load and
+ run an interpreter.
+ The interpreter is responsible for unpacking the object file and map all
+ the allocable sections to virtual memory.
+ The path to the interpreter itself is located in the 
+\begin_inset Quotes eld
+\end_inset
+
+interp
+\begin_inset Quotes erd
+\end_inset
+
+ section, which is allocable and loaded first.
+ On our system, this defaults to 
 \begin_inset Quotes eld
 \end_inset
 
@@ -8015,315 +7919,22 @@ TODO: Create example with injecting loader triggers lsd.
 \begin_inset Quotes erd
 \end_inset
 
-.
- This can indeed vary, and there are tools for changing interpreter in compiled
- binaries (patchelf).
- It can be changed with a compile flag to the GCC linker with -Wl,-dynamic-linke
-r,/home/lars/very/long/path/to/another/loader.symlink.so.2.
- This does indeed move everything, a plausible way to change code layout.
-\end_layout
-
-\begin_layout Description
-.note.ABI-tag Formatted as comment section from ELF standard.
- Specifies OS (0 for Linux), and earliest compatible Linux kernel 
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
-target "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-.
- Example from ELF output.
-\begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-Notes at offset 0x00000254 with length 0x00000020:
-\end_layout
-
-\begin_layout Plain Layout
-
-  Owner                 Data size	Description
-\end_layout
-
-\begin_layout Plain Layout
-
-  GNU                  0x00000010	NT_GNU_ABI_TAG (ABI version tag)
-\end_layout
-
-\begin_layout Plain Layout
-
-    OS: Linux, ABI: 2.6.24
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Description
-.note.gnu.build-id Bitstring with some kind of hash to identify the build.
-\begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-Notes at offset 0x00000274 with length 0x00000024:
-\end_layout
-
-\begin_layout Plain Layout
-
-  Owner                 Data size	Description
-\end_layout
-
-\begin_layout Plain Layout
-
-  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
-\end_layout
-
-\begin_layout Plain Layout
-
-    Build ID: a449e580b52059227cbefd8d4454a9c6f16b9cde
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Description
-.gnu.hash Some hash value.
- 28 bytes on our machine.
- An 
+, which should be common on 64 bit Linux systems.
+ Other loaders can be specified, either at compile time or by patching the
+ object file [footnote, patchelf].
+ Because the string is allocated to virtual memory before the text segment,
+ the size (in characters) can offset code addresses.
+ Consider experimenting with a custom loader, for example linking with 
 \begin_inset Quotes eld
 \end_inset
 
-old
-\begin_inset Quotes erd
-\end_inset
-
- hash method can be used by providing linker options, but that might break
- libc compatibility.
-\end_layout
-
-\begin_layout Description
-.dynsym As explained very well here 
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
-target "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-, there are two symbol tables in ELF files; 
-\begin_inset Quotes eld
-\end_inset
-
-.dynsym
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-.symtab
+-Wl,-dynamic-linker,/home/me/very/long/path/to/another/loader.symlink.so.2
 \begin_inset Quotes erd
 \end_inset
 
 .
- Only dynsym is allocable (marked with 'A' in readelf) -- meaning it will
- occupy virtual address space in the running process.
- This is needed for global external symbols, references that needs to be
- resolved at runtime.
- References to library functions such as 
-\begin_inset Quotes eld
-\end_inset
-
-printf
-\begin_inset Quotes erd
-\end_inset
-
- appears in dynsym, and is resolved at runtime after libc (or whatever standard
- library) is loaded.
- The symtab section is not allocable, and contains all symbols (including
- those in dynsym).
+ Doing this can actually offset text segment of ELF binaries.
  
-\end_layout
-
-\begin_layout Description
-.dynstr The string table associated with dynamically linked symbols.
- Probably indexed into by dynsym.
- 
-\end_layout
-
-\begin_layout Description
-.gnu.version A table of version numbers.
- Increasing with more external references to library functions.
-\end_layout
-
-\begin_layout Description
-.gnu.version_r More version table stuff.
-\end_layout
-
-\begin_layout Description
-.rela.dyn Relocation stuff, for 
-\begin_inset Quotes eld
-\end_inset
-
-'dyn
-\begin_inset Quotes erd
-\end_inset
-
- section? These also change with more external references.
-\end_layout
-
-\begin_layout Description
-.rela.plt Relocation stuff for plt section.
-\end_layout
-
-\begin_layout Description
-.init Executable instructions that are done before main is called.
-\end_layout
-
-\begin_layout Description
-.plt Procedure Linkage Table.
- Also changes with more external references.
- Manual says attributes are processor specific.
-\end_layout
-
-\begin_layout Description
-.text Executable code.
- This is the interesting part -- if changes to any other section offsets
- this, we might experience bias effects.
-\end_layout
-
-\begin_layout Description
-.fini
-\end_layout
-
-\begin_layout Description
-.rodata Read-only data ?
-\end_layout
-
-\begin_layout Description
-.eh_frame_hdr
-\end_layout
-
-\begin_layout Description
-.eh_frame
-\end_layout
-
-\begin_layout Description
-.ctors
-\end_layout
-
-\begin_layout Description
-.dtors
-\end_layout
-
-\begin_layout Description
-.jcr
-\end_layout
-
-\begin_layout Description
-.dynamic
-\end_layout
-
-\begin_layout Description
-.got
-\end_layout
-
-\begin_layout Description
-.got.plt ?
-\end_layout
-
-\begin_layout Description
-.data 
-\end_layout
-
-\begin_layout Description
-.bss Uninitialized data.
- Will be initialized to zero once program is loaded.
- Occupies no space in ELF file.
-\end_layout
-
-\begin_layout Description
-.comment 
-\begin_inset Quotes eld
-\end_inset
-
-Version control information
-\begin_inset Quotes erd
-\end_inset
-
- from the documentation.
- Contains the compiler version used: 
-\begin_inset Quotes eld
-\end_inset
-
-GCC: (Ubuntu Linaro 4.6.3-1ubuntu5) 4.6.3
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
-\begin_layout Description
-.shstrtab Section names, such as 
-\begin_inset Quotes eld
-\end_inset
-
-.text
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-.dtors
-\begin_inset Quotes erd
-\end_inset
-
- etc.
- Each section listed in the ELF file contains an index to its name in this
- section.
-\end_layout
-
-\begin_layout Description
-.symtab Symbol table.
- Nice printout in readelf.
- Entries point to .strtab and .dynstr for names.
-\end_layout
-
-\begin_layout Description
-.strtab Symbol names used in the source file.
- Function names are placed here.
 \end_layout
 
 \begin_layout Chapter

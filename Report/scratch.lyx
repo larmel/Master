@@ -2133,5 +2133,405 @@ Experiments were repeated with hyperthreading turned on -- and we got the
  It seems like HT does not affect the chunk fetch limit of the LSD.
 \end_layout
 
+\begin_layout Section
+Bias from trivial source code changes
+\end_layout
+
+\begin_layout Standard
+If we consider link order to be a possible source of bias, then what about
+ other seemingly trivial changes to the program source itself? Keeping in
+ mind that alignment and memory address of instructions can have huge impacts
+ on performance -- in what ways can this be altered?
+\end_layout
+
+\begin_layout Standard
+Useful commands for analysing binary files: 
+\end_layout
+
+\begin_layout Standard
+ldd a.out : Print shared library dependencies
+\end_layout
+
+\begin_layout Standard
+nm (-u) a.out : List symbols
+\end_layout
+
+\begin_layout Standard
+readelf -a a.out : List ELF info
+\end_layout
+
+\begin_layout Standard
+objdump -D a.out : Disassemble
+\end_layout
+
+\begin_layout Standard
+strip a.out : Removes .symtab and .strtab.
+ See thread for more info: http://stackoverflow.com/questions/9401217/is-the-elf-
+notes-section-really-needed
+\end_layout
+
+\begin_layout Standard
+elfedit: GNU utility to edit some fields.
+ Very limited properties, doesn't look like arbitrary big strings can be
+ inserted.
+\end_layout
+
+\begin_layout Standard
+ht: Downloaded and built from source.
+ Too complex :p
+\end_layout
+
+\begin_layout Standard
+patchelf: Works for changing dynamic linker.
+ Nice explanation on homepage.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Using strip
+\end_layout
+
+\begin_layout Standard
+Various sections of the ELF binary is not necessarily needed for normal
+ execution.
+ Quite a lot of extra information is included to aid in debugging etc.
+ The strip command gets rid of symbol table and stringtable.
+ These sections are non-allocable, so itdoes not affect code layout.
+ Printing with objdump for example will not be as nice.
+ Text segment is not marked with functions (internally resolved symbols).
+ 
+\end_layout
+
+\begin_layout Standard
+It is possible to specify specific segments to remove using the -R parameter.
+ Removing the .note sections for example, will probably not prevent the program
+ from running correctly.
+ Even though they are located (and allocated) before the .text segment, stripping
+ them out will not offset code.
+ This makes sense, as any reordering would require offseting every jump
+ address accordingly.
+\end_layout
+
+\begin_layout Description
+.interp ELF interpreter/linker to be loaded.
+ Default on our system is 
+\begin_inset Quotes eld
+\end_inset
+
+/lib64/ld-linux-x86-64.so.2
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This can indeed vary, and there are tools for changing interpreter in compiled
+ binaries (patchelf).
+ It can be changed with a compile flag to the GCC linker with -Wl,-dynamic-linke
+r,/home/lars/very/long/path/to/another/loader.symlink.so.2.
+ This does indeed move everything, a plausible way to change code layout.
+\end_layout
+
+\begin_layout Description
+.note.ABI-tag Formatted as comment section from ELF standard.
+ Specifies OS (0 for Linux), and earliest compatible Linux kernel 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
+target "http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ Example from ELF output.
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Notes at offset 0x00000254 with length 0x00000020:
+\end_layout
+
+\begin_layout Plain Layout
+
+  Owner                 Data size	Description
+\end_layout
+
+\begin_layout Plain Layout
+
+  GNU                  0x00000010	NT_GNU_ABI_TAG (ABI version tag)
+\end_layout
+
+\begin_layout Plain Layout
+
+    OS: Linux, ABI: 2.6.24
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+.note.gnu.build-id Bitstring with some kind of hash to identify the build.
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Notes at offset 0x00000274 with length 0x00000024:
+\end_layout
+
+\begin_layout Plain Layout
+
+  Owner                 Data size	Description
+\end_layout
+
+\begin_layout Plain Layout
+
+  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Build ID: a449e580b52059227cbefd8d4454a9c6f16b9cde
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+.gnu.hash Some hash value.
+ 28 bytes on our machine.
+ An 
+\begin_inset Quotes eld
+\end_inset
+
+old
+\begin_inset Quotes erd
+\end_inset
+
+ hash method can be used by providing linker options, but that might break
+ libc compatibility.
+\end_layout
+
+\begin_layout Description
+.dynsym As explained very well here 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
+target "https://blogs.oracle.com/ali/entry/inside_elf_symbol_tables"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, there are two symbol tables in ELF files; 
+\begin_inset Quotes eld
+\end_inset
+
+.dynsym
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+.symtab
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Only dynsym is allocable (marked with 'A' in readelf) -- meaning it will
+ occupy virtual address space in the running process.
+ This is needed for global external symbols, references that needs to be
+ resolved at runtime.
+ References to library functions such as 
+\begin_inset Quotes eld
+\end_inset
+
+printf
+\begin_inset Quotes erd
+\end_inset
+
+ appears in dynsym, and is resolved at runtime after libc (or whatever standard
+ library) is loaded.
+ The symtab section is not allocable, and contains all symbols (including
+ those in dynsym).
+ 
+\end_layout
+
+\begin_layout Description
+.dynstr The string table associated with dynamically linked symbols.
+ Probably indexed into by dynsym.
+ 
+\end_layout
+
+\begin_layout Description
+.gnu.version A table of version numbers.
+ Increasing with more external references to library functions.
+\end_layout
+
+\begin_layout Description
+.gnu.version_r More version table stuff.
+\end_layout
+
+\begin_layout Description
+.rela.dyn Relocation stuff, for 
+\begin_inset Quotes eld
+\end_inset
+
+'dyn
+\begin_inset Quotes erd
+\end_inset
+
+ section? These also change with more external references.
+\end_layout
+
+\begin_layout Description
+.rela.plt Relocation stuff for plt section.
+\end_layout
+
+\begin_layout Description
+.init Executable instructions that are done before main is called.
+\end_layout
+
+\begin_layout Description
+.plt Procedure Linkage Table.
+ Also changes with more external references.
+ Manual says attributes are processor specific.
+\end_layout
+
+\begin_layout Description
+.text Executable code.
+ This is the interesting part -- if changes to any other section offsets
+ this, we might experience bias effects.
+\end_layout
+
+\begin_layout Description
+.fini
+\end_layout
+
+\begin_layout Description
+.rodata Read-only data ?
+\end_layout
+
+\begin_layout Description
+.eh_frame_hdr
+\end_layout
+
+\begin_layout Description
+.eh_frame
+\end_layout
+
+\begin_layout Description
+.ctors
+\end_layout
+
+\begin_layout Description
+.dtors
+\end_layout
+
+\begin_layout Description
+.jcr
+\end_layout
+
+\begin_layout Description
+.dynamic
+\end_layout
+
+\begin_layout Description
+.got
+\end_layout
+
+\begin_layout Description
+.got.plt ?
+\end_layout
+
+\begin_layout Description
+.data 
+\end_layout
+
+\begin_layout Description
+.bss Uninitialized data.
+ Will be initialized to zero once program is loaded.
+ Occupies no space in ELF file.
+\end_layout
+
+\begin_layout Description
+.comment 
+\begin_inset Quotes eld
+\end_inset
+
+Version control information
+\begin_inset Quotes erd
+\end_inset
+
+ from the documentation.
+ Contains the compiler version used: 
+\begin_inset Quotes eld
+\end_inset
+
+GCC: (Ubuntu Linaro 4.6.3-1ubuntu5) 4.6.3
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+.shstrtab Section names, such as 
+\begin_inset Quotes eld
+\end_inset
+
+.text
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+.dtors
+\begin_inset Quotes erd
+\end_inset
+
+ etc.
+ Each section listed in the ELF file contains an index to its name in this
+ section.
+\end_layout
+
+\begin_layout Description
+.symtab Symbol table.
+ Nice printout in readelf.
+ Entries point to .strtab and .dynstr for names.
+\end_layout
+
+\begin_layout Description
+.strtab Symbol names used in the source file.
+ Function names are placed here.
+\end_layout
+
 \end_body
 \end_document
