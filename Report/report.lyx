@@ -503,12 +503,20 @@ name "chap:Background"
 
 In this chapter, we begin by presenting some of the previous work done on
  measurement bias in performance analysis.
- An introduction to virtual memory, linking and loading on x86_64 Linux
+ An introduction to virtual memory, linking and loading on 64 bit Linux
  architectures is provided as background material -- explaining what we
  mean by the program environment.
- A brief overview of the Intel Core i7 architecture is included, introducing
- performance counters, and highlighting some of the features and hardware
- optimizations that can cause performance cliffs.
+ A brief overview of the Intel Core 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ architecture is included, introducing performance counters, and highlighting
+ some of the features and hardware optimizations that can cause performance
+ cliffs.
  
 \end_layout
 
@@ -837,7 +845,7 @@ Extensible Micro-Architectural Optimizer
 
 .
  This is an assembly-to-assembly translator, containing architecture-specific
- rules to optimize machine code emitted by the compiler for x86 and x86_64
+ rules to optimize machine code emitted by the compiler for x86 and x86-64
  architectures.
  Many rules attempt to fix 
 \begin_inset Quotes eld
@@ -947,8 +955,15 @@ Hardware and Performance Monitoring
 \end_layout
 
 \begin_layout Standard
-Bias effects often depend on specific hardware features, and 'performance
- cliffs' caused by them.
+Bias effects often depend on specific hardware features, and 
+\begin_inset Quotes eld
+\end_inset
+
+performance cliffs
+\begin_inset Quotes erd
+\end_inset
+
+ caused by them.
  A rudimentary understanding of the underlying hardware is necessary to
  be able to understand why performance varies during different execution
  contexts.
@@ -978,11 +993,18 @@ To gain accurate measurements and diagnostics, we will use hardware performance
 \end_layout
 
 \begin_layout Subsection
+\begin_inset Quotes eld
+\end_inset
+
 Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ Microarchitecture
 \end_layout
 
 \begin_layout Standard
-The 
+The name 
 \begin_inset Quotes eld
 \end_inset
 
@@ -990,15 +1012,34 @@ Ivy Bridge
 \begin_inset Quotes erd
 \end_inset
 
- is the 
+ is a code name for what is also referred to as the 
 \begin_inset Quotes eld
 \end_inset
 
-third generation
+3rd Generation Intel Core Microarchitecture
 \begin_inset Quotes erd
 \end_inset
 
- Intel Core microarchitecture, succeeding 
+, or alternatively 
+\begin_inset Quotes eld
+\end_inset
+
+Intel Core Microarchitecture Code Name Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+.
+ These are the terms that are used in the manuals, but we will refer to
+ architectures mostly by code name throughout the rest of the thesis.
+ Preceeding Ivy Bridge is 
+\begin_inset Quotes eld
+\end_inset
+
+2nd Generation Intel Core Microarchitecture
+\begin_inset Quotes erd
+\end_inset
+
+ with code name 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1006,17 +1047,15 @@ Sandy Bridge
 \begin_inset Quotes erd
 \end_inset
 
-, and eventually followed by 
-\begin_inset Quotes eld
-\end_inset
-
-Haswell
-\begin_inset Quotes erd
-\end_inset
-
 .
  Many of the architectural features found in Ivy Bridge can also be found
  in Sandy Bridge and earlier Core architectures.
+ 
+\end_layout
+
+\begin_layout Standard
+For our purposes, a general overview and idea of what happens during program
+ execution is sufficient.
  Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1024,10 +1063,18 @@ reference "fig:pipeline"
 
 \end_inset
 
- shows a high level overview of the processor pipeline.
- For our purposes, a general idea of what happens during program execution
- is sufficient.
- Some of the more interesting features is summarized below.
+ shows a high level view of the processor pipeline, consisting of a front
+ end, out of order engine, and execution core component, in addition to
+ memory subsystem.
+ We will give a brief overview of each component, while a comprehensive
+ reference can be found in the vendor manuals 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume1,Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -1056,10 +1103,10 @@ name "fig:pipeline"
 
 \end_inset
 
-Sandy/Ivy Bridge pipeline, adapted from 
+Ivy Bridge pipeline, adapted from 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Intel:2013:Volume1"
+key "Intel:2012:OptimizationManual"
 
 \end_inset
 
@@ -1081,9 +1128,65 @@ Front End
 \end_layout
 
 \begin_layout Standard
-Next instruction is first searched for in Decoded ICache, which holds up
- to 1536 already decoded instructions (micro-operations).
- If not found there, go through the decode stack.
+The front end is responsible for fetching and decoding instructions, feeding
+ the execution pipeline with a constant stream of micro-operations.
+ The branch predictor is used to fetch instructions speculatively, along
+ the most likely path of execution.
+ 
+\end_layout
+
+\begin_layout Standard
+There is an important distinction between IA-32 or Intel 64
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Intel uses IA-32 and Intel 64 for what is also commonly known as x86 and
+ x86-64 instruction set architectures.
+ We will use these terms interchangeably.
+\end_layout
+
+\end_inset
+
+ instructions and a micro-operations (
+\begin_inset Quotes eld
+\end_inset
+
+micro-ops
+\begin_inset Quotes erd
+\end_inset
+
+): Assembly instructions emitted by a compiler are decoded into micro-operations
+ used internally in the processor.
+ There are many reasons for this, some of it being the incredible complexity
+ of the instruction set.
+ Decoding assembly instructions is a costly operation in hardware, and a
+ lot of logic in the front end is dedicated to avoid this stage as much
+ as possible.
+ The Decoded ICache is a cache holding recently executed micro-operations,
+ containing up to 1526 entries.
+ When the next block of code to execute is determined by the branch predictor,
+ the micro-op cache is searched first.
+ Intel claims that typical hit rates exceed 80 %, and approaching 100 %
+ for hot spots 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ If not found in the micro-op cache, the 
+\begin_inset Quotes eld
+\end_inset
+
+legacy
+\begin_inset Quotes erd
+\end_inset
+
+ fetch-decode pipeline is used.
+ New blocks of instruction memory goes through several decode stages, before
+ finally being ready to execute as micro-ops.
  To fill 
 \begin_inset Quotes eld
 \end_inset
@@ -1092,8 +1195,8 @@ holes
 \begin_inset Quotes erd
 \end_inset
 
- in the instruction stream, a micro-op queue sits between the front end
- and the rest of the pipeline.
+ in the instruction stream, a queue of micro-ops sits between the front
+ end and the rest of the pipeline.
  
 \end_layout
 
@@ -1102,8 +1205,24 @@ Macro-Fusion
 \end_layout
 
 \begin_layout Standard
-Common instruction pairs can be fused together into a single micro-op, increasin
-g the instructions perf cycle (IPC).
+To increase the number of instructions that can be executed each cycle,
+ pairs of instructions can sometimes be fused by the front-end into one
+ equivalent, more complex, operation.
+ With macro-fusion, certain pairs of assembly instructions can be combined
+ to a single micro-operation.
+ This is restricted to pairs where the first instruction modifies condition
+ flags (such as 
+\family typewriter
+test
+\family default
+ or 
+\family typewriter
+cmp
+\family default
+), and the other is a conditional jump.
+ Pairs like these appear often in practice, increasing the instructions-per-cycl
+e of common code.
+ 
 \end_layout
 
 \begin_layout Paragraph
@@ -1111,12 +1230,16 @@ Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
-The Loop Stream Detector (LSD) is, with some restrictions, able to detect
- software loops in the micro-op stream.
- To save fetch and decode-logic, the LSD locks micro-ops in the queue, thereby
- saving fetch and decode logic prior in the pipeline.
- This saves power, but can also give a performance gain in cases where the
- front end is the bottleneck.
+The Loop Stream Detector is, with some restrictions, able to detect software
+ loops in the micro-op stream.
+ It analyzes micro-ops delivered to the queue, and identifies chains of
+ repeatedly executed operations.
+ When a loop is detected, the LSD locks the micro-ops in the queue, disabling
+ any further ICache lookup as well as the whole decode pipeline.
+ Micro-ops are streamed directly from the queue, until a branch mispredict
+ causes normal operation to resume.
+ This optimization can save power by disabling logic, but also give a performanc
+e gain in cases where the front end is a bottleneck.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1127,8 +1250,10 @@ Out-of-Order Engine and Execution Core
 One of the key features of modern processors is instruction level parallelism.
  A great amount of logic is dedicated to be able to issue multiple instructions
  per cycle, increasing the throughput.
- The Ivy Bridge has six execution ports, giving a theoretical maximum of
- six micro-operations executed per cycle.
+ The out-of-order engine analyzes dependencies between micro-operations,
+ issuing them to the execution core accordingly.
+ There are six execution ports, giving a maximum of six micro-operations
+ issued by the scheduler each cycle.
  
 \end_layout
 
