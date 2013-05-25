@@ -2547,22 +2547,15 @@ Sources of Measurement Bias
 
 \begin_layout Standard
 Modern microprocessors are extremely complex in design and functionality.
- Some of the features on our Ivy Bridge includes; several layers of cache
- to camouflage slow memory, multiple prefetchers -- able to detect strided
- access patters[ref], 
-\emph on
-macro fusion[ref]
-\emph default
- -- combining simple instructions to one, speculative out-of-order execution,
- complicated branch prediction, just to name a few.
+ Some features of recent Intel processors includes several layers of cache
+ to camouflage slow memory, multiple prefetchers, speculative out-of-order
+ execution and complicated branch prediction, just to name a few.
  Optimizing for the common case, these hardware features sometimes behaves
- badly.
- Dispite reasonably good documentation, only Intel knows all the details
- of the inner workings of the processor, leaving us with sort of a black
- box testing.
- In this chapter we will unveil characteristics about two architectural
- features in the Core i7; speculative out-of-order memory operations, and
- the Loop Stream Detector.
+ suboptimally, resulting in bias observed by performance analysts.
+ In this chapter, we will unveil characteristics about two specific architectura
+l features in Ivy Bridge, and show how they can bias performance towards
+ certain memory layouts.
+ 
 \end_layout
 
 \begin_layout Section
@@ -2570,16 +2563,17 @@ Methodology and Experimental Setup
 \end_layout
 
 \begin_layout Standard
-Before going ahead with all the details, it is important to describe the
- methodology used to aquire accurate measurements.
+Measurement bias is by definition a product of variations in the environment.
+ To produce reliable results, we need to properly control every variable
+ that can affect mearurements.
  We make the following configuration to our experimental setup:
 \end_layout
 
 \begin_layout Itemize
 Unless specified otherwise, address space layout randomization (ASLR) is
  kept disabled.
- This is necessary when testing effects from memory context, and often required
- to make results reproducible.
+ This is necessary when testing effects from changing memory context, and
+ often required to make results reproducible.
 \end_layout
 
 \begin_layout Itemize
@@ -2593,6 +2587,7 @@ Hyper threading is disabled, ensuring that only one thread runs simultaneously
 \begin_layout Itemize
 System load is kept at a minimum to avoid interference with other processes
  and tasks.
+ 
 \end_layout
 
 \begin_layout Itemize
@@ -2721,8 +2716,8 @@ We use
 \family typewriter
 perf stat
 \family default
- to aquire performance counter statistics, which should introduce minimal
- overhead and observer effect.
+ to aquire hardware performance counter statistics, which should introduce
+ minimal overhead and observer effect.
  Plots are generated using Python's matplotlib 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -2738,7 +2733,7 @@ Address Alias Effects (4K Aliasing)
 \end_layout
 
 \begin_layout Standard
-Placement of code and data in memory affect the performance of programs
+Placement of code and data in virtual memory affect the performance of programs
  in various ways.
  In this section, we will look at a phenomenon related to the addresses
  of read and write operations.
@@ -2752,9 +2747,8 @@ Placement of code and data in memory affect the performance of programs
 
  occurs when the addresses of a store followed by a load differ by a multiple
  of 4 KiB.
- Consider the following example, where a value is written to the address
- stored in %rax, and immediately after reading from the address stored in
- %rbx
+ Consider the following example, first writing a value to the memory address
+ stored in %rax, before reading from the address stored in %rbx
 \end_layout
 
 \begin_layout Standard
@@ -2779,16 +2773,9 @@ mov (%rbx), %r11
 \end_layout
 
 \begin_layout Standard
-If for example 
-\family typewriter
-%rax
-\family default
- is 0x601010 and 
-\family typewriter
-%rbx
-\family default
- is 0x604010, the memory accesses are said to be aliased.
- The difference between the two memory addresses is 0x3000, which is a multiple
+If for example %rax is 0x601010 and %rbx is 0x604010, the memory accesses
+ are said to be aliased.
+ The difference between the two addresses is 0x3000, which is a multiple
  of 4096, or 0x1000 in hexadecimal.
  
 \end_layout
@@ -2902,10 +2889,6 @@ Counts the number of loads that have partial address match with preceding
 
 \end_layout
 
-\begin_layout Subsubsection*
-Cost of Address Alias
-\end_layout
-
 \begin_layout Standard
 False dependencies due to address aliasing decreases the processor performance.
  The optimizatio manual suggests that each alias event costs about 5 cycles,
@@ -2939,18 +2922,18 @@ Bias from Stack Alignment
 \end_layout
 
 \begin_layout Standard
-As we saw in the Introduction chapter, changing the Unix environment variables
- can significantly affects the cycle count of this program.
+As shown in previous work, changing the Unix environment variables can sometimes
+ significantly affect program performance.
  It is typically not the content of environment variables that are important,
  but rather the effect their size has on stack position.
- When programs are mapped into virtual memory, the environment variables
- are allocated before the stack, offseting the top of stack address.
+ Environment variables are allocated before the stack when programs are
+ mapped into virtual memory, essentially offseting all the following call
+ frames and stack allocated variables.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement h
 wide false
 sideways false
 status open
@@ -3044,8 +3027,8 @@ C code with bias towards certain stack positions
 \end_layout
 
 \begin_layout Standard
-We begin by showing how address aliasing causes measurement bias for the
- micro kernel from 
+We begin by showing how address aliasing can explain measurement bias for
+ the micro kernel presented in 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Mytkowicz:2009:WrongData"
@@ -3077,18 +3060,8 @@ No satisfactory explanaition as to what causes bias was given in the original
 \end_layout
 
 \begin_layout Standard
-We use perf and an automated script to collect performance counter statistics
- over a series of runs, with increasing environment size using a dummy variable
- between each execution.
- The program is compiled using GCC with all default options.
- Note that any optimization would likely disregard most of the function
- as redundant code, and reduce it to return zero immediately.
- 
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -3107,6 +3080,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:loop-cycles-only"
+
+\end_inset
+
 Performance variations from offseting stack position by changing environment
  size
 \end_layout
@@ -3122,11 +3101,36 @@ Performance variations from offseting stack position by changing environment
 \end_layout
 
 \begin_layout Standard
+We use perf and an automated script to collect performance counter statistics
+ over a series of runs, with increasing environment size using a dummy variable
+ between each execution.
+ The program is compiled using GCC with all default options.
+ Note that any optimization would likely disregard most of the function
+ as redundant code, and reduce it to return zero immediately.
+ 
+\end_layout
+
+\begin_layout Standard
 Collecting the cycle count performance counter, we observe a distinct spike
  over a period of 16 (verify!) bytes under increasing environment size.
- The difference is over 20 % between the worst and best case.
- A good starting point in trying to analyze the potential cause for these
- effects, is to look at all the data provided by various performance counters.
+ As illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:loop-cycles-only"
+
+\end_inset
+
+, the difference is over 20 % between the worst and best case.
+ 
+\end_layout
+
+\begin_layout Standard
+Even for such a simple program, it is far from obvious that stack position
+ should have any impact on performance.
+ As a starting point in trying to analyze the potential cause for these
+ effects, we will look at data provided by various performance counters.
+ With nearly 200 non-architectural performance counters available for Ivy
+ Bridge, hopefully some of them can give some insight into what is happening.
  The set of counters that most closely follows the cycle count is shown
  in Table 
 \begin_inset CommandInset ref
@@ -3136,8 +3140,8 @@ reference "tab:loop-all-counters"
 \end_inset
 
 .
- We have used a simple linear correlation to filter out what metrics might
- be of interest.
+ We have used a simple linear correlation to filter out the metrics that
+ most closely follows the cycle count.
  
 \end_layout
 
@@ -4062,30 +4066,21 @@ Among all the performance counters supported on our architecture, only a
  few shows significant correlation to cycle count in this case.
  Other interesting counters include resource stalls and loads pending, both
  strongly correlating to cycle count.
- 
-\end_layout
-
-\begin_layout Standard
-When presenting similar results for the Core 2, the authors mentions the
+ When presenting similar results for the Core 2, the authors mentions the
  performance counter LOAD_BLOCK.OVERLAP_STORE as a potential explanation.
- There is no counter by that name for the Ivy Bridge 
+ As mentioned, there is no counter by that name for the Ivy Bridge 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
 
 \end_inset
 
-, but one that seems 
-\begin_inset Quotes eld
-\end_inset
-
-close
-\begin_inset Quotes erd
-\end_inset
-
- is LD_BLOCKS.STORE_FORWARD.
- However, this counter does not correlate with cycle count in our case.
- Instead, we are looking at 
+.
+ One that seems close in description is LD_BLOCKS.STORE_FORWARD, which counts
+ the number of times loads are blocked by overlapping stores.
+ Interestingly, this counter does not correlate with cycle count in our
+ case.
+ Instead we are looking at 
 \family roman
 \series medium
 \shape up
@@ -4097,9 +4092,11 @@ close
 \uwave off
 \noun off
 \color none
-LD_BLOCKS_PARTIAL.
- ADDRESS_ALIAS as the most likely indication of what happens.
- 
+LD_BLOCKS_PARTIAL.ADDRESS_ALIAS as the most likely indication of what happens
+ -- indicating a potential aliasing issue.
+ Plotting this counter, we see that it reports zero almost everywhere, and
+ spiking in perfect correlation with cycle count.
+
 \family default
 \series default
 \shape default
@@ -4111,34 +4108,10 @@ LD_BLOCKS_PARTIAL.
 \uwave default
 \noun default
 \color inherit
-The official documentation for the address alias counter state
-\end_layout
-
-\begin_layout Quote
-\begin_inset Quotes eld
-\end_inset
-
-False dependencies in MOB due to partial compare on address.
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Here, 
-\begin_inset Quotes eld
-\end_inset
-
-MOB
-\begin_inset Quotes erd
-\end_inset
-
- refers to Memory Order Buffer, a collection of caches for read and write
- operations that are not yet committed to the L1 cache, but can be read
- speculatively and out of order.
  It appears that a read/write dependency is falsely detected, causing the
- pipeline to wait for the previous memory operations to complete.
+ pipeline to wait for previous memory operations to complete.
+ A higher amount of resource stalls and pending loads seems like a natural
+ consequence of stalling due to aliasing.
 \end_layout
 
 \begin_layout Standard
@@ -4177,10 +4150,34 @@ Cycle count correlating with resource stalls, pending memory loads and address
 \end_layout
 
 \begin_layout Standard
-The statically allocated variables have their virtual addresses determined
- at compile time.
- Inspecting the symbol table section of the ELF object file reveals that
- the addresses of i, j and k are 
+To find out which memory accesses collide, we need to know the memory addresses
+ of each variable at run time.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Static variables
+\end_layout
+
+\begin_layout Standard
+Variables i, j and k are declared as 
+\family typewriter
+static
+\family default
+ in C, meaning they have a static storage class.
+ Statically allocated variables have their virtual addresses determined
+ at compile time, and are not affected by offseting stack address.
+ Inspecting the symbol table section of the ELF object file
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Output is generated using the readelf utility, part of GNU Binary Utilities
+\end_layout
+
+\end_inset
+
+, reveals that the addresses of i, j and k are 
 \family typewriter
 0x601028
 \family default
@@ -4236,14 +4233,27 @@ Symbol table '.symtab' contains 66 entries:
 
 \end_layout
 
+\begin_layout Subsubsection*
+Automatic variables
+\end_layout
+
 \begin_layout Standard
-It is difficult to observe the correct addresses for variables g and inc
- without introducing observer effects.
+Variables g and inc are local automatic variables, which are allocated on
+ stack.
+ The addresses of these variables will be affected by changing initial stack
+ position.
+ However, it is very difficult to observe the correct addresses of g and
+ inc without introducing observer effects.
  Simply adding a call to printf for instance, completely changes the program
  behaviour with repect to bias.
- Printing the addresses manually with assembly code however, does work.
- We find that the spike in cycle count occurs when the stack allocated variables
- have the following addresses;
+ Insted, we use a small amount of assembly code to calculate the addresses
+ and print the numbers directly using system calls.
+ 
+\end_layout
+
+\begin_layout Standard
+We find that the spike in cycle count occurs when the stack allocated variables
+ have the following addresses:
 \end_layout
 
 \begin_layout Standard
@@ -4264,10 +4274,6 @@ status open
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
 Note that the last twelve bits (three hexadecimal digits) for 
 \family typewriter
 g
@@ -4285,23 +4291,14 @@ i
 j
 \family default
 .
- This is referred to as 
-\begin_inset Quotes eld
-\end_inset
-
-4K aliasing
-\begin_inset Quotes erd
-\end_inset
-
-.
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsubsection
 Run-time Solutions to Address Aliasing
 \end_layout
 
 \begin_layout Standard
-In general, the address of stack variables cannot be determined statically.
+In general, the address of automatic variables can not be determined statically.
  In addition to being offset by environment variables, the stack can also
  be perturbed by other factors, such as address layout randomization.
  Because of this, effects from 4K aliasing is observed as measurement bias.
@@ -4547,13 +4544,6 @@ No change to performance based on environment size.
 
 \begin_layout Standard
 This example shows that 4K aliasing can potentially be fixed at runtime.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage pagebreak
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsection
