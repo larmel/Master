@@ -2738,73 +2738,168 @@ Address Alias Effects (4K Aliasing)
 \end_layout
 
 \begin_layout Standard
-In a typical C program, multiple different areas of memory are accessed.
-\end_layout
-
-\begin_layout Description
-Stack Call frames for each function call, holding parameters and local automatic
- variables
-\end_layout
-
-\begin_layout Description
-Heap Dynamically allocated memory
-\end_layout
-
-\begin_layout Description
-Static Data with storage allocation determined at compile time
-\end_layout
-
-\begin_layout Standard
-Alias conflicts can occur between any combination of these areas.
-\end_layout
-
-\begin_layout Standard
-In this section we show that the run time addresses of data, allocated staticall
-y, on stack or on heap, are significatn.
-\end_layout
-
-\begin_layout Standard
-Relevant performance counter is PARTIAL.ADDRESS_ALIAS.
-\end_layout
-
-\begin_layout Standard
-Store forwaring introduction.
- Refer to intel guidelines, trying to avoid aliasing on bit 0..11.
- This is not always possible, and will manifest as measurement bias from
- 
+Placement of code and data in memory affect the performance of programs
+ in various ways.
+ In this section, we will look at a phenomenon related to the addresses
+ of read and write operations.
+ Effects known as 
 \begin_inset Quotes eld
 \end_inset
 
-random
+4K aliasing
 \begin_inset Quotes erd
 \end_inset
 
- changes to the environment.
+ occurs when the addresses of a store followed by a load differ by a multiple
+ of 4 KiB.
+ Consider the following example, where a value is written to the address
+ stored in %rax, and immediately after reading from the address stored in
+ %rbx
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+mov %r10, (%rax)
+\end_layout
+
+\begin_layout Plain Layout
+
+mov (%rbx), %r11
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If for example 
+\family typewriter
+%rax
+\family default
+ is 0x601010 and 
+\family typewriter
+%rbx
+\family default
+ is 0x604010, the memory accesses are said to be aliased.
+ The difference between the two memory addresses is 0x3000, which is a multiple
+ of 4096, or 0x1000 in hexadecimal.
  
 \end_layout
 
-\begin_layout Subsubsection*
-Store Forwaring Limitations
+\begin_layout Standard
+The memory system issues load and store operations speculatively and out
+ of order to increase throughput and parallelism.
+ Some analysis is done to determine which operations are safe to issue out
+ of order.
+ In the above example, the processor could very well issue the load before
+ the store, as they refer to different addresses.
+ However, on recent Intel architectures only the last 12 address bits are
+ used to determine if operations refer to the same address.
+ The last twelve bits of 0x601010 is 0x010, or 0000'0001'0000 in binary
+ -- the same as for 0x604
+\series bold
+010
+\series default
+.
+ Only doing a partial address compare, dependencies between load and store
+ operations are sometimes falsely detected.
+ Issues with 4K aliasing have existed for many generations of micro-architecture
+s, and discussed on several occations in the optimization manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ The following quote is listed under section 3.6.8.2; 
+\begin_inset Quotes eld
+\end_inset
+
+Alias Cases in the Pentium M, Intel Core Solo, Intel Core Duo and Intel
+ Core 2 Duo Processors
+\begin_inset Quotes erd
+\end_inset
+
+;
 \end_layout
 
-\begin_layout Standard
-Limitations described in section 3.6.8.2 of optimization manual.
- On load/store on multiples of 4KiB, code is effectively serialized.
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+Store forwarding -- If a store to an address is followed by a load from
+ the same address, the load will not proceed until the store data is available.
+ If a store is followed by a load and their addresses differ by a multiple
+ of 4 KBytes, the load stalls until the store operation completes
+\begin_inset Quotes erd
+\end_inset
+
  
 \end_layout
 
 \begin_layout Standard
-Point for later: The guidelines provided by intel does not cover effects
- from ASLR.
- Stack/static collisions can not easily be accounted for or predicted.
-\end_layout
+In earlier architectures, effects of 4K aliasing emerge as a case of failed
+ store forwarding.
+ The performance counter LOAD_BLOCK.OVERLAP_STORE counts instances where
+ forwarding is blocked due to various reasons, including false dependency
+ from address aliasing.
+ Interestingly, there is no counter by that name (or event code) listed
+ for Ivy Bridge.
+ There is however, one performance counter that reports alias events only
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
 
-\begin_layout Standard
-The intel optimization manual mentions two performance counters
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Description
 LD_BLOCKS_PARTIAL.ADDRESS_ALIAS False dependency in the Memory Order Buffer
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Memory Order Buffer
+\begin_inset Quotes erd
+\end_inset
+
+ refers to a collection of read/write buffers within the L1 data cache.
+ It buffers loads and stores of not yet retired instructions, enabling speculati
+ve and out-of-order execution while ensuring that no dependencies are violated
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Doweck:InsideIntelCoreMicroarchitecture,Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ The optimization manual provides a more to-the-point explanation of the
+ counter, stating it 
+\begin_inset Quotes eld
+\end_inset
+
+Counts the number of loads that have partial address match with preceding
+ stores, causing the load to be reissued.
+\begin_inset Quotes erd
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection*
@@ -2812,9 +2907,17 @@ Cost of Address Alias
 \end_layout
 
 \begin_layout Standard
-Formula given in optimization manual.
- Suggests that each alias event costs 5 cycles.
- The portion of cycle time spent dealing with alias is then
+False dependencies due to address aliasing decreases the processor performance.
+ The optimizatio manual suggests that each alias event costs about 5 cycles,
+ using the following formula to quantify the fraction of cycles incurred
+ from overhead due to alias 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
 \begin_inset Formula 
 \[
 \text{4K Alias Cost}=\frac{\text{LD\_BLOCKS\_PARTIAL.ADDRESS\_ALIAS}\times5}{\text{CPU\_CLK\_UNHALTED.THREAD\_P}}
@@ -2823,6 +2926,12 @@ Formula given in optimization manual.
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Through a series of examples, we show that bias effects due to address aliasing
+ is both common and significant.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -2943,7 +3052,7 @@ key "Mytkowicz:2009:WrongData"
 
 \end_inset
 
-, reproduced in Listing 
+, reproduced here in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:loop-micro-kernel"
@@ -3014,7 +3123,7 @@ Performance variations from offseting stack position by changing environment
 
 \begin_layout Standard
 Collecting the cycle count performance counter, we observe a distinct spike
- over a period of 16 (verify!) bytes.
+ over a period of 16 (verify!) bytes under increasing environment size.
  The difference is over 20 % between the worst and best case.
  A good starting point in trying to analyze the potential cause for these
  effects, is to look at all the data provided by various performance counters.
@@ -3034,6 +3143,7 @@ reference "tab:loop-all-counters"
 
 \begin_layout Standard
 \begin_inset Float table
+placement t
 wide false
 sideways false
 status open
@@ -4259,12 +4369,7 @@ int main() {
 
 \begin_layout Plain Layout
 
-    if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) 
-\end_layout
-
-\begin_layout Plain Layout
-
-    {
+    if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) {
 \end_layout
 
 \begin_layout Plain Layout
@@ -4394,8 +4499,9 @@ Modified code with explicit check for aliasing between inc and j.
 \end_layout
 
 \begin_layout Standard
-Only one pari of variables needs to be checked in this case, as both static
+Only one pair of variables needs to be checked in this case, as both static
  and stack variables are allocated concecutively.
+ Variables g and i will alias only if inc and j also alias.
  Running the same tests again, we are able to remove all aliasing from this
  particular program.
  In most cases, assuming a uniform random distrubution of initial stack

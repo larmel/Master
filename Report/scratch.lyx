@@ -78,6 +78,50 @@ First Chapter
 \end_layout
 
 \begin_layout Section
+4K Alias
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+A 4k aliasing conflict between loads and stores causes a reissue on the
+ load.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "B.3.4.4"
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+4K aliasing and store forwarding block are two different scenarios in which
+ loads are blocked by preceding stores due to different reasons.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "B.6.5.2"
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
 Introduction
 \end_layout
 
