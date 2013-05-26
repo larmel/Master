@@ -625,11 +625,11 @@ The set of relevant metrics in performance analysis is diverse; a database
 
 \begin_layout Standard
 Mytkowitcz et al.
- shows that both strict use of hardware counters, as well as adding any
- form of software instrumentation, is vulnerable to observer effects.
+ show that both strict use of hardware counters, as well as adding any form
+ of software instrumentation, is vulnerable to observer effects.
  Even in standardized benchmark suites such as SPEC 2006, they find that
  change in performance due to observer effect is significant, enough to
- invalidate research results if not properly considered.
+ draw invalid conclusions if not properly considered.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -637,8 +637,8 @@ Measurement bias
 \end_layout
 
 \begin_layout Standard
-The performance characteristics of software changes also from external propertie
-s of the experimental setup.
+The performance characteristics of software changes not only from observer
+ effects, but also from external properties of the experimental setup.
  Two, seemingly innocious, properties of the environment are discussed:
 \end_layout
 
@@ -649,8 +649,8 @@ Link order of object files: The order of which the .o files are provided
 
 \begin_layout Itemize
 Shell state, specifically environment variables.
- The content of environment variables depends on many factors, such as the
- user currently logged in (stored as 
+ The content of environment variables on a given system depends on many
+ factors, such as the user currently logged in (stored as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -672,9 +672,9 @@ PATH
 
 \begin_layout Standard
 The authors study how different compiler optimization levels is affected
- by adding characters to environment variables or altering the permuting
- link order.
- The results show that SPEC benchmarks are sensitive to this as well.
+ by adding characters to environment variables or changing program link
+ order.
+ Their results show that SPEC benchmarks are sensitive to this as well.
  Different conclusions about O2's efficiency versus O3 can be drawn depending
  on the environment.
 \end_layout
@@ -694,7 +694,7 @@ key "Mytkowicz:2009:WrongData"
 , the effects previously presented are reiterated, along with a more detailed
  analysis of measurement bias.
  In addition to pointing out sensitivity in large benchmark programs from
- the SPEC suite, the authors also provide a small, isolated C program with
+ the SPEC suite, the authors also present a small, isolated C program with
  very high sensitivity to change in environment size.
  We discuss this particular program in the Introduction chapter, showing
  that similar bias effects appear on newer architectures as well.
@@ -1313,16 +1313,24 @@ Cache Hierarchy
 \end_layout
 
 \begin_layout Standard
-L1 data cache supports out of order operations via load and store buffers
- (collectively known as 
-\begin_inset Quotes eld
-\end_inset
+There are three levels of cache; Each processor core has an L1 data and
+ instruction cache of 32 KiB each, and a unified L2 cache of 256 KiB holding
+ both data and instructions.
+ An L3 cache, also known as last level cache (LLC), is shared among all
+ cores via a ring connection.
+ 
+\end_layout
 
-memory order buffer
-\begin_inset Quotes erd
-\end_inset
+\begin_layout Paragraph
+Prefetching
+\end_layout
 
-).
+\begin_layout Standard
+Prefecthing is used to mask memory latency, by loading data that is soon
+ to be accessed into cache.
+ Several prefetchers operate on different levels and between different levels
+ of cache.
+ 
 \end_layout
 
 \begin_layout Paragraph
@@ -1359,7 +1367,7 @@ key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficient
 \end_layout
 
 \begin_layout Standard
-Loads and store buffers hold the values of speculatively executed memory
+Load and store buffers hold the values of speculatively executed memory
  operations, sometimes collectively referred to as 
 \begin_inset Quotes eld
 \end_inset
@@ -1370,11 +1378,6 @@ Memory Order Buffer
 
 .
  
-\end_layout
-
-\begin_layout Standard
-Memory disambiguation: Information in 2.2.4.5.
- Predicts conflict of loads, issue speculatively.
 \end_layout
 
 \begin_layout Subsection
@@ -1764,6 +1767,8 @@ key "Intel:2013:Volume3B"
 \end_inset
 
 .
+ Table 19-5 contains all the non-architectural counters supported by Ivy
+ Bridge.
  A shorter reference is included in Appendix 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1780,7 +1785,7 @@ reference "chap:list-of-performance-counters"
 Accuracy of Performance Counters
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Using 
 \family typewriter
 perf
@@ -1791,7 +1796,8 @@ There are multiple ways of accessing the processor's performance monitoring
  facilities from software.
  Support is needed from the operating system, as kernel mode previliges
  are needed to manage the low level PMU hardware.
- On Linux, there is the perf_event kernel interface, along with the perf
+ Linux systems provide a kernel interface called perf_events, which can
+ be used along with the perf
 \begin_inset Foot
 status open
 
@@ -1819,9 +1825,10 @@ target "https://perf.wiki.kernel.org/index.php/Main_Page"
 \begin_layout Standard
 Perf is a utility program for interfacing performance counters from user
  code on Linux.
- On Ubuntu, it is available as linux-tools-{version}, substituting for the
- correct kernel version.
- Perf supports many counters by mnemonics, such as 
+ It is included in linux-tools-{version} from the package repository for
+ Ubuntu, substituting for the correct kernel version.
+ Perf is relatively easy to use, with support for many performance counters
+ by mnemonics such as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1846,7 +1853,14 @@ branch-misses
 \end_inset
 
 .
- The following command reports the total cycle count from executing a.out.
+ We will mostly use the 
+\family typewriter
+stat
+\family default
+ command, which takes a list of performance counters and a program to benchmark
+ as arguments.
+ As an example, the following command reports the total cycle count from
+ executing ls (listing files and directories).
 \end_layout
 
 \begin_layout Standard
@@ -1857,7 +1871,7 @@ status open
 
 \begin_layout Plain Layout
 
-perf stat -e cycles ./a.out
+perf stat -e cycles ls
 \end_layout
 
 \end_inset
@@ -1866,7 +1880,52 @@ perf stat -e cycles ./a.out
 \end_layout
 
 \begin_layout Standard
-Counters are configured by writing the 8 bit 
+As output, we see something like the following.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+ Performance counter stats for 'ls':
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 cycles                    #    0.000 GHz             
+       
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.010666675 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Accessing arbitrary counters
+\end_layout
+
+\begin_layout Standard
+Not all counters are available as mnemonics.
+ Arbitrary performance counters can be used by specifying their respective
+ 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1882,22 +1941,23 @@ event code
 \begin_inset Quotes erd
 \end_inset
 
- to special model specific registers.
- These values can be found in the documentation, for example (
-\family typewriter
-0x3C
-\family default
-, 
-\family typewriter
-0x00
-\family default
-) for un-halted core cycles.
- 
+, available in the documentation.
+ To get some intuition as to how this works exactly, it is worthwile to
+ point out how performance counters are configured under the hood in hardware.
+ Counters are set up by writing to special 32 bit model specific registers
+ (MSR), Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:msr"
+
+\end_inset
+
+ illustrates the bit field for initializing counters on Ivy Bridge.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -1940,38 +2000,24 @@ key "Intel:2013:Volume3B"
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:msr"
-
-\end_inset
-
- illustrates the bit field for initializing counters on Ivy Bridge.
- In addition to unit mask and event code, the remaining bits can be set
- to impose various constraints on what is counted.
+In addition to unit mask and event code, the remaining bits can be set to
+ impose various constraints on what is counted.
  We will typically toggle OS mode and user mode such that statistics is
  reported from code executing in user mode only.
- This is done automatically by appending 
-\family typewriter
-:u
-\family default
- to an event in perf, as in 
-\family typewriter
-cycles:u
-\family default
-.
  
 \end_layout
 
 \begin_layout Standard
-Arbitrary performance counters can be specified by using the appropriate
- event number and unit mask hexadecimal values.
- The following command counts resource stalls in user mode.
+Perf uses this bit-format fairly explicitly, meaning we can provide a hexadecima
+l number corresponding to the desired register value to specify which counter
+ to use.
+ Let's say we want to count RESOURSE_STALLS.ANY in user mode for ls.
+ This corresponds to a bitfield containing 1 for User mode, followed by
+ 0x01, 0xA2 for unit mask and event code respectively, resulting in the
+ number 0x101A2.
+ Instead of manually setting the user mode bit, we can append :u to the
+ perf code.
+ The syntax for invoking perf with this counter becomes
 \end_layout
 
 \begin_layout Standard
@@ -1982,7 +2028,7 @@ status open
 
 \begin_layout Plain Layout
 
-perf stat -e r01a2:u ./a.out
+perf stat -e r01a2:u ls
 \end_layout
 
 \end_inset
@@ -1991,8 +2037,10 @@ perf stat -e r01a2:u ./a.out
 \end_layout
 
 \begin_layout Standard
-There are also additional constraints and special cases for various counters.
- Refer to the manual for detailes on specific counters.
+Simply concatenating unit mask and event code and appending a trailing :u
+ is what we want to do in most cases.
+ There are additional constraints and special cases for various counters.
+ Refer to the manual for additional details.
 \end_layout
 
 \begin_layout Section
@@ -2000,8 +2048,7 @@ The Execution Context
 \end_layout
 
 \begin_layout Standard
-The operating system might be cosidered a vital part of the execution environmen
-t.
+The operating system is a vital part of the execution environment.
  Running tests on a particular operating system might very well result in
  big performance differences.
  Because of time limitations we have not considered bias effects due to
@@ -2384,7 +2431,7 @@ Simple C program with data allocated in four different segments of virtual
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Itemize
 Variable c and d are 
 \emph on
 automatic
@@ -2399,12 +2446,19 @@ key "Kernighan:1988:CProgrammingLanguage"
 , which are stack allocated.
  Their run-time address depends on where the stack segment is initialized
  in virtual memory, and can in general not be known ahead of time.
- The address returned by malloc and stored in variable d points to a location
+\end_layout
+
+\begin_layout Itemize
+The address returned by malloc and stored in variable d points to a location
  on the heap.
  The exact address depends on the implementation of malloc, as well as the
  initial position of the heap segment, and is also impossible to predict
  in general.
- Global variables a and b should be placed in bss and data segments respectively.
+ 
+\end_layout
+
+\begin_layout Itemize
+Global variables a and b should be placed in bss and data segments respectively.
  Their virtual addresses are determined at compile time, and can be found
  in the ELF object file's symbol table 
 \begin_inset CommandInset citation
@@ -2433,6 +2487,7 @@ The actual memory map from running processes can be obtained by reading
  for some process id.
  A sample output from a run of the previous hello world example is shown
  below.
+ Recognize [stack] located on high address, and [heap]
 \end_layout
 
 \begin_layout Standard
@@ -2661,7 +2716,7 @@ Operating System
 \begin_inset Text
 
 \begin_layout Plain Layout
-Ubuntu 12.04 LTS (3.2.0-41)
+64bit Ubuntu 12.04 LTS (3.2.0-41)
 \end_layout
 
 \end_inset
