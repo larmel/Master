@@ -2967,6 +2967,10 @@ As shown in previous work, changing the Unix environment variables can sometimes
  
 \end_layout
 
+\begin_layout Subsubsection
+Analysis of Micro Kernel
+\end_layout
+
 \begin_layout Standard
 \begin_inset Float algorithm
 wide false
@@ -4598,7 +4602,47 @@ No change to performance based on environment size using the modified code
 \end_layout
 
 \begin_layout Subsection
-Bias from Dynamic Memory
+Aligned Memory Accesses
+\end_layout
+
+\begin_layout Standard
+Sliding window algorithms.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/alias/window.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Sliding window, accessing elements from two different buffers that are aligned
+ on 4 KiB
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4623,8 +4667,12 @@ In the previous example, we saw aliasing between stack variables and static
  
 \end_layout
 
-\begin_layout Subsection
-Heap address conflicts
+\begin_layout Subsubsection
+Properties of Malloc
+\end_layout
+
+\begin_layout Subsubsection
+Heap Address Conflicts
 \end_layout
 
 \begin_layout Standard
@@ -5360,7 +5408,7 @@ Interestingly, neither O1, O2 or O3 was able to do anything about this --
  
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsubsection
 Architectural Optimization Flags
 \end_layout
 
@@ -5409,8 +5457,10 @@ corei7-avx
  other architectures, reducing portability.
 \end_layout
 
-\begin_layout Subsubsection*
-Use of restrict
+\begin_layout Subsubsection
+Use of 
+\family typewriter
+restrict
 \end_layout
 
 \begin_layout Standard
@@ -5580,7 +5630,7 @@ Note that the resulting binaries, providing no offset and offset of 0x30,
  move (for addition), and different register for another movq instruction.
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsubsection
 Other Compilers
 \end_layout
 
@@ -5611,7 +5661,7 @@ icc produces code that performs reasonably well with respect to alias count
 \end_layout
 
 \begin_layout Subsection
-Libraries as Environment Bias
+Bias from Dynamic Libraries
 \end_layout
 
 \begin_layout Standard
@@ -5622,6 +5672,10 @@ The previous example does not show measurement bias per se, but rather an
  Bottom line is: dynamically linked libraries are part of the execution
  environment.
  
+\end_layout
+
+\begin_layout Subsubsection
+Memory Allocators
 \end_layout
 
 \begin_layout Standard
