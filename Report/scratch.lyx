@@ -710,6 +710,41 @@ Idea: Version of shell (bash or sh or tch etc) matters because of environment
  size variable etc)
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/alias/window.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Sliding window, accessing elements from two different buffers that are aligned
+ on 4 KiB
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Heap conflicts
 \end_layout

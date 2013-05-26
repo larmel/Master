@@ -4606,8 +4606,67 @@ Aligned Memory Accesses
 \end_layout
 
 \begin_layout Standard
-Sliding window algorithms.
+With address aliasing in mind, consider for a moment how programs operating
+ on arrays of data might suffer from this effect.
+ Many algorithms work in a 
+\begin_inset Quotes eld
+\end_inset
+
+sliding window
+\begin_inset Quotes erd
+\end_inset
+
+ fashion; reading some data from an input buffer, do some computation, before
+ writing the result to an output buffer.
+ Some usages that fit this pattern include;
+\end_layout
+
+\begin_layout Itemize
+Copy or moving data
+\end_layout
+
+\begin_layout Itemize
+Vector operations
+\end_layout
+
+\begin_layout Itemize
+Image filtering
+\end_layout
+
+\begin_layout Standard
+A potential source of bias is algorithms like these occur from alias between
+ input and output arrays.
+ For larger data structures and arrays, memory is likely to reside on the
+ heap.
  
+\end_layout
+
+\begin_layout Subsubsection
+Properties of Malloc
+\end_layout
+
+\begin_layout Standard
+The system call that is usually used to aquire heap address space is 
+\family typewriter
+malloc
+\family default
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+A good source of information on this topic is the man-pages for malloc,
+ sbrk and mmap
+\end_layout
+
+\end_inset
+
+, which takes a number of bytes to allocate and returns a pointer to that
+ area.
+ The heap is located somewhere above the text and static data segments in
+ virtual memory.
+ Under the hood, a typical malloc implementation on Linux systems uses two
+ different system calls to aquire more memory.
 \end_layout
 
 \begin_layout Standard
@@ -4620,7 +4679,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename Img/alias/window.eps
+	filename Img/alias/malloc.eps
 
 \end_inset
 
@@ -4631,8 +4690,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Sliding window, accessing elements from two different buffers that are aligned
- on 4 KiB
+Heap memory spread out in virtual memory between mmap and sbrk requests
 \end_layout
 
 \end_inset
@@ -4645,30 +4703,81 @@ Sliding window, accessing elements from two different buffers that are aligned
 
 \end_layout
 
-\begin_layout Standard
-There are roughly speaking three areas of memory
-\end_layout
-
 \begin_layout Description
-Stack Holding function parameters and local automatic variables
-\end_layout
+sbrk A 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Description
-Heap Dynamically allocated memory at runtime
-\end_layout
+break
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Description
-Static Data contained within the compiled binary
-\end_layout
-
-\begin_layout Standard
-In the previous example, we saw aliasing between stack variables and static
- data.
+ symbol (brk) marks the border of maximum heap area given to the process
+ so far.
+ When malloc is asked to allocate more memory, the sbrk system call is used
+ to aquire more brk space from the operating system.
  
 \end_layout
 
-\begin_layout Subsubsection
-Properties of Malloc
+\begin_layout Description
+mmap For larger allocations, malloc uses mmap internally.
+ This function creates a mapping between some memory area and the contents
+ of a file, essentially 
+\begin_inset Quotes eld
+\end_inset
+
+mapping
+\begin_inset Quotes erd
+\end_inset
+
+ the file to concecutive memory.
+ For larger requests, malloc uses mmap with the ANONYMOUS flag specified,
+ indicating that memory is not backed by a file.
+ Memory mapping has some interesting requirements, most importantly that
+ mapped files are always page aligned.
+ 
+\end_layout
+
+\begin_layout Standard
+To illustrate how this works, we can print out addresses of multiple allocations
+ using 
+\family typewriter
+printf(
+\begin_inset Quotes eld
+\end_inset
+
+%p
+\begin_inset Quotes erd
+\end_inset
+
+, malloc(n))
+\family default
+.
+ For 10 small requests with 
+\begin_inset Formula $N=10$
+\end_inset
+
+ bytes, we migth get addresses like; ??
+\end_layout
+
+\begin_layout Standard
+For 10 larger requests of 
+\begin_inset Formula $N=1000000$
+\end_inset
+
+ bytes, we get: ??
+\end_layout
+
+\begin_layout Standard
+Because the page size is typically 4096 bytes, memory returned from larger
+ requests will 
+\bar under
+always
+\bar default
+ have alias on the last 12 bits.
+ This is true in all cases where mmap is used internally, as it explicitly
+ guaratees the return value to be page aligned.
+ 
 \end_layout
 
 \begin_layout Subsubsection
@@ -4788,17 +4897,17 @@ status open
 
 \begin_layout Plain Layout
 
-    float *input  = malloc(N*sizeof(float));
+float *input  = malloc(N*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-    float *result = malloc(N*sizeof(float));
+float *result = malloc(N*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-    convolve(N, input, result);
+convolve(N, input, result);
 \end_layout
 
 \end_inset
@@ -4810,9 +4919,9 @@ status open
 The program is compiled with GCC and optimization O3.
  Output from perf is shown below, measuring number of cycles, address alias,
  resource stalls and number of instructions.
- A large number of alias events and resource stalls are generated.
+ As suspected, a large number of alias events and resource stalls are generated.
  Considering this is compiled with the highest optimization level, the instructi
-on per cycle metric is not very impressive either.
+on per cycle metric is not very impressive for such a simple function.
  
 \end_layout
 
@@ -4857,13 +4966,9 @@ status open
 \end_layout
 
 \begin_layout Standard
-For moderately large allocations, the input and output arrays will 
-\emph on
-always
-\emph default
+For moderately large allocations, the input and output arrays will always
  be aligned to 12 bits.
- The likely cause of alias problems here is a conflict between input[i]
- and output[i].
+ Because of that, input[i] and output[i] alias.
  Although distinct memory locations, the out of order memory system detects
  conflicts.
  The hypothesis can be tested by offseting one of the arrays before calling
@@ -4883,12 +4988,12 @@ status open
 
 \begin_layout Plain Layout
 
-    float *result = malloc((N + 0x100)*sizeof(float));
+float *result = malloc((N + 0x100)*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-    convolve(N, input, (result + OFFSET));
+convolve(N, input, (result + OFFSET));
 \end_layout
 
 \end_inset
@@ -4904,393 +5009,7 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="5" columns="8">
-<features tabularvalignment="middle" tabularwidth="100text%">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0pt">
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-x
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x01
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x04
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x08
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x0c
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x10
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x14
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
--O0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
--O1
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
--O2
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
--O3
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
+(Graph over offset -> (cycles, alias).
 \end_layout
 
 \begin_layout Plain Layout
@@ -5319,7 +5038,7 @@ status open
 
 \begin_layout Plain Layout
 
-perf stat -e r0107:u -r 10
+perf stat -e cycles:u,r0107:u -r 10
 \end_layout
 
 \end_inset
@@ -5335,11 +5054,6 @@ perf stat -e r0107:u -r 10
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-TODO: Might want graph to visualize number of address alias per offset and/or
- cycles.
 \end_layout
 
 \begin_layout Standard
@@ -5392,12 +5106,8 @@ status open
 \begin_layout Standard
 Note that the number of alias conflicts reduces with increasing offset.
  This is likely because adjacent indeces are accessed in the loop.
- If output is offset by 0x01, then output[i] is aliased with input[i-1].
- Intuitively, one could suspect that an offset of 3 floats would be enough
- to eliminate alias, as the maximum difference is 2.
- (Is this true for low optimization?) We find that as many as 16 is needed
- on the highest level of optimization, illustrating the depth of speculative
- execution of memory operations.
+ We find that as many as 16 is needed on the highest level of optimization,
+ illustrating the depth of speculative execution of memory operations.
  
 \end_layout
 
@@ -5413,7 +5123,7 @@ Architectural Optimization Flags
 \end_layout
 
 \begin_layout Standard
-Because address aliasing is an artifact of intricacies in the Intel Core
+Because address aliasing is an artifact of intricacies in the processor
  architecture, we could hope that GCC will help when provided this information.
  In the documentation
 \begin_inset Foot
@@ -5465,7 +5175,11 @@ restrict
 
 \begin_layout Standard
 We can provide additional information to the compiler's optimizer by using
- the restrict keyword for the input and output arrays.
+ the 
+\family typewriter
+restrict
+\family default
+ keyword for the input and output arrays.
  This keyword was added in the C99 standard.
  It functions as a type qualifier for pointers, specifying that no pointer
  aliases exists.
@@ -5474,7 +5188,7 @@ We can provide additional information to the compiler's optimizer by using
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily},language=C"
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
 inline false
 status open
 
@@ -5492,14 +5206,15 @@ void convolve(int size, const float * restrict input, float * restrict output)
 By marking input and output as restrict, we guarantee they are the only
  pointers to their respective memory areas, and not accesses through any
  other (aliased) pointers.
- This results in much more efficient code.
- We find that the following compile parameters for gcc provide the best
- code.
+ This benefits code generation and optimization, resulting in much more
+ efficient code in our case.
+ We find that the following compile parameters for gcc gives the best performanc
+e.
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small}"
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
@@ -5529,26 +5244,22 @@ status open
 
 \begin_layout Plain Layout
 
-         3,565,704 cycles:u                  #    0.000 GHz             
-         ( +-  0.20% )
+         3,565,704 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-           258,469 r0107:u                                             
-          ( +-  0.05% )
+           258,469 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         1,065,207 r01a2:u                                             
-          ( +-  0.59% )
+         1,065,207 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         3,299,634 instructions:u            #    0.93  insns per cycle 
-         ( +-  0.00% )
+         3,299,634 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -5557,8 +5268,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.002281839 seconds time elapsed                                 
-         ( +-  0.76% )
+       0.002281839 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5586,26 +5296,22 @@ status open
 
 \begin_layout Plain Layout
 
-         3,070,418 cycles:u                  #    0.000 GHz             
-         ( +-  0.32% )
+         3,070,418 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-               206 r0107:u                                             
-          ( +- 27.26% )
+               206 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-           580,203 r01a2:u                                             
-          ( +-  1.82% )
+           580,203 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         3,299,634 instructions:u            #    1.07  insns per cycle 
-         ( +-  0.00% )
+         3,299,634 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -5614,8 +5320,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.002118936 seconds time elapsed                                 
-         ( +-  0.67% )
+       0.002118936 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5840,10 +5545,10 @@ status open
 \begin_inset Tabular
 <lyxtabular version="3" rows="9" columns="4">
 <features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0pt">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -5883,7 +5588,7 @@ Hoard
 </cell>
 </row>
 <row>
-<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+<cell multirow="3" alignment="center" valignment="middle" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5963,7 +5668,7 @@ Hoard
 </cell>
 </row>
 <row>
-<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+<cell multirow="3" alignment="center" valignment="middle" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6043,7 +5748,7 @@ Hoard
 </cell>
 </row>
 <row>
-<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+<cell multirow="3" alignment="center" valignment="middle" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6131,7 +5836,7 @@ Hoard
 </cell>
 </row>
 <row>
-<cell multirow="3" alignment="left" valignment="middle" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell multirow="3" alignment="center" valignment="middle" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -8277,7 +7982,7 @@ Length of external symbols
 \end_layout
 
 \begin_layout Standard
-unction names are placed in the .strtab section in the ELF file.
+Function names are placed in the .strtab section in the ELF file.
  When running readelf or objdump, the names are used to print nice output.
  However, function names of external symbols resolved at run-time does affect
  code layout.
