@@ -21,6 +21,8 @@ bin/offsets-O3-gcc.csv: conv-O3-gcc
 # Output: perf statistics for default and optimal offset, O3 only
 perf-offsets-O3: conv-O3-gcc
 	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+
+	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+ 12
+	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+ 16
 
 
 #

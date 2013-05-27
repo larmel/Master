@@ -4622,9 +4622,7 @@ Aligned Memory Accesses
 \end_layout
 
 \begin_layout Standard
-With address aliasing in mind, consider for a moment how programs operating
- on arrays of data might suffer from this effect.
- Many algorithms work in a 
+Many algorithms work in a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4632,9 +4630,9 @@ sliding window
 \begin_inset Quotes erd
 \end_inset
 
- fashion; reading some data from an input buffer, do some computation, before
- writing the result to an output buffer.
- Some usages that fit this pattern include;
+ fashion; reading some data from an input buffer, do some computation, and
+ write the result to an output buffer.
+ Some usages that fit this pattern include:
 \end_layout
 
 \begin_layout Itemize
@@ -4650,10 +4648,12 @@ Image filtering
 \end_layout
 
 \begin_layout Standard
-A potential source of bias is algorithms like these occur from alias between
- input and output arrays.
+Functions that operate on several contiguous arrays can be vulnerable to
+ 4K aliasing.
  For larger data structures and arrays, memory is likely to reside on the
  heap.
+ Whether or not heap areas alias depends on properties of the memory allocator
+ used.
  
 \end_layout
 
@@ -4662,7 +4662,7 @@ Properties of Malloc
 \end_layout
 
 \begin_layout Standard
-The system call that is usually used to aquire heap address space is 
+Aquiring dynamic memory at run time is usually done by calling 
 \family typewriter
 malloc
 \family default
@@ -4672,17 +4672,21 @@ status open
 
 \begin_layout Plain Layout
 A good source of information on this topic is the man-pages for malloc,
- sbrk and mmap
+ sbrk and mmap.
+ These are available by typing 
+\family typewriter
+man <topic>
+\family default
+ in a terminal.
 \end_layout
 
 \end_inset
 
 , which takes a number of bytes to allocate and returns a pointer to that
  area.
- The heap is located somewhere above the text and static data segments in
- virtual memory.
  Under the hood, a typical malloc implementation on Linux systems uses two
- different system calls to aquire more memory.
+ different system calls to aquire more memory from the operating system.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -4720,7 +4724,13 @@ Heap memory spread out in virtual memory between mmap and sbrk requests
 \end_layout
 
 \begin_layout Description
-sbrk A 
+
+\family typewriter
+sbrk
+\family default
+ The heap is placed after static code and data segments in virtual memory,
+ extending towards higher addresses up to a certain point.
+ Every process has a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4728,35 +4738,35 @@ break
 \begin_inset Quotes erd
 \end_inset
 
- symbol (brk) marks the border of maximum heap area given to the process
- so far.
- When malloc is asked to allocate more memory, the sbrk system call is used
- to aquire more brk space from the operating system.
- 
+ position, which marks the current heap address limit currently available
+ to the process.
+ The heap can be increased by the sbrk system call, which is what malloc
+ normally does when more dynamic memory is required.
 \end_layout
 
 \begin_layout Description
-mmap For larger allocations, malloc uses mmap internally.
- This function creates a mapping between some memory area and the contents
- of a file, essentially 
-\begin_inset Quotes eld
-\end_inset
 
-mapping
-\begin_inset Quotes erd
-\end_inset
-
- the file to concecutive memory.
- For larger requests, malloc uses mmap with the ANONYMOUS flag specified,
- indicating that memory is not backed by a file.
- Memory mapping has some interesting requirements, most importantly that
- mapped files are always page aligned.
+\family typewriter
+mmap
+\family default
+ A mapping between memory address space and the contents of a file can be
+ created by calling mmap.
+ Malloc uses mmap with the 
+\family typewriter
+MAP_ANONYMOUS
+\family default
+ flag specified for larger requests, indicating that memory is not backed
+ by a file.
+ Memory returned by mmap is disjoint from the normal heap area, typically
+ located on much higher addresses closer to the stack.
+ mmap has some interesting requirements, most importantly that mapped files
+ are always page aligned.
  
 \end_layout
 
 \begin_layout Standard
-To illustrate how this works, we can print out addresses of multiple allocations
- using 
+To illustrate the difference between normal heap memory and use of mmap,
+ we can print out addresses of multiple allocations using 
 \family typewriter
 printf(
 \begin_inset Quotes eld
@@ -4769,31 +4779,58 @@ printf(
 , malloc(n))
 \family default
 .
- For 10 small requests with 
-\begin_inset Formula $N=10$
+ 
+\end_layout
+
+\begin_layout Itemize
+For small requests of 
+\begin_inset Formula $n=10$
 \end_inset
 
- bytes, we migth get addresses like; ??
+ bytes, we get get the following addresses for five concecutive allocations:
+ 0x1541010, 0x1541030, 0x1541050, 0x1541070, 0x1541090.
+ With address layout randomization enabled, the first heap page can vary.
+\end_layout
+
+\begin_layout Itemize
+For larger requests of 
+\begin_inset Formula $n=1000000$
+\end_inset
+
+ bytes, we get: 0x7ff1b13ce
+\series bold
+010
+\series default
+, 0x7ff1b0e12
+\series bold
+010
+\series default
+, 0x7ff1b0d1d
+\series bold
+010
+\series default
+, 0x7ff1b0c28
+\series bold
+010
+\series default
+, 0x7ff1b0b33
+\series bold
+010
+\series default
+.
+ 
 \end_layout
 
 \begin_layout Standard
-For 10 larger requests of 
-\begin_inset Formula $N=1000000$
-\end_inset
-
- bytes, we get: ??
-\end_layout
-
-\begin_layout Standard
-Because the page size is typically 4096 bytes, memory returned from larger
- requests will 
+Because the page size is 4096 bytes, memory returned from larger requests
+ will 
 \bar under
 always
 \bar default
  have alias on the last 12 bits.
  This is true in all cases where mmap is used internally, as it explicitly
  guaratees the return value to be page aligned.
- It is also not affected by address randomization.
+ Note that this effect is not affected by address randomization.
  
 \end_layout
 
@@ -5020,7 +5057,11 @@ status open
 \end_layout
 
 \begin_layout Standard
-Malloc is using mmap to allocate heap area, making both arrays page aligned.
+Malloc is using 
+\family typewriter
+mmap
+\family default
+ to allocate heap area, making both arrays page aligned.
  Because of that, a read from 
 \family typewriter
 input[i]
@@ -5032,8 +5073,12 @@ output[i]
  in convolve.
  Although distinct memory locations, the processor assumes there are dependencie
 s between them, apparently with a great penalty in this program.
- The hypothesis can be tested by offseting one of the arrays before calling
- convolve.
+ 
+\end_layout
+
+\begin_layout Standard
+Aliasing can be accounted for in software by offseting one of the arrays
+ before calling convolve.
  We allocate some extra padding for output, and use pointer arithmetic to
  adjust the buffer before passing the pointer to convolve.
  
@@ -5052,17 +5097,17 @@ int main() {
 
 \begin_layout Plain Layout
 
-    float *input  = malloc( N           *sizeof(float));
+    float *input  = malloc( N     *sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-    float *output = malloc((N + padding)*sizeof(float));
+    float *output = malloc((N + x)*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-    convolve(N, input, (result + padding));
+    convolve(N, input, (result + x));
 \end_layout
 
 \begin_layout Plain Layout
@@ -5078,10 +5123,6 @@ int main() {
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-With padding
 \end_layout
 
 \begin_layout Standard
@@ -5106,19 +5147,10 @@ status open
 
 \begin_layout Plain Layout
 Performance statistics for 
-\begin_inset listings
-lstparams "basicstyle={\ttfamily},language=C"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+\family typewriter
 convolve(input, (result + x), N)
-\end_layout
-
-\end_inset
-
-, with varying offset x, and array size N of 0x100000.
+\family default
+, with increasing values of x.
  
 \end_layout
 
@@ -5133,10 +5165,12 @@ convolve(input, (result + x), N)
 \end_layout
 
 \begin_layout Standard
-The best parameter is found to be at a 16 element difference in alignment
+The difference mod 4096 between input and output arrays is 4*x bytes.
+ Plotting this for increasing values of x shows that virtually all aliasing
+ is removed after offseting with 12 or more elements.
+ The best parameter is found to be at a 16 element difference in alignment
  between input and output.
- Adding 0x10 to the output pointer (allocating some extra space to compensate),
- we get much faster code.
+ Simply by altering addresses yields more than 2x speedup.
 \end_layout
 
 \begin_layout Standard
@@ -5147,22 +5181,22 @@ status open
 
 \begin_layout Plain Layout
 
-         5,719,361 cycles:u
+         5,600,499 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-             1,094 r0107:u
+             1,192 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         1,351,256 r01a2:u
+         1,298,975 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-        11,163,873 instructions:u
+        11,166,799 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -5171,7 +5205,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.002919409 seconds time elapsed
+       0.002889411 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5255,8 +5289,7 @@ We can provide additional information to the compiler's optimizer by using
 \family typewriter
 restrict
 \family default
- keyword for the input and output arrays.
- This keyword was added in the C99 standard.
+ qualifier, which was added in the C99 standard.
  It functions as a type qualifier for pointers, specifying that no pointer
  aliases exists.
  
@@ -5282,8 +5315,10 @@ void convolve(int size, const float * restrict input, float * restrict output)
 By marking input and output as restrict, we guarantee they are the only
  pointers to their respective memory areas, and not accesses through any
  other (aliased) pointers.
- This benefits code generation and optimization, resulting in much more
- efficient code in our case.
+ This benefits code generation and optimization, potentially improving performan
+ce.
+ Additionally, the input array should be specified as const, guaranteeing
+ that only read operations are done to that array.
  We find that the following compile parameters for gcc gives the best performanc
 e.
 \end_layout
