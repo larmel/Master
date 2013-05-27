@@ -37,6 +37,7 @@ int main(void)
 	TEST(0xf00000);
 	TEST(0xfedcba);
 	TEST(0xffffff);
+	TEST(0x1000000);
 
 	return 0;
 }

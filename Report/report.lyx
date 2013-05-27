@@ -3151,7 +3151,7 @@ Performance variations from offseting stack position by changing environment
 
 \begin_layout Standard
 Collecting the cycle count performance counter, we observe a distinct spike
- over a period of 16 (verify!) bytes under increasing environment size.
+ over a period of 16 bytes under increasing environment size.
  As illustrated in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -5490,7 +5490,7 @@ The previous example does not show measurement bias per se, but rather an
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Memory Allocators
 \end_layout
 
@@ -5534,7 +5534,14 @@ target "http://g.oswego.edu/dl/html/malloc.html"
 
 \end_inset
 
-, Hoard
+, Hoard 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Berger:2000:Hoard"
+
+\end_inset
+
+
 \begin_inset Foot
 status open
 
@@ -5587,30 +5594,10 @@ target "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
 
 .
  Many allocators try to battle lock contention for multithreaded programs,
- where each thread share a common heap space.
+ where all threads share a common heap space.
  Allocating and freeing dynamic memory from a shared pool must be synchronized
  in some way.
- Testing multiple allocators might be worthwile, particularly for multithreaded
- applications.
- A potential cause of producing 
-\begin_inset Quotes eld
-\end_inset
-
-bad data
-\begin_inset Quotes erd
-\end_inset
-
- is optimizing around a bad allocator, or one that perform sub-optimally
- on a particular usage pattern.
-\end_layout
-
-\begin_layout Standard
-Need some measurements to support this claim ...
- Pretty easy to test malloc replacements, just change LD_PRELOAD apparently.
- Question: Does any of the implementations of malloc optimize for parallell
- sequential array access, reducing alias effects? Probably not, which is
- cool! Could suggest fix.
- (Heuristic, or static analysis, etc).
+ 
 \end_layout
 
 \begin_layout Description
@@ -5635,9 +5622,9 @@ tcmalloc Aligns at page boundary, ending in 0x000.
 We did some testing with three of the libraries, allocating two arrays of
  equal length for different sizes.
  The libraries produce very different results.
- The default implementation alternates between using the brk segment (low
- addresses and non-aligned, and mmap on higher segments.
- Tcmalloc tends to put variables on page boundaries, also for small sizes,
+ The default implementation alternates between using the regular heap (non-align
+ed low addresses) and mmap on higher segments.
+ Tcmalloc tends to put variables on page boundaries also for small sizes,
  returning addresses ending in 0x000.
  Hoard tends to align on page boundaries for larger requests, with addresses
  ending in 0x070.
@@ -5674,7 +5661,7 @@ Size
 \begin_inset Text
 
 \begin_layout Plain Layout
-Default (libc)
+Default (ptmalloc)
 \end_layout
 
 \end_inset
@@ -5951,7 +5938,7 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x10000
+0xfedcba
 \end_layout
 
 \end_inset
@@ -5960,7 +5947,9 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x603010
+0x2aaaab091
+\series bold
+010
 \end_layout
 
 \end_inset
@@ -5969,7 +5958,7 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x6a7
+0x8b57
 \series bold
 000
 \end_layout
@@ -5980,7 +5969,7 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x2aaaac020
+0x2aaaac030
 \series bold
 070
 \end_layout
@@ -6002,7 +5991,9 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x643020
+0x2aaaaf049
+\series bold
+010
 \end_layout
 
 \end_inset
@@ -6011,7 +6002,7 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x6e7
+0xcb2f
 \series bold
 000
 \end_layout
@@ -6022,7 +6013,7 @@ Hoard
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x2aaaac070
+0x2aaaafff0
 \series bold
 070
 \end_layout
@@ -6048,7 +6039,7 @@ name "tab:malloc-impl-tuples"
 \end_inset
 
 Addresses returned when allocating two float arrays of the same size, examples
- of possible sources for alias conflicts.
+ of possible sources of 4K alias conflicts highlighted.
  Tests were run with ASLR disabled for reproducible results, but we get
  similar results with randomization enabled.
 \end_layout
