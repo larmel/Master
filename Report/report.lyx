@@ -599,10 +599,20 @@ key "Mytkowicz:2008:Easy"
  The authors draw parallels to the social and natural sciences, scientific
  fields where considerable care is taken to avoid observer effect and bias
  in experimental setups.
- They argue that the methodology currently employed in performance analysis
- for software is lacking, if not flawed.
- In a literature survey, they find that very few authors even considers
- potential effects of bias when evaluating results.
+ They argue that the methodology currently employed in analysis of software
+ is lacking.
+ Because observer effect and bias in experiments is often ignored (or improperly
+ accounted for), performance analysis suffers from 
+\begin_inset Quotes eld
+\end_inset
+
+poor-quality data
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In literature surveys, they find that very few authors considers these
+ effects when evaluating results.
  
 \end_layout
 
@@ -611,25 +621,23 @@ Observer effect
 \end_layout
 
 \begin_layout Standard
-The set of relevant metrics in performance analysis is diverse; a database
- application might be interested in the number of transactions per second,
- while the cycle count and cache misses might be more relevant for a sorting
- algorithm implementation.
- Many low level metrics such as cycle count and cache misses, can be aquired
- with minimal overhead by performance counters in hardware.
- In other cases we might need to add instrumentation to the program being
- measured, for example in the form of counter variables incremented for
- each function call.
- 
-\end_layout
-
-\begin_layout Standard
-Mytkowitcz et al.
- show that both strict use of hardware counters, as well as adding any form
- of software instrumentation, is vulnerable to observer effects.
- Even in standardized benchmark suites such as SPEC 2006, they find that
- change in performance due to observer effect is significant, enough to
- draw invalid conclusions if not properly considered.
+Observer effect occurs when the act of observing something changes its character
+istics.
+ In performance analysis, we are interested in observing a variaty of properties
+; A database application might be interested in the number of transactions
+ per second, while the cycle count or number of cache misses might be more
+ relevant when implementing a hash function.
+ Many low level metrics, such as the number of CPU cycles used, can be aquired
+ (or observed) using hardware performance counters.
+ In other cases, we need to add instrumentation to the program being measured,
+ for example in the form of incrementing counter variables for every function
+ call.
+ Mytkowitcz et al.
+ show that both strict use of hardware counters, as well as adding software
+ instrumentation, is vulnerable to observer effects.
+ Dispite using techniques with minimal intrusion and overhead to the original
+ program, observer effects can sometimes have a significant performance
+ impact.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -637,14 +645,18 @@ Measurement bias
 \end_layout
 
 \begin_layout Standard
-The performance characteristics of software changes not only from observer
- effects, but also from external properties of the experimental setup.
- Two, seemingly innocious, properties of the environment are discussed:
+The performance characteristics of software changes not only from observations,
+ but also from external properties of the experimental setup.
+ Two, seemingly innocious, properties of the execution environment are discussed
+:
 \end_layout
 
 \begin_layout Itemize
 Link order of object files: The order of which the .o files are provided
- to the linker, usually more than one valid permutations exist.
+ to the linker.
+ Usually more than one valid permutations exist, and different orderings
+ produce functionally identical programs.
+ 
 \end_layout
 
 \begin_layout Itemize
@@ -674,7 +686,8 @@ PATH
 The authors study how different compiler optimization levels is affected
  by adding characters to environment variables or changing program link
  order.
- Their results show that SPEC benchmarks are sensitive to this as well.
+ Their results show that standardized SPEC benchmarks are sensitive to both
+ of these properties.
  Different conclusions about O2's efficiency versus O3 can be drawn depending
  on the environment.
 \end_layout
