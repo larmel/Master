@@ -2967,7 +2967,7 @@ As shown in previous work, changing the Unix environment variables can sometimes
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Analysis of Micro Kernel
 \end_layout
 
@@ -4331,12 +4331,12 @@ j
 .
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Run-time Solutions to Address Aliasing
 \end_layout
 
 \begin_layout Standard
-Sddresses of automatic variables can not be determined statically, because
+Addresses of automatic variables can not be determined statically, because
  the position of stack is unknown.
  In addition to being offset by environment variables, the stack address
  can also be perturbed by other factors such as address layout randomization.
@@ -4558,16 +4558,6 @@ Modified code with explicit check for aliasing between inc and j.
 \end_layout
 
 \begin_layout Standard
-Running the same set of tests again, we are now able to remove all aliasing
- from this particular program.
- In most cases, assuming a uniform random distrubution of initial stack
- addresses, the program performs slighly worse because of the additional
- overhead and extra instructions executed.
- On average over all initial stack positions however, adding this check
- yields a speedup.
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float figure
 placement H
 wide false
@@ -4599,6 +4589,16 @@ No change to performance based on environment size using the modified code
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Running the same set of tests again, we are now able to remove all aliasing
+ from this particular program.
+ In most cases, assuming a uniform random distrubution of initial stack
+ addresses, the program performs slighly worse because of the additional
+ overhead and extra instructions executed.
+ On average over all initial stack positions however, adding this check
+ yields a speedup.
 \end_layout
 
 \begin_layout Subsection
@@ -4641,7 +4641,7 @@ A potential source of bias is algorithms like these occur from alias between
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Properties of Malloc
 \end_layout
 
@@ -4777,10 +4777,11 @@ always
  have alias on the last 12 bits.
  This is true in all cases where mmap is used internally, as it explicitly
  guaratees the return value to be page aligned.
+ It is also not affected by address randomization.
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Heap Address Conflicts
 \end_layout
 
@@ -4885,7 +4886,13 @@ Convolution kernel
 
 \begin_layout Standard
 We use malloc to allocate two reasonably sized arrays for input and output,
- skipping initialization before calling convolve to save some cycles.
+ with 
+\begin_inset Formula $N=$
+\end_inset
+
+ 0x10000.
+ A float is 4 byte, thus each array is of size 4 MiB.
+ Initialization is skipped to save some cycles.
  
 \end_layout
 
@@ -4897,17 +4904,32 @@ status open
 
 \begin_layout Plain Layout
 
-float *input  = malloc(N*sizeof(float));
+int main() {
 \end_layout
 
 \begin_layout Plain Layout
 
-float *result = malloc(N*sizeof(float));
+    float *input  = malloc(N*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
-convolve(N, input, result);
+    float *output = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    convolve(N, input, result);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \end_inset
@@ -4917,38 +4939,39 @@ convolve(N, input, result);
 
 \begin_layout Standard
 The program is compiled with GCC and optimization O3.
- Output from perf is shown below, measuring number of cycles, address alias,
- resource stalls and number of instructions.
- As suspected, a large number of alias events and resource stalls are generated.
- Considering this is compiled with the highest optimization level, the instructi
-on per cycle metric is not very impressive for such a simple function.
+ Output from perf stat is shown below, measuring number of cycles, address
+ alias (r0107:u), resource stalls (r01a2:u) and number of retired instructions.
+ We see that a very large number of alias events and resource stalls are
+ generated compared to cycle count.
+ Considering this is compiled with optimization enabled, the instruction
+ per cycle metric is not very impressive for such a simple function.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
+lstparams "basicstyle={\small}"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-        12,391,475 cycles:u
+        12,100,699 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         9,039,041 r0107:u
+         9,176,205 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         7,931,308 r01a2:u
+         7,797,070 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
 
-        11,163,873 instructions:u
+        11,165,929 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -4957,7 +4980,7 @@ status open
 
 \begin_layout Plain Layout
 
-       0.004906424 seconds time elapsed
+       0.004837679 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -4966,18 +4989,23 @@ status open
 \end_layout
 
 \begin_layout Standard
-For moderately large allocations, the input and output arrays will always
- be aligned to 12 bits.
- Because of that, input[i] and output[i] alias.
- Although distinct memory locations, the out of order memory system detects
- conflicts.
+Malloc is using mmap to allocate heap area, making both arrays page aligned.
+ Because of that, a read from 
+\family typewriter
+input[i]
+\family default
+ will always alias with a write to 
+\family typewriter
+output[i]
+\family default
+ in convolve.
+ Although distinct memory locations, the processor assumes there are dependencie
+s between them, apparently with a great penalty in this program.
  The hypothesis can be tested by offseting one of the arrays before calling
  convolve.
- We allocate some extra space for output, and use pointer arithmetic to
- offset the buffer sent to convolve.
- Offset is defined using a compile directive, adding no overhead in the
- generated source.
- The impact of a constant addition of allocated space is neglegtible.
+ We allocate some extra padding for output, and use pointer arithmetic to
+ adjust the buffer before passing the pointer to convolve.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -4988,17 +5016,41 @@ status open
 
 \begin_layout Plain Layout
 
-float *result = malloc((N + 0x100)*sizeof(float));
+int main() {
 \end_layout
 
 \begin_layout Plain Layout
 
-convolve(N, input, (result + OFFSET));
+    float *input  = malloc( N           *sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *output = malloc((N + padding)*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    convolve(N, input, (result + padding));
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+With padding
 \end_layout
 
 \begin_layout Standard
@@ -5009,7 +5061,13 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-(Graph over offset -> (cycles, alias).
+\align center
+\begin_inset Graphics
+	filename Img/alias/offsets-O3-gcc.eps
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Plain Layout
@@ -5029,21 +5087,8 @@ convolve(input, (result + x), N)
 
 \end_inset
 
-, with varying offset x, and array size N of 0xffff.
- Measured using 
-\begin_inset listings
-lstparams "basicstyle={\ttfamily},language=C"
-inline true
-status open
-
-\begin_layout Plain Layout
-
-perf stat -e cycles:u,r0107:u -r 10
-\end_layout
-
-\end_inset
-
-, counting number of partial address alias events averaged over 10 runs.
+, with varying offset x, and array size N of 0x100000.
+ 
 \end_layout
 
 \end_inset
@@ -5065,7 +5110,7 @@ The best parameter is found to be at a 16 element difference in alignment
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
+lstparams "basicstyle={\small}"
 inline false
 status open
 
@@ -5118,7 +5163,7 @@ Interestingly, neither O1, O2 or O3 was able to do anything about this --
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Architectural Optimization Flags
 \end_layout
 
@@ -5167,7 +5212,7 @@ corei7-avx
  other architectures, reducing portability.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Use of 
 \family typewriter
 restrict
@@ -5335,7 +5380,7 @@ Note that the resulting binaries, providing no offset and offset of 0x30,
  move (for addition), and different register for another movq instruction.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Other Compilers
 \end_layout
 

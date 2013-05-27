@@ -1,8 +1,11 @@
+bin
+conv-O3-gcc
+conv-cc
 
 convolution.cc.s
 convolution.clang.s
 convolution.icc.s
 stat.csv
 stat.all.csv
-a.out
 convolution
+convolution-simple
