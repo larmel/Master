@@ -4198,11 +4198,11 @@ Static variables
 \end_layout
 
 \begin_layout Standard
-Variables i, j and k are declared as 
+Variables i, j and k have static storage class, declared as 
 \family typewriter
 static
 \family default
- in C, meaning they have a static storage class.
+ in C.
  Statically allocated variables have their virtual addresses determined
  at compile time, and are not affected by offseting stack address.
  Inspecting the symbol table section of the ELF object file
@@ -4578,6 +4578,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:loop-fixed"
+
+\end_inset
+
 No change to performance based on environment size using the modified code
 \end_layout
 
@@ -4594,11 +4600,21 @@ No change to performance based on environment size using the modified code
 \begin_layout Standard
 Running the same set of tests again, we are now able to remove all aliasing
  from this particular program.
- In most cases, assuming a uniform random distrubution of initial stack
- addresses, the program performs slighly worse because of the additional
- overhead and extra instructions executed.
- On average over all initial stack positions however, adding this check
- yields a speedup.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:loop-fixed"
+
+\end_inset
+
+ shows that all performance counter statistics are stable through 4096 byte
+ of offset.
+ This covers a whole period of 12 bit address suffixes, showing that the
+ aliasing is not merely moved to another offset.
+ With only neglegtibe overhead from additional code size and instructions
+ executed, we are able to remove bias effects caused by stack position for
+ this program.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -4786,13 +4802,22 @@ Heap Address Conflicts
 \end_layout
 
 \begin_layout Standard
-Consider the following function, computing the convolution between an input
- array and a fixed kernel, disregarding endpoints for simplicity.
+Consider the function shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:convolution"
+
+\end_inset
+
+, computing the convolution between an input array and a fixed kernel, writing
+ the result to another array.
+ Endpoints are skipped for simplicity.
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -4871,6 +4896,12 @@ void convolve(int size, float *input, float *output)
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:convolution"
+
+\end_inset
+
 Convolution kernel
 \end_layout
 

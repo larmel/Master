@@ -41,7 +41,7 @@ bin/loop.csv: loop
 
 bin/fixed.csv: loop-fixed
 	../lperf ./$+ -e $(COUNTERS) -o $@ -n 256 -r 2 \
-		--environment-offset $(ENV_OFFSET) --environment-increment 1
+		--environment-offset $(ENV_OFFSET) --environment-increment 16
 
 bin/motivation.csv: loop
 	../lperf ./$+ -e $(COUNTERS) -o $@ -n 100 -r 100 \
@@ -67,10 +67,11 @@ bin/uopsdispatch.eps: bin/loop.csv
 		--legend 'upper right' --legendcols 2 \
 		--labels 'Cycles, cycles:u' 'Port 0' 'Port 1' 'Port 4' 'Port 5'
 
-# Figure: All alias gone with alternate code path on detected conflict
+# Figure: All alias gone with alternate code path on detected conflict, cover 4096 B to be convincing
 bin/fixed.eps: bin/fixed.csv
 	../lplot $+ -e cycles:u,r0107:u,r01a2:u,r02a3:u --export $@ \
-		--xlabel 'Bytes added to environment' --ticks 64 \
+		--xlabel 'Bytes added to environment' --ticks 1024 \
+		--ylim 1600000 --stride 16 \
 		--legend 'upper right' --legendcols 2 \
 		--labels 'Cycles, cycles:u' 'Alias, r0107:u' 'Resource stalls, r01a2:u' 'Pending loads, r02a3:u'
 
