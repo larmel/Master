@@ -1,7 +1,7 @@
 
 # Books ###########################################################################################
 
-@book { Patterson:2011:ComputerOrganization
+@book { Patterson:2011:ComputerOrganization,
     author    = {David A. Patterson and John L. Hennessy},
     title     = {Computer Organization and Design -- The Hardware / Software Interface (Revised 4th Edition)},
     publisher = {Academic Press},
@@ -51,9 +51,7 @@
 }
 
 @misc { Intel:2006:InsideICM:SmartMemoryAccess,
-    title        = "Inside " # IntelCore # " Microarchitecture and Smart Memory Access: 
-                   An In-Depth Look at {Intel} Innovations for Accelerating Execution of 
-                   Memory-Related Instructions",
+    title        = "White Paper: Inside " # IntelCore # " Microarchitecture and Smart Memory Access",
     author       = {Jack Doweck},
     year         = {2006},
     organization = {Intel Corporation}
@@ -64,12 +62,14 @@
     author       = {Cris Lomont},
     year         = {2012},
     url          = {http://software.intel.com/en-us/articles/introduction-to-x64-assembly},
+    howpublished = {Available from \url{http://software.intel.com/en-us/articles/introduction-to-x64-assembly}}
     organization = {Intel Corporation}
 }
 
 @misc { Intel:OnlinePCReference,
     title        = {Reference for Processor Events},
     url          = {http://software.intel.com/sites/products/documentation/doclib/stdxe/2013/amplifierxe/win/ug_docs/reference},
+    howpublished = {Available from \url{http://software.intel.com/sites/products/documentation/doclib/stdxe/2013/amplifierxe/win/ug_docs/reference}},
     organization = {Intel Corporation}
 }
 
@@ -78,6 +78,7 @@
     author       = {Ramesh Peri},
     organization = {Intel Corporation},
     url          = {http://cscads.rice.edu/workshops/summer09/slides/performance-tools/CSCADS_NHM_PMU.pdf},
+    howpublished = {Available from \url{http://cscads.rice.edu/workshops/summer09/slides/performance-tools/CSCADS_NHM_PMU.pdf}},
     year         = {2009}
 }
 
@@ -85,6 +86,7 @@
 @misc { Doweck:InsideIntelCoreMicroarchitecture,
     title        = "Inside " # IntelCore # " Microarchitecture",
     author       = {Jack Doweck},
+    howpublished = {Presentation, available from \url{http://www.hotchips.org/wp-content/uploads/hc_archives/hc18/3_Tues/HC18.S9/HC18.S9T4.pdf}},
     organization = {Intel Corporation}
 }
 
@@ -118,7 +120,6 @@
     booktitle    = {IEEE International Symposium on Workload Characterization},
     year         = {2008},
     pages        = {141--150},
-    doi          = {10.1109/IISWC.2008.4636099},
     masid        = {4334229}
 }
 
@@ -147,15 +148,11 @@
                     ETAPS 2009},
     series       = {CC '09},
     year         = {2009},
-    isbn         = {978-3-642-00721-7},
     location     = {York, UK},
     pages        = {251--265},
     numpages     = {15},
-    url          = {http://dx.doi.org/10.1007/978-3-642-00722-4_18},
-    doi          = {10.1007/978-3-642-00722-4_18},
-    acmid        = {1532846},
     publisher    = {Springer-Verlag},
-    address      = {Berlin, Heidelberg},
+    address      = {Berlin, Heidelberg}
 } 
 
 @inproceedings { Mytkowicz:2009:WrongData,
@@ -165,21 +162,16 @@
                     programming languages and operating systems},
     series       = {ASPLOS XIV},
     year         = {2009},
-    isbn         = {978-1-60558-406-5},
     location     = {Washington, DC, USA},
     pages        = {265--276},
     numpages     = {12},
-    url          = {http://doi.acm.org/10.1145/1508244.1508275},
-    doi          = {10.1145/1508244.1508275},
-    acmid        = {1508275},
     publisher    = {ACM},
-    address      = {New York, NY, USA},
-    keywords     = {bias, measurement, performance},
+    address      = {New York, NY, USA}
 }
 
 # Matplotlib ######################################################################################
 
-@Article{ Hunter:2007,
+@article { Hunter:2007:Matplotlib,
     Author       = {Hunter, J. D.},
     Title        = {Matplotlib: A 2D graphics environment},
     Journal      = {Computing In Science \& Engineering},
@@ -191,7 +183,7 @@
                     publication-quality image generation across user
                     interfaces and operating systems.},
     publisher    = {IEEE COMPUTER SOC},
-    year         = 2007
+    year         = {2007}
 }
 
 # ASLR ############################################################################################
@@ -206,12 +198,8 @@
     location     = {Washington DC, USA},
     pages        = {298--307},
     numpages     = {10},
-    url          = {http://doi.acm.org/10.1145/1030083.1030124},
-    doi          = {10.1145/1030083.1030124},
-    acmid        = {1030124},
     publisher    = {ACM},
-    address      = {New York, NY, USA},
-    keywords     = {address-space randomization, automated attacks, diversity},
+    address      = {New York, NY, USA}
 }
 
 # C and malloc ####################################################################################
@@ -237,7 +225,7 @@
     pages        = {117--128},
     numpages     = {12},
     publisher    = {ACM},
-    address      = {New York, NY, USA},
+    address      = {New York, NY, USA}
 }
 
 
@@ -285,11 +273,8 @@
                     Code Generation and Optimization},
     series       = {CGO '11},
     year         = {2011},
-    isbn         = {978-1-61284-356-8},
     pages        = {1--10},
     numpages     = {10},
-    url          = {http://dl.acm.org/citation.cfm?id=2190025.2190077},
-    acmid        = {2190077},
     publisher    = {IEEE Computer Society},
     address      = {Washington, DC, USA}
 } 
@@ -308,7 +293,8 @@
     address      = {New York, NY, USA},
 } 
 
-@book { SystemVABI,
-    title        = {System V Application Binary Interface},
-    url          = {http://www.sco.com/developers/devspecs/gabi41.pdf}
+@misc { SystemVABI,
+    title        = {{System V Application Binary Interface}},
+    url          = {http://www.sco.com/developers/devspecs/gabi41.pdf},
+    howpublished = {Available from \url{http://www.sco.com/developers/devspecs/gabi41.pdf}}
 }

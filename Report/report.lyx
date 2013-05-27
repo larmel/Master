@@ -136,7 +136,9 @@ In this thesis we will study bias effects that can be experienced by changing
 \begin_layout Abstract
 Finally, we show that even highly optimized FFT and linear algebra libraries
  are prone to bias.
- 
+ Stack alignment plays a vital role in the performance of FFTW, and more
+ than 30 % performance gain can be made by avoiding address aliasing in
+ BLAS matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
@@ -195,7 +197,15 @@ The goal of this project is to model some of these effects for common use
  cases, and methods for avoiding them, in order to avoiding bias and achieving
  peak performance.
  These effects might be highly platform dependent, so to limit the scope
- we will focus on a particular architecture, the Intel Core i7 'Ivy Bridge'.
+ we will focus on a particular architecture, the Intel Core i7 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+.
  Case studies will include small isolated programs, and ideally also 
 \begin_inset Quotes eld
 \end_inset
@@ -221,13 +231,9 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Analyzing performance is common activity for people in the field of conputer
- science.
- 
-\end_layout
-
-\begin_layout Standard
-This problem is known as measurement bias.
+In this thesis, we will look at how external properties of the execution
+ context affects the performance of computer programs.
+ A number of factors determines how fast or slow a program executes
 \end_layout
 
 \begin_layout Section
@@ -251,22 +257,20 @@ key "Mytkowicz:2009:WrongData"
 \end_inset
 
 , the authors show how simple changes to the execution environment can heavily
- impact program performance.
- Two variables are studied; size of the Unix environment variables, and
- link order of object files.
- Both are found to be significant with respect to measured performance of
- standardized benchmarks.
- This paper is getting old however, thus it is unclear whether measurement
- bias is an issue on newer CPUs.
- A quick reproduction of one of their tests however, clearly shows that
- measurement bias is still an issue on the -- at the time of writing --
- most recent Intel Core i7 Ivy Bridge architecture.
+ impact performance of programs.
+ One of the parameters they studied was the size of Unix environment variables.
+ Environment variables contain various information about the system, for
+ instance the name of the currently logged in user, and current directory
+ path.
+ It seems unlikely that the contents of these variables should have any
+ significance on program performance, yet previous work show that the effects
+ can be enormous.
+ 
 \end_layout
 
 \begin_layout Standard
 \noindent
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -393,7 +397,7 @@ name "fig:motivation"
 \end_inset
 
 A simple C program with significant performance variations under different
- environment sizes.
+ environment sizes
 \end_layout
 
 \end_inset
@@ -407,51 +411,57 @@ A simple C program with significant performance variations under different
 \end_layout
 
 \begin_layout Standard
-Figure 
+This paper is particularly interesting because of an intriguing little C
+ program, which is reproduced here in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:motivation"
 
 \end_inset
 
- shows the micro-kernel presented in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-, together with measurements from our machine.
- The graph shows the number of cycles over a large number of runs, where
- characters are appended to a dummy environment variable between each.
- Cycle counts were measured with hardware performance counters using perf
- to obtain accurate results.
- The program is compiled with GCC
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-GCC, the GNU Compiler Collection.
+.
+ The authors observed that this program was noticeably affected by changes
+ to the environment variables, performing much worse (in terms of cycle
+ count) for some environment sizes.
+ Interestingly, we are able to reproduce very similar results for our newer
+ Ivy Bridge architecture.
+ Plotting the number of cycles executed for different environment sizes,
+ we see that the cycle count suddenly increases by more than 20 %.
+ In principle, the length of your name -- by extension you user login --
+ could be the tipping point between good and bad performance in this case.
  
-\begin_inset CommandInset href
-LatexCommand href
-name "http://gcc.gnu.org/"
-target "http://gcc.gnu.org/"
-
-\end_inset
-
-
 \end_layout
 
+\begin_layout Standard
+What is the 
+\begin_inset Quotes eld
 \end_inset
 
- using all default options.
- The code should not appear particularly extraordinary, yet its performance
- characteristics are quite peculiar.
- Even though the exact same binary executable file is run multiple times,
- the performance is clearly not the same for every environment size.
- Measurement bias is still an issue on the most recent architectures, and
- worth investigating.
+correct
+\begin_inset Quotes erd
+\end_inset
+
+ cycle count for this program? One could say that in most cases, it should
+ be around 700'000, although on average it is somewhat higher.
+ If you are unlucky, sitting on a machine with just the right environment
+ size, you might declare that the cycle count is about 850'000.
+ Previous work focuses mostly on how to mitigate effects of bias, and avoid
+ drawing the wrong conclusions based on misleading measurements.
+ Our goal is to gain a better understanding on exactly what mechanism of
+ the processor causes these effects.
+ With greater understanding comes the possibility to actively avoid 
+\begin_inset Quotes eld
+\end_inset
+
+spikes
+\begin_inset Quotes erd
+\end_inset
+
+ in performance, and gain a real speedup on average.
+\end_layout
+
+\begin_layout Section
+Contributions
 \end_layout
 
 \begin_layout Section
@@ -459,16 +469,7 @@ Outline
 \end_layout
 
 \begin_layout Standard
-The purpose of this thesis is to explore ways to tackle the effects of measureme
-nt bias.
- Previous work has focused mostly on ways to statistically eliminate the
- effects in order to produce reliable measurements -- working towards a
- more statistically valid methodology employed in the computer science community.
- Our approach is slightly different.
- If bias could be controlled in certain situations, we could change program
- or environment to enhance performance -- essentially control the bias to
- work in our favor.
- 
+The remaining parts of this thesisis structured as follows
 \end_layout
 
 \begin_layout Description
@@ -478,12 +479,9 @@ Chapter
 
 2 presents some of the previous work done on measurement bias, showing its
  severity as well as proposed solutions to mitigate or compensate for it.
- A discussion of what actually constitutes the 
-\emph on
-environment
-\emph default
- is discussed.
- 
+ A brief introduction to the Ivy Bridge architecture and use of hardware
+ performance monitoring is given, as well as a discussion of virtual memory
+ on 64 bit Linux systems.
 \end_layout
 
 \begin_layout Description
@@ -491,17 +489,11 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 investigates various performance metrics acquired from simple programs,
- trying to identify potential 
-\emph on
-sources
-\emph default
- of measurement bias.
- We will focus on two different bias effects; memory address aliasingthe
- first has to with memory address aliasing between variables, that can cause
- problems for the out-of-order scheduling.
- Next we will look at Loop Stream Detector, another hardware optimization
- that sometimes can give bad performance.
+3 investigates several potential causes of measurement bias, showing how
+ specific hardware features is sensitive to changes in memory layout.
+ Specifically, we show how address aliasing and the Loop Stream Detector
+ can explain effects observed by increasing environment size or changing
+ link order.
 \end_layout
 
 \begin_layout Description
@@ -509,11 +501,12 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 applies knowledge of bias effects from Chapter 3 in an attempt to speed
- up real-world applications.
- We take an in-depth look at FFTW, a high performance and automatically
- tuned implementation of the fourier transform.
- 
+4 applies knowledge of bias effects from Chapter 3, showing how they apply
+ to real world applications.
+ We take an in-depth look at FFTW, showing how this highly optimized fourier
+ transform library affected by memory layout.
+ We also show how to get significant performance gains for BLAS matrix-vector
+ routines by actively avoiding address aliasing.
 \end_layout
 
 \begin_layout Description
@@ -1019,7 +1012,7 @@ Hardware and Performance Monitoring
 \end_layout
 
 \begin_layout Standard
-Bias effects often depend on specific processor features, and 
+Bias effects generally depend on specific processor features, and 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1028,9 +1021,8 @@ performance cliffs
 \end_inset
 
  caused by them.
- A rudimentary understanding of the underlying hardware is necessary to
- be able to understand why performance varies during different execution
- contexts.
+ A rudimentary understanding of the underlying hardware is necessary in
+ order to understand why performance varies during different execution contexts.
  We limit our study to the Intel Core 
 \begin_inset Quotes eld
 \end_inset
@@ -1046,7 +1038,15 @@ Ivy Bridge
  Instead, we will provide a brief overview of some architectural features,
  and in particular those that migth cause bias due to differences in virtual
  memory layout.
- 
+ For a general introduction to concepts in computer architecture, refer
+ to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Patterson:2011:ComputerOrganization"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -1187,7 +1187,7 @@ key "Intel:2012:OptimizationManual"
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Front End
 \end_layout
 
@@ -1306,7 +1306,7 @@ The Loop Stream Detector is, with some restrictions, able to detect software
 e gain in cases where the front end is a bottleneck.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Out-of-Order Engine and Execution Core
 \end_layout
 
@@ -1321,7 +1321,7 @@ One of the key features of modern processors is instruction level parallelism.
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Cache Hierarchy
 \end_layout
 
@@ -1794,7 +1794,7 @@ reference "chap:list-of-performance-counters"
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Accuracy of Performance Counters
 \end_layout
 
@@ -2068,7 +2068,7 @@ The operating system is a vital part of the execution environment.
  specific variations in OS-es, but rather specific variations within the
  execution context provided by the operating system.
  For all our results, we have used the latest stable release of Ubuntu,
- version 12.04, updated with the latest kernel updates.
+ which is 12.04 LTS.
 \end_layout
 
 \begin_layout Standard
@@ -2175,16 +2175,8 @@ Effectively, only 48 out of 64 available bits are used for addressing.
 0xffffffff'ffffffff
 \family default
  is reserved for the operating system .
- Note that this leaves a large 
-\begin_inset Quotes eld
-\end_inset
-
-hole
-\begin_inset Quotes erd
-\end_inset
-
- of unused addresses, as current hardware does not support addressing the
- whole 64 bit range 
+ Note that this leaves a large gap of unused addresses, as current hardware
+ does not actually support addressing the whole 64 bit range 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Lomont:2012:x64Assembly"
@@ -2201,20 +2193,11 @@ A running process is divided into several sections within the virtual address
 
 \begin_layout Description
 stack Stack frames with parameters and local variables for function calls.
- Allocated starting somewhere around the top address 
-\begin_inset listings
-lstparams "basicstyle={\ttfamily}"
-inline true
-status open
-
-\begin_layout Plain Layout
-
-0x007fff'ffffffff
-\end_layout
-
-\end_inset
-
- and expanding downwards.
+ Allocated starting somewhere around the top (address 
+\family typewriter
+0x7fff'ffffffff
+\family default
+) and expanding downwards.
  
 \end_layout
 
@@ -2789,7 +2772,7 @@ perf stat
  Plots are generated using Python's matplotlib 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Hunter:2007"
+key "Hunter:2007:Matplotlib"
 
 \end_inset
 
@@ -6090,7 +6073,7 @@ Most allocators focus on efficiency in a multithreaded environment, and
 \end_layout
 
 \begin_layout Subsection
-Optimization Guidelines
+Summary and Optimization Guidelines
 \end_layout
 
 \begin_layout Standard
@@ -7330,7 +7313,7 @@ Link order of object files was discussed in the background as one of the
  
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Chunk fetches
 \end_layout
 
@@ -7865,7 +7848,7 @@ We see that measurement bias from link order can in some cases be explained
  alignment to 32 byte, with -falign-loops=32.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsubsection*
 Decoded ICache Limitations
 \end_layout
 
@@ -8172,7 +8155,7 @@ interp
 \end_layout
 
 \begin_layout Subsection
-Optimization Guidelines
+Summary and Optimization Guidelines
 \end_layout
 
 \begin_layout Chapter
