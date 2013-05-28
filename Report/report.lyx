@@ -110,9 +110,9 @@ k_sarnath - Intel forums.
 
 \begin_layout Abstract
 Performance analysis of software is subject to measurement bias.
- Seemingly innocious properties of the environment, such as the location
- of variables in memory, or even room temperature, can impact the performance
- of computer programs.
+ Seemingly innocious properties of the environment, such as the contents
+ of system environment variables, can impact the performance of computer
+ programs.
  Features and restrictions of the underlying hardware introduces performance
  cliffs; on one machine a piece of code might fit within a single cache
  line, while on another the alignment in memory fragments it in two.
@@ -128,7 +128,7 @@ In this thesis we will study bias effects that can be experienced by changing
  Through experimentation and careful measurement using hardware performance
  counters, we identify several potential sources of bias.
  Limitations imposed by the Loop Stream Detector hardware optimization is
- modeled, along with effects from 4K address aliasing.
+ revealed, along with effects from 4K address aliasing.
  We show that environment bias is in fact not completely unpredictable,
  and discuss measures can be made to try to avoid it.
 \end_layout
@@ -160,7 +160,7 @@ status open
 \begin_layout Abstract
 
 \lang norsk
-Sammendrag paa norsk
+Sammendrag på norsk
 \end_layout
 
 \begin_layout Standard
@@ -215,6 +215,21 @@ real
 \end_inset
 
  applications such as FFT algorithms.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Acknowledgements
+\end_layout
+
+\begin_layout Standard
+I would like to thank ...
 \end_layout
 
 \begin_layout Standard
@@ -1749,8 +1764,12 @@ architectural
 non-architectural
 \emph default
  counters, which are specific for each architecture.
- The official documentation of available performance counters and their
- usage can be found in Volume 3B of the Software Developer's Manual 
+ 
+\end_layout
+
+\begin_layout Standard
+The official documentation of available performance counters and their usage
+ can be found in Volume 3B of the Software Developer's Manual 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
@@ -1768,10 +1787,6 @@ reference "chap:list-of-performance-counters"
 , listing only counters that are relevant to the discussion throughout the
  thesis.
  
-\end_layout
-
-\begin_layout Subsubsection*
-Accuracy of Performance Counters
 \end_layout
 
 \begin_layout Subsection
@@ -1905,10 +1920,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsubsection*
-Accessing arbitrary counters
 \end_layout
 
 \begin_layout Standard
@@ -2073,8 +2084,8 @@ Virtual Memory
 Before a program can be run, it needs to be loaded into memory in some way.
  The ELF file includes the path to an interpreter, a program that is responsible
  for loading code and data, setting up a stack, and loading any dependencies.
- Files compiled for execution on a 64 bit Linux platform will point to a
- loader in 
+ Files compiled for execution on a 64 bit Linux platform will typically
+ point to a loader in 
 \family typewriter
 /lib64/ld-linux-x86-64.so.2
 \family default
@@ -2186,8 +2197,7 @@ stack Stack frames with parameters and local variables for function calls.
 heap Dynamically allocated memory, allocated above the text and data segments
  and growing upwards as programs request more memory.
  The start of heap is marked by 'brk'.
- A Linux system call to brk will request more memory, extending the current
- limit.
+ A Linux system call to sbrk adjust the current limit.
  
 \end_layout
 
