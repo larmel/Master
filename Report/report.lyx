@@ -1031,8 +1031,7 @@ Ivy Bridge
 \begin_inset Quotes erd
 \end_inset
 
-, but the architecture borrows many features from previous CPU generations
- as well.
+.
  Of course, a comprehensive introduction to the inner working of any processor
  is way beyond the scope of this thesis.
  Instead, we will provide a brief overview of some architectural features,
@@ -1284,9 +1283,8 @@ test
 cmp
 \family default
 ), and the other is a conditional jump.
- Pairs like these appear often in practice, increasing the instructions-per-cycl
-e of common code.
- 
+ Pairs like these appear often in practice, improving the instructions per
+ cycle when macro fusion is applied.
 \end_layout
 
 \begin_layout Paragraph
@@ -1335,24 +1333,14 @@ There are three levels of cache; Each processor core has an L1 data and
 \end_layout
 
 \begin_layout Paragraph
-Prefetching
-\end_layout
-
-\begin_layout Standard
-Prefecthing is used to mask memory latency, by loading data that is soon
- to be accessed into cache.
- Several prefetchers operate on different levels and between different levels
- of cache.
- 
-\end_layout
-
-\begin_layout Paragraph
 Store Forwarding
 \end_layout
 
 \begin_layout Standard
-A load that happens after a store which is not yet committed, can have the
- store data forwarded directly from the store operations.
+If a load follows a store to the same memory location, the store value can
+ be forwarded to the load operation.
+ Store forwarding avoid accesses to data cache, allowing loads to execute
+ faster.
 \end_layout
 
 \begin_layout Paragraph
@@ -1360,8 +1348,10 @@ Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
-Loads are scheduled speculatively, even if there are potential conflicts
- with preceeding stores 
+A load coming after a store with unresolved address can potentially have
+ a dependency, and must wait until the store is complete.
+ With memory disambiguation, the hardware makes a prediction on wether a
+ conflict will occur, scheduling loads speculatively 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficientPerformance"
@@ -1369,10 +1359,6 @@ key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficient
 \end_inset
 
 .
- A load coming after a store with unresolved address can potentially have
- a dependency, and must wait until the store is complete.
- With memory disambiguation, the hardware makes a prediction on wether a
- conflict will occur.
  Loads that are predicted not to have any dependencies are allowed to read
  data from L1 cache, before previous stores are resolved.
  The predictions are later verified before retirement, re-executing instructions
@@ -1381,15 +1367,7 @@ key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficient
 
 \begin_layout Standard
 Load and store buffers hold the values of speculatively executed memory
- operations, sometimes collectively referred to as 
-\begin_inset Quotes eld
-\end_inset
-
-Memory Order Buffer
-\begin_inset Quotes erd
-\end_inset
-
-.
+ operations, sometimes collectively referred to as Memory Order Buffer.
  
 \end_layout
 
@@ -1780,8 +1758,6 @@ key "Intel:2013:Volume3B"
 \end_inset
 
 .
- Table 19-5 contains all the non-architectural counters supported by Ivy
- Bridge.
  A shorter reference is included in Appendix 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -2024,7 +2000,11 @@ In addition to unit mask and event code, the remaining bits can be set to
 Perf uses this bit-format fairly explicitly, meaning we can provide a hexadecima
 l number corresponding to the desired register value to specify which counter
  to use.
- Let's say we want to count RESOURSE_STALLS.ANY in user mode for ls.
+ Let's say we want to count 
+\shape smallcaps
+resourse_stalls.any
+\shape default
+ in user mode for ls.
  This corresponds to a bitfield containing 1 for User mode, followed by
  0x01, 0xA2 for unit mask and event code respectively, resulting in the
  number 0x101A2.
@@ -2052,7 +2032,8 @@ perf stat -e r01a2:u ls
 \begin_layout Standard
 Simply concatenating unit mask and event code and appending a trailing :u
  is what we want to do in most cases.
- There are additional constraints and special cases for various counters.
+ Note that there are additional constraints and special cases for various
+ counters.
  Refer to the manual for additional details.
 \end_layout
 
@@ -2654,8 +2635,9 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="4" columns="2">
+<lyxtabular version="3" rows="5" columns="3">
 <features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
@@ -2668,11 +2650,49 @@ Processor
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-Intel® Core™ i7-3770 @ 3.40GHz
+Intel® Core™ i7-3770 @ 3.40 GHz
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Family: 0x06, Model: 0x3A
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2688,11 +2708,20 @@ Memory
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 16 GB
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2708,11 +2737,20 @@ Operating System
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 64bit Ubuntu 12.04 LTS (3.2.0-41)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2728,11 +2766,20 @@ Toolchain
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 GCC 4.6.3
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -4185,9 +4232,7 @@ To find out which memory accesses collide, we need to know the memory addresses
 \begin_layout Paragraph
 
 \family typewriter
-static
-\family default
- int i, j, k
+static int i, j, k
 \end_layout
 
 \begin_layout Standard
@@ -4249,6 +4294,8 @@ Symbol table '.symtab' contains 66 entries:
 \end_layout
 
 \begin_layout Paragraph
+
+\family typewriter
 int g = 0, inc = 1
 \end_layout
 
@@ -4265,23 +4312,8 @@ ng observer effects.
  and print the numbers directly using system calls.
  We find that the spike in cycle count occurs when the address of g and
  inc are 0x7fffffffe028 and 0x7fffffffe02c, respectively.
- Note that the last twelve bits (three hexadecimal digits) for 
-\family typewriter
-g
-\family default
- and 
-\family typewriter
-inc
-\family default
- are the same as 
-\family typewriter
-i
-\family default
- and 
-\family typewriter
-j
-\family default
-.
+ Note that the last twelve bits (three hexadecimal digits) for g and inc
+ are the same as for i and j.
  There are two aliasing cases:
 \end_layout
 
@@ -4307,7 +4339,8 @@ When presenting similar results for the Core 2, the authors mentions the
 \shape smallcaps
 load_block.overlap_store
 \shape default
- as a potential explanation of bias effects 
+, which is not available on Ivy Bridge, as a potential indication of what
+ causes of bias effects 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Mytkowicz:2008:Easy"
@@ -4334,19 +4367,19 @@ The load and store have the same offset relative to the beginning of different
 \end_layout
 
 \begin_layout Standard
-It appears that in earlier architectures, effects of 4K aliasing emerge
- as a case of failed store forwarding.
+It appears that effects of 4K aliasing emerge as a case of failed store
+ forwarding in earlier architectures.
  Address aliasing between static and automatic variables was probably the
  underlying cause of bias in the original paper as well.
 \end_layout
 
 \begin_layout Subsubsection*
-Run-time Solutions to Address Aliasing
+Avoiding Aliasing at Runtime
 \end_layout
 
 \begin_layout Standard
 Addresses of automatic variables can not be determined statically, because
- the position of stack is unknown.
+ the position of stack at runtime is generally unknown.
  In addition to being offset by environment variables, the stack address
  can also be perturbed by other factors such as address layout randomization.
  Although we can not easily know 
@@ -4360,23 +4393,7 @@ if
 
 \begin_layout Enumerate
 Pointer addresses can be accessed in C, thus we can read out the addresses
- to check if there are any collisions between (
-\family typewriter
-g
-\family default
-, 
-\family typewriter
-i
-\family default
-) and (
-\family typewriter
-inc
-\family default
-, 
-\family typewriter
-j
-\family default
-).
+ to check if there are any collisions between (g, i) and (inc, j).
 \end_layout
 
 \begin_layout Enumerate
@@ -4594,7 +4611,7 @@ name "fig:loop-fixed"
 \end_inset
 
 Performance counter statistics for modified code, showing stable values
- over a full 4 KiB range of possible stack positions
+ over a full 4 KiB range of possible stack addresses modulo 4096
 \end_layout
 
 \end_inset
@@ -4608,9 +4625,7 @@ Performance counter statistics for modified code, showing stable values
 \end_layout
 
 \begin_layout Standard
-Running the same set of tests again, we are now able to remove all aliasing
- from this particular program.
- Figure 
+Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:loop-fixed"
@@ -4622,8 +4637,8 @@ reference "fig:loop-fixed"
  This covers a whole period of 12 bit address suffixes, showing that the
  aliasing is not merely moved to another offset.
  With only neglegtibe overhead from additional code size and instructions
- executed, we are able to remove negative bias effects caused by stack position
- for this program.
+ executed, we are able to completely remove negative bias effects caused
+ by stack position for this program.
  
 \end_layout
 
