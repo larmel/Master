@@ -2848,75 +2848,17 @@ The memory system issues load and store operations speculatively and out
 .
  Only doing a partial address compare, dependencies between load and store
  operations are sometimes falsely detected.
- Issues with 4K aliasing have existed for many generations of micro-architecture
-s, and discussed on several occations in the optimization manual 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-.
- The following quote is listed under section 3.6.8.2; 
-\begin_inset Quotes eld
-\end_inset
-
-Alias Cases in the Pentium M, Intel Core Solo, Intel Core Duo and Intel
- Core 2 Duo Processors
-\begin_inset Quotes erd
-\end_inset
-
-;
-\end_layout
-
-\begin_layout Quote
-\begin_inset Quotes eld
-\end_inset
-
-Store forwarding -- If a store to an address is followed by a load from
- the same address, the load will not proceed until the store data is available.
- If a store is followed by a load and their addresses differ by a multiple
- of 4 KBytes, the load stalls until the store operation completes
-\begin_inset Quotes erd
-\end_inset
-
- 
-\end_layout
-
-\begin_layout Standard
-In earlier architectures, effects of 4K aliasing emerge as a case of failed
- store forwarding.
- The performance counter LOAD_BLOCK.OVERLAP_STORE counts instances where
- forwarding is blocked due to various reasons, including false dependency
- from address aliasing.
- Interestingly, there is no counter by that name (or event code) listed
- for Ivy Bridge.
- There is however, one performance counter that reports alias events only
- 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
-
-\end_inset
-
-.
- 
+ These events can be counted by the following performance counter
 \end_layout
 
 \begin_layout Description
-LD_BLOCKS_PARTIAL.ADDRESS_ALIAS False dependency in the Memory Order Buffer
+LD_BLOCKS_PARTIAL.ADDRESS_ALIAS False dependencies in Memory Order Buffer
+ due to partial compare on address.
 \end_layout
 
 \begin_layout Standard
-The 
-\begin_inset Quotes eld
-\end_inset
-
-Memory Order Buffer
-\begin_inset Quotes erd
-\end_inset
-
- refers to a collection of read/write buffers within the L1 data cache.
+The Memory Order Buffer refers to a collection of load/store buffers within
+ the L1 data cache.
  It buffers loads and stores of not yet retired instructions, enabling speculati
 ve and out-of-order execution while ensuring that no dependencies are violated
  
@@ -2942,8 +2884,8 @@ Counts the number of loads that have partial address match with preceding
 
 \begin_layout Standard
 False dependencies due to address aliasing can have a negative effect on
- processor performance.
- Through a series of examples, we show that bias effects due to address
+ performance due to loads being reissued.
+ Through a series of examples, we show that bias effects caused by address
  aliasing is both common and significant.
  
 \end_layout
@@ -2968,7 +2910,28 @@ Analysis of Micro Kernel
 \end_layout
 
 \begin_layout Standard
+We begin by showing how address aliasing can explain measurement bias for
+ the micro kernel presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, reproduced here in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:loop-micro-kernel"
+
+\end_inset
+
+.
+ This example is interesting for several reasons:
+\end_layout
+
+\begin_layout Standard
 \begin_inset Float algorithm
+placement h
 wide false
 sideways false
 status open
@@ -3061,26 +3024,6 @@ C code with bias towards certain stack positions
 
 \end_layout
 
-\begin_layout Standard
-We begin by showing how address aliasing can explain measurement bias for
- the micro kernel presented in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-, reproduced here in Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:loop-micro-kernel"
-
-\end_inset
-
-.
- This example is interesting for several reasons:
-\end_layout
-
 \begin_layout Itemize
 The bias effects are significant and easily reproducible
 \end_layout
@@ -3096,8 +3039,8 @@ No satisfactory explanaition as to what causes bias was given in the original
 
 \begin_layout Standard
 We use perf and an automated script to collect performance counter statistics
- over a series of runs, with increasing environment size using a dummy variable
- between each execution.
+ over a series of runs, incrementally increasing environment size using
+ a dummy variable.
  The program is compiled using GCC with all default options.
  Note that any optimization would likely disregard most of the function
  as redundant code, and reduce it to return zero immediately.
@@ -4082,7 +4025,7 @@ name "tab:loop-all-counters"
 
 \end_inset
 
-Performance counters with more than 30% positive or negative correlation
+Performance counters with more than 30 % positive or negative correlation
  to cycle count
 \end_layout
 
@@ -4098,24 +4041,53 @@ Performance counters with more than 30% positive or negative correlation
 
 \begin_layout Standard
 Among all the performance counters supported on our architecture, only a
- few shows significant correlation to cycle count in this case.
- Other interesting counters include resource stalls and loads pending, both
- strongly correlating to cycle count.
- When presenting similar results for the Core 2, the authors mentions the
- performance counter LOAD_BLOCK.OVERLAP_STORE as a potential explanation.
- As mentioned, there is no counter by that name for the Ivy Bridge 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
+ few shows significant correlation to cycle count.
+ 
+\end_layout
 
+\begin_layout Itemize
+Address aliasing have a near perfect correlation, indicating that false
+ memory dependencies causes a performance hit.
+\end_layout
+
+\begin_layout Itemize
+Positive correlation with resource stalls supports the aliasing hypothesis.
+ 
+\shape smallcaps
+resource_stalls.any
+\shape default
+ counts stalled cycles from 
+\begin_inset Quotes eld
+\end_inset
+
+resource related reasons
+\begin_inset Quotes erd
 \end_inset
 
 .
- One that seems close in description is LD_BLOCKS.STORE_FORWARD, which counts
- the number of times loads are blocked by overlapping stores.
- Interestingly, this counter does not correlate with cycle count in our
- case.
- Instead we are looking at 
+ 
+\shape smallcaps
+cycle_activity.cycles_ldm_pending
+\shape default
+ is a related metric, counting the number of cycles with pending memory
+ loads.
+ 
+\end_layout
+
+\begin_layout Itemize
+The remaining counters appears to be less interesting.
+ Bus cycles and 
+\shape smallcaps
+cpl_cycles.ring123
+\shape default
+ will naturally correlate with cycle count.
+ There are differences in the way micro-operations are scheduled between
+ dispatch ports, which seems more like a by-product of the other events.
+ 
+\end_layout
+
+\begin_layout Standard
+
 \family roman
 \series medium
 \shape up
@@ -4127,10 +4099,33 @@ key "Intel:2013:Volume3B"
 \uwave off
 \noun off
 \color none
-LD_BLOCKS_PARTIAL.ADDRESS_ALIAS as the most likely indication of what happens.
- Plotting this counter, we see that it reports zero almost everywhere, and
- spiking in perfect correlation with cycle count.
-
+Plotting 
+\family default
+\series default
+\shape smallcaps
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ld_blocks_partial.address_alias
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+, we see that it reports zero almost everywhere, and spiking in perfect
+ correlation with cycle count.
+ 
 \family default
 \series default
 \shape default
@@ -4142,9 +4137,7 @@ LD_BLOCKS_PARTIAL.ADDRESS_ALIAS as the most likely indication of what happens.
 \uwave default
 \noun default
 \color inherit
- It appears that a read/write dependency is falsely detected, causing the
- pipeline to wait for previous memory operations to complete.
- A higher amount of resource stalls and pending loads seems like a natural
+A higher amount of resource stalls and pending loads seems like a natural
  consequence of stalling due to aliasing.
 \end_layout
 
@@ -4189,18 +4182,17 @@ To find out which memory accesses collide, we need to know the memory addresses
  
 \end_layout
 
-\begin_layout Subsubsection*
-Static variables
-\end_layout
+\begin_layout Paragraph
 
-\begin_layout Standard
-Variables i, j and k have static storage class, declared as 
 \family typewriter
 static
 \family default
- in C.
- Statically allocated variables have their virtual addresses determined
- at compile time, and are not affected by offseting stack address.
+ int i, j, k
+\end_layout
+
+\begin_layout Standard
+Statically allocated variables have their virtual addresses determined at
+ compile time, and are not affected by offseting stack address.
  Inspecting the symbol table section of the ELF object file
 \begin_inset Foot
 status open
@@ -4211,19 +4203,8 @@ Output is generated using the readelf utility, part of GNU Binary Utilities
 
 \end_inset
 
-, reveals that the addresses of i, j and k are 
-\family typewriter
-0x601028
-\family default
-, 
-\family typewriter
-0x60102c
-\family default
- and 
-\family typewriter
-0x601030
-\family default
-, respectively.
+, reveals that the addresses of i, j and k are 0x601028, 0x60102c and 0x601030,
+ respectively.
  
 \end_layout
 
@@ -4267,8 +4248,8 @@ Symbol table '.symtab' contains 66 entries:
 
 \end_layout
 
-\begin_layout Subsubsection*
-Automatic variables
+\begin_layout Paragraph
+int g = 0, inc = 1
 \end_layout
 
 \begin_layout Standard
@@ -4276,39 +4257,15 @@ Variables g and inc are local automatic variables, which are allocated on
  stack.
  The addresses of these variables will be affected by changing initial stack
  position.
- However, it is very difficult to observe the correct addresses of g and
- inc without introducing observer effects.
+ It is difficult to observe the correct addresses of g and inc without introduci
+ng observer effects.
  Simply adding a call to printf for instance, completely changes the program
  behaviour with repect to bias.
  Insted, we use a small amount of assembly code to calculate the addresses
  and print the numbers directly using system calls.
- 
-\end_layout
-
-\begin_layout Standard
-We find that the spike in cycle count occurs when the stack allocated variables
- have the following addresses:
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
- g   :   0x7fffffffe028
-\end_layout
-
-\begin_layout Plain Layout
-
- inc :   0x7fffffffe02c
-\end_layout
-
-\end_inset
-
-Note that the last twelve bits (three hexadecimal digits) for 
+ We find that the spike in cycle count occurs when the address of g and
+ inc are 0x7fffffffe028 and 0x7fffffffe02c, respectively.
+ Note that the last twelve bits (three hexadecimal digits) for 
 \family typewriter
 g
 \family default
@@ -4325,9 +4282,65 @@ i
 j
 \family default
 .
+ There are two aliasing cases:
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(\text{g},\text{i}\right) & \rightarrow & \left(\text{0x7fffffffe028},\text{0x601028}\right)\\
+\left(\text{inc},\text{j}\right) & \rightarrow & \left(\text{0x7fffffffe02c},\text{0x60102c}\right)
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Relation to Previous Architectures
+\end_layout
+
+\begin_layout Standard
+When presenting similar results for the Core 2, the authors mentions the
+ performance counter 
+\shape smallcaps
+load_block.overlap_store
+\shape default
+ as a potential explanation of bias effects 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:Easy"
+
+\end_inset
+
+.
+ The documentation states that this counter triggers on loads blocked by
+ a preceeding store due to a variety of reasons, including the following
+ case:
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+The load and store have the same offset relative to the beginning of different
+ 4-KByte pages.
+ This case is also called 4-KByte aliasing.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It appears that in earlier architectures, effects of 4K aliasing emerge
+ as a case of failed store forwarding.
+ Address aliasing between static and automatic variables was probably the
+ underlying cause of bias in the original paper as well.
+\end_layout
+
+\begin_layout Subsubsection*
 Run-time Solutions to Address Aliasing
 \end_layout
 
@@ -4580,7 +4593,8 @@ name "fig:loop-fixed"
 
 \end_inset
 
-No change to performance based on environment size using the modified code
+Performance counter statistics for modified code, showing stable values
+ over a full 4 KiB range of possible stack positions
 \end_layout
 
 \end_inset
@@ -4608,8 +4622,8 @@ reference "fig:loop-fixed"
  This covers a whole period of 12 bit address suffixes, showing that the
  aliasing is not merely moved to another offset.
  With only neglegtibe overhead from additional code size and instructions
- executed, we are able to remove bias effects caused by stack position for
- this program.
+ executed, we are able to remove negative bias effects caused by stack position
+ for this program.
  
 \end_layout
 
@@ -4644,12 +4658,33 @@ Image filtering
 \end_layout
 
 \begin_layout Standard
-Functions that operate on several contiguous arrays can be vulnerable to
- 4K aliasing.
- For larger data structures and arrays, memory is likely to reside on the
+Functions that operate on pairs of contiguous arrays can be vulnerable to
+ 4K aliasing 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ A typical worst case for this group of functions are when each buffer have
+ the same addresses modulo 4096.
+ For example, iterating over some data from a buffer starting on 0x601
+\series bold
+020
+\series default
+ and writing the result to another buffer starting at 0x865
+\series bold
+020
+\series default
+ is likely to generate aliasing.
+\end_layout
+
+\begin_layout Standard
+For larger data structures and arrays, memory is likely to reside on the
  heap.
- Whether or not heap areas alias depends on properties of the memory allocator
- used.
+ Whether or not heap areas alias will then depend on properties of the memory
+ allocator used.
  
 \end_layout
 
@@ -4668,8 +4703,7 @@ status open
 
 \begin_layout Plain Layout
 A good source of information on this topic is the man-pages for malloc,
- sbrk and mmap.
- These are available by typing 
+ sbrk and mmap, available by typing 
 \family typewriter
 man <topic>
 \family default
@@ -4825,13 +4859,13 @@ always
 \bar default
  have alias on the last 12 bits.
  This is true in all cases where mmap is used internally, as it explicitly
- guaratees the return value to be page aligned.
- Note that this effect is not affected by address randomization.
+ guarantees the return value to be page aligned.
+ Note that this is not affected by address randomization.
  
 \end_layout
 
-\begin_layout Subsection
-Heap Address Conflicts
+\begin_layout Subsubsection*
+Example of Heap Address Conflicts
 \end_layout
 
 \begin_layout Standard
@@ -10798,10 +10832,6 @@ In many cases it will be possible to accurately predict the address of larger
 Conclusions and Future Work
 \end_layout
 
-\begin_layout Standard
-Sure this is an easy section.
-\end_layout
-
 \begin_layout Section
 Contributions
 \end_layout
@@ -10840,15 +10870,11 @@ name "chap:list-of-performance-counters"
 
 \end_layout
 
-\begin_layout Standard
-\noindent
-\begin_inset Float table
-placement h
-wide false
-sideways false
-status open
+\begin_layout Section
+Architectural Counters
+\end_layout
 
-\begin_layout Plain Layout
+\begin_layout Standard
 \align center
 \begin_inset ERT
 status open
@@ -10871,7 +10897,7 @@ begin{small}
 <lyxtabular version="3" rows="8" columns="5">
 <features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="center" valignment="top" width="8text%">
-<column alignment="center" valignment="top" width="8text%">
+<column alignment="center" valignment="top" width="9text%">
 <column alignment="left" valignment="top" width="34text%">
 <column alignment="left" valignment="top" width="15text%">
 <column alignment="left" valignment="top" width="25text%">
@@ -10880,15 +10906,19 @@ begin{small}
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Event num.
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Umask value
 \end_layout
 
@@ -10898,6 +10928,8 @@ Umask value
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Event Mask Mnemonic
 \end_layout
 
@@ -10907,6 +10939,8 @@ Event Mask Mnemonic
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Perf mnemonic
 \end_layout
 
@@ -10916,6 +10950,8 @@ Perf mnemonic
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Description
 \end_layout
 
@@ -11585,38 +11621,40 @@ endgroup
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:architectural-counters"
-
-\end_inset
-
-Architectural performance counters
-\end_layout
-
+\begin_layout Standard
+\begin_inset Newpage pagebreak
 \end_inset
 
 
 \end_layout
 
-\end_inset
-
-
+\begin_layout Section
+Non-Architectural Counters
 \end_layout
 
 \begin_layout Standard
-\noindent
-\begin_inset Float table
-placement h
-wide false
-sideways false
-status open
+This following table contains a subset of the non-architectural performance
+ counters supported on 3rd generation Intel Core 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Plain Layout
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ processors.
+ The official reference can be found in Table 19-5 in the Software Developer's
+ Manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
 \align center
 \begin_inset ERT
 status open
@@ -11636,10 +11674,10 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="18" columns="4">
-<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
+<lyxtabular version="3" rows="19" columns="4">
+<features booktabs="true" islongtable="true" longtabularalignment="center">
 <column alignment="center" valignment="top" width="8text%">
-<column alignment="center" valignment="top" width="8text%">
+<column alignment="center" valignment="top" width="9text%">
 <column alignment="left" valignment="top" width="38text%">
 <column alignment="left" valignment="top" width="40text%">
 <row>
@@ -11647,33 +11685,41 @@ begin{small}
 \begin_inset Text
 
 \begin_layout Plain Layout
-Event num.
+
+\series bold
+Event num
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Umask value
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Event Mask Mnemonic
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 Description
 \end_layout
 
@@ -11980,7 +12026,7 @@ CPL_CYCLES.RING0
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12066,7 +12112,7 @@ CPL_CYCLES.RING123
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12153,7 +12199,7 @@ UOPS_DISPATCHED_PORT.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12414,7 +12460,7 @@ UOPS_DISPATCHED_PORT.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12501,7 +12547,7 @@ UOPS_DISPATCHED_PORT.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12588,7 +12634,7 @@ UOPS_DISPATCHED_PORT.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12674,11 +12720,49 @@ RESOURCE_STALLS.ANY
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 Cycles Allocation is stalled due to Resource Related reason
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xA2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x04
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RESOURCE_STALLS.RS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycles stalled due to no eligible RS entry available
 \end_layout
 
 \end_inset
@@ -12761,7 +12845,7 @@ CYCLE_ACTIVITY.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12848,7 +12932,7 @@ CYCLE_ACTIVITY.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -13085,29 +13169,6 @@ status open
 end{small}
 \backslash
 endgroup
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:non-architectural-counters"
-
-\end_inset
-
-Interesting non-architectural performance counters
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \end_inset

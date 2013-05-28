@@ -745,6 +745,61 @@ Sliding window, accessing elements from two different buffers that are aligned
 
 \end_layout
 
+\begin_layout Section
+4K Alias
+\end_layout
+
+\begin_layout Standard
+Issues with 4K aliasing have existed for many generations of micro-architectures
+, and discussed on several occations in the optimization manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ The following quote is listed under section 3.6.8.2; 
+\begin_inset Quotes eld
+\end_inset
+
+Alias Cases in the Pentium M, Intel Core Solo, Intel Core Duo and Intel
+ Core 2 Duo Processors
+\begin_inset Quotes erd
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+Store forwarding -- If a store to an address is followed by a load from
+ the same address, the load will not proceed until the store data is available.
+ If a store is followed by a load and their addresses differ by a multiple
+ of 4 KBytes, the load stalls until the store operation completes
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Interestingly, there is no counter by that name (or event code) listed for
+ Ivy Bridge.
+ There is however, one performance counter that reports alias events only
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+ 
+\end_layout
+
 \begin_layout Subsection
 Heap conflicts
 \end_layout
