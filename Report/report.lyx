@@ -10861,12 +10861,77 @@ In many cases it will be possible to accurately predict the address of larger
 
 .
  For larger requests, malloc will call mmap and always align to page boundary.
- Perhaps this can simplify the calculations somewhat.
+ Taking advantage of this can simplify the calculations somewhat.
  
 \end_layout
 
 \begin_layout Chapter
 Conclusions and Future Work
+\end_layout
+
+\begin_layout Standard
+In this thesis we have studied effects of contextual bias on the Intel Core
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ architecture.
+ The premiss for our work relies heavily in previous work done by Mytkowitch
+ et al.
+ Their study of measurement bias in earlier architectures showed that changes
+ to environment variables and link order could heavily impact performance.
+ Furthermore, the effects were concluded to be unpredictable and difficult
+ to account for.
+ Questions of what actually causes bias are left largely unanswered, which
+ leaves room for valuable research.
+ Our goal was to gain a better understanding of the mechanisms causing bias
+ effects, and if possible use this knowledge to improve program performance.
+\end_layout
+
+\begin_layout Standard
+As a starting point for our research, we chose to study the micro-kernel
+ first presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ It was not clear wether bias effects were even an issue on our architecture,
+ as previous work studied mostly Core 2 and earlier processors.
+ Being able to reproduce similar effects from changing environment size
+ was a big motivator for continued exploration.
+ In Chapter 3, we present an in-depth study of what was causing bias for
+ that particular program.
+ Through careful measurements using hardware performance counters, we find
+ that address aliasing between local and static variables can explain what
+ is happening.
+ 
+\end_layout
+
+\begin_layout Standard
+With an understanding of the possible performance penalties incurred from
+ aliasing, we started to explore what other use cases might be affected
+ by this.
+ The fact that malloc often allocates on page boundary proved to be troubling,
+ essentially guaranteeing bad performance from aliasing in many cases.
+ Already, we had an excellent example where some knowledge of the hardware
+ could provide massive speedup in real world applications.
+ Knowing about the synergy between malloc and 4K aliasing, coming up with
+ the convolution example was actually not very hard.
+ 
+\end_layout
+
+\begin_layout Standard
+The Loop Stream Detector had been previously mentioned as a possible cause
+ of bias.
+ We wanted to know wether this was true for  Our study of this proved somewhat
+ challenging by tha
 \end_layout
 
 \begin_layout Section
@@ -10879,6 +10944,15 @@ Challenges
 
 \begin_layout Section
 Future Work
+\end_layout
+
+\begin_layout Standard
+In the end, we managed to document two bias effects; 4K aliasing and LSD.
+ A lot of experimental work on other potential effects are left our of the
+ thesis.
+ With very limited knowledge of architectural details, it is challenging
+ to design code that exhibits some form of bias.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -11689,6 +11763,16 @@ key "Intel:2013:Volume3B"
 \end_inset
 
 .
+ Note that 
+\shape smallcaps
+lsd_overflow
+\shape default
+ and 
+\shape smallcaps
+lsd.uops
+\shape default
+ are included in this list, dispite not being officially supported on our
+ architecture.
 \end_layout
 
 \begin_layout Standard
