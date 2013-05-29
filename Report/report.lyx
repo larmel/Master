@@ -4454,7 +4454,7 @@ status open
 
 \begin_layout Plain Layout
 With just the right environment size, stack allocated variables end up with
- the same address suffix as static variables
+ the same address suffixes as static variables
 \end_layout
 
 \end_inset
@@ -4781,7 +4781,9 @@ reference "fig:loop-fixed"
 \end_layout
 
 \begin_layout Subsection
-Aligned Memory Accesses
+Properties of 
+\family typewriter
+malloc
 \end_layout
 
 \begin_layout Standard
@@ -4838,25 +4840,20 @@ For larger data structures and arrays, memory is likely to reside on the
  heap.
  Whether or not heap areas alias will then depend on properties of the memory
  allocator used.
- 
-\end_layout
-
-\begin_layout Subsubsection*
-Properties of Malloc
-\end_layout
-
-\begin_layout Standard
-Aquiring dynamic memory at run time is usually done by calling 
+ Aquiring dynamic memory at run time is usually done by calling 
 \family typewriter
 malloc
 \family default
-
+, which takes a number of bytes to allocate and returns a pointer to that
+ area.
+ Under the hood, a typical malloc implementation on Linux systems uses two
+ different system calls to aquire more memory from the operating system
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
-A good source of information on this topic is the man-pages for malloc,
- sbrk and mmap, available by typing 
+More information can be found in the man-pages for malloc, sbrk and mmap,
+ available by typing 
 \family typewriter
 man <topic>
 \family default
@@ -4865,10 +4862,7 @@ man <topic>
 
 \end_inset
 
-, which takes a number of bytes to allocate and returns a pointer to that
- area.
- Under the hood, a typical malloc implementation on Linux systems uses two
- different system calls to aquire more memory from the operating system.
+.
  
 \end_layout
 
@@ -4972,7 +4966,7 @@ For small requests of
 
  bytes, we get get the following addresses for five concecutive allocations:
  0x1541010, 0x1541030, 0x1541050, 0x1541070, 0x1541090.
- With address layout randomization enabled, the first heap page can vary.
+ With address layout randomization enabled, the initial heap page can vary.
 \end_layout
 
 \begin_layout Itemize
@@ -5017,7 +5011,7 @@ always
  
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Subsection
 Example of Heap Address Conflicts
 \end_layout
 
@@ -5170,7 +5164,7 @@ int main() {
 
 \begin_layout Plain Layout
 
-    convolve(N, input, result);
+    convolve(N, input, output);
 \end_layout
 
 \begin_layout Plain Layout
@@ -5189,7 +5183,7 @@ int main() {
 \end_layout
 
 \begin_layout Standard
-The program is compiled with GCC and optimization O3.
+The program is compiled with GCC and optimization level O3.
  Output from perf stat is shown below, measuring number of cycles, address
  alias (r0107:u), resource stalls (r01a2:u) and number of retired instructions.
  We see that a very large number of alias events and resource stalls are
@@ -5255,7 +5249,8 @@ output[i]
 \family default
  in convolve.
  Although distinct memory locations, the processor assumes there are dependencie
-s between them, apparently with a great penalty in this program.
+s between them, apparently with a significant performance penalty in this
+ program.
  
 \end_layout
 
@@ -5290,7 +5285,7 @@ int main() {
 
 \begin_layout Plain Layout
 
-    convolve(N, input, (result + x));
+    convolve(N, input, (output + x));
 \end_layout
 
 \begin_layout Plain Layout
@@ -5310,7 +5305,6 @@ int main() {
 
 \begin_layout Standard
 \begin_inset Float table
-placement H
 wide false
 sideways false
 status open
@@ -5329,12 +5323,14 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Performance statistics for 
+Performance statistics for convolution with increasing separation of input
+ and output addresses suffixes.
+ Graph plots 
 \family typewriter
-convolve(input, (result + x), N)
+convolve(N, input, (output + x))
 \family default
-, with increasing values of x.
- 
+ for increasing values of x, separating array addresses by x floats (or
+ 4x bytes) modulo 4096.
 \end_layout
 
 \end_inset
@@ -5348,12 +5344,12 @@ convolve(input, (result + x), N)
 \end_layout
 
 \begin_layout Standard
-The difference mod 4096 between input and output arrays is 4*x bytes.
+The difference mod 4096 between input and output arrays is 4x bytes.
  Plotting this for increasing values of x shows that virtually all aliasing
  is removed after offseting with 12 or more elements.
  The best parameter is found to be at a 16 element difference in alignment
  between input and output.
- Simply by altering addresses yields more than 2x speedup.
+ Simply altering addresses yields more than 2x speedup.
 \end_layout
 
 \begin_layout Standard
@@ -5411,14 +5407,14 @@ Interestingly, neither O1, O2 or O3 was able to do anything about this --
  
 \end_layout
 
-\begin_layout Subsubsection*
-Architectural Optimization Flags
+\begin_layout Subsection
+Architectural Optimization
 \end_layout
 
 \begin_layout Standard
 Because address aliasing is an artifact of intricacies in the processor
- architecture, we could hope that GCC will help when provided this information.
- In the documentation
+ architecture, we could hope that GCC will help when asked to compile for
+ a specific target machine
 \begin_inset Foot
 status open
 
@@ -5435,7 +5431,9 @@ target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.
 
 \end_inset
 
- we find four possible architecture specifications; 
+.
+ In the documentation we find four possible architecture specifications;
+ 
 \emph on
 native
 \emph default
@@ -5452,18 +5450,11 @@ corei7
 corei7-avx
 \emph default
 .
- Native seems to produce code equivalent to corei7-avx.
  Using the -march=native flag does indeed prodice better code, but not as
  efficient as offseting arrays manually and not specifying any particular
  architecture.
  Note that code compiled with these flags are not guaranteed to work on
  other architectures, reducing portability.
-\end_layout
-
-\begin_layout Subsubsection*
-Use of 
-\family typewriter
-restrict
 \end_layout
 
 \begin_layout Standard
@@ -5502,8 +5493,7 @@ By marking input and output as restrict, we guarantee they are the only
 ce.
  Additionally, the input array should be specified as const, guaranteeing
  that only read operations are done to that array.
- We find that the following compile parameters for gcc gives the best performanc
-e.
+ We find that the following compile parameters gives the best performance.
 \end_layout
 
 \begin_layout Standard
@@ -10181,11 +10171,7 @@ Planning for Alias
 \end_layout
 
 \begin_layout Standard
-A more realistic solution is to give this responsibility to the 
-\emph on
-planner
-\emph default
-.
+A more realistic solution is to give this responsibility to the planner.
  Note that the heap addresses are already required when computing a plan.
 \end_layout
 
@@ -10207,33 +10193,19 @@ fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
 \begin_layout Standard
 As we have shown, the optimal stack position for each kernel depends on
- the memory addresses of input and output arrays.
- 
-\end_layout
-
-\begin_layout Standard
-Note that aliasing is still an issue when using a more thorough planner,
- for example using 
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline true
-status open
-
-\begin_layout Plain Layout
-
+ the memory addresses of input and output arrays, but the component that
+ is missing is stack position.
+ In principle, planning using a more thorough planner which considers empirical
+ timings (for example using 
+\family typewriter
 FFTW_MEASURE
-\end_layout
-
-\end_inset
-
-.
- FFTW then actually measures the performance for different plans empirically,
- optimizing automatically for the underlying hardware.
- This would cancel out bias if the following were true:
+\family default
+) could cancel out bias if the following were true;
 \end_layout
 
 \begin_layout Enumerate
 Multiple alternative kernels with varying alias characteristcs exists.
+ 
 \end_layout
 
 \begin_layout Enumerate
@@ -10243,14 +10215,16 @@ The call chain are the same during benchmarking in the planner as when the
 \end_layout
 
 \begin_layout Standard
-The planner can not know the stack depth of which a user calls fftw_execute
- with a given plan, thus simply benchmarking multiple alternative implementation
- to find which one does not suffer from bias will not work.
-\end_layout
-
-\begin_layout Standard
-Realistic alternative: compiler can generate better assembly that checks
- for alias conflict on O3 and -march=native.
+Unfortunately, the planner can not know the stack depth of which a user
+ calls fftw_execute with a given plan.
+ Simply benchmarking multiple alternative implementation to find which one
+ does not suffer from bias will not work in general.
+ On the contrary, empirical planning might actually falsely predict which
+ kernels are good.
+ A hypothetical scenario would be if planning is done in a memory environment
+ that are not affected by aliasing, and later executed in a worst-case environme
+nt for aliasing.
+ 
 \end_layout
 
 \begin_layout Subsubsection*
@@ -10258,8 +10232,16 @@ Allocating Alias-free
 \end_layout
 
 \begin_layout Standard
-Even though we did not find any apparent heap-heap conflicts, fftw_malloc
- could help by ?
+FFTW comes with fftw_malloc, which is a wrapper around regular malloc with
+ stronger alignment guarantees.
+ The purpose of using this is to optimize for use with SIMD instructions.
+ In cases where address conflicts between heap data can occur, extending
+ fftw_malloc to avoid returning aliased heap segments would be a realistic
+ solution.
+ For the n1fv_16 kernel, we found that alias in heap addresses did not matter.
+ However, this is not necessarily true for all kernels.
+ Looking into possible improvements here might be worthwile.
+ 
 \begin_inset Newpage pagebreak
 \end_inset
 
@@ -11060,18 +11042,18 @@ In our case studies, we chose to concentrate on highly optimized numerical
  specific optimizations, in order to achieve the maximum possible performance.
  We chose to focus mainly on FFTW because of some previous experiences with
  this library from other coursework at NTNU.
- We are able to identify bias towards certain stack positions for small
+ We were able to identify bias towards certain stack positions for small
  kernels, caused by 4K aliasing.
- Unfortunately, the effects are so minor that any intrusive fixes to the
- kernels themselves quickly incur too large overhead to be worth it.
+ The effects are so minor however, that any intrusive fixes to the kernels
+ themselves quickly incur too large of an overhead to be worth it.
  
 \end_layout
 
 \begin_layout Standard
-Lastly, we wanted to investigate wether BLAS libraries also suffered from
+Lastly, we wanted to investigate whether BLAS libraries also suffered from
  bias.
  We suspected that certain operations might be sensitive to aliasing between
- heap buffers, similar to the effects observed in Chapter 3.
+ heap buffers, similar to the effects pointed out in Chapter 3.
  The impact of address aliasing in matrix-vector multiplication proved to
  be huge, even for an automatically tuned ATLAS installation.
  By manually adjusting alignment of matrix and vector buffers, speedups
