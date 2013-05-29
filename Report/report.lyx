@@ -7375,8 +7375,7 @@ c0
 \end_inset
 
  byte of instruction addresses, this specific alignment causes the code
- to span not 12 but 13 chunks, exceeding the limitation of the Loop Stream
- Detector.
+ to span not 12 but 13 chunks, exceeding the limitation.
  
 \end_layout
 
@@ -8198,15 +8197,14 @@ On a final note, it is not too difficult to come up with smaller programs
 \end_layout
 
 \begin_layout Subsection
-Bias from Trivial Code Changes
+Effects of Trivial Code Changes
 \end_layout
 
 \begin_layout Standard
-The Loop Stream Detector can in some cases provide significant speedup.
- On the flip side, subtle changes to code layout sometimes prevents this
- optimization to be utilized.
- As we have seen, simply adding a printf statement or changing the link
- order, can result in wildly different performance characteristics.
+The Loop Stream Detector can provide significant speedup, but subtle changes
+ to code layout sometimes prevents this optimization to be utilized.
+ As we have seen, simply adding (or removing) a printf statement, or changing
+ the link order, can have a severe performance impact.
  Programmers rarely care, or even know, about intricate details such as
  the addresses and alignment of code.
  We expect, and probably rightfully so, that sensible compilers and linkers
@@ -8257,17 +8255,17 @@ Length of external symbols
 \end_layout
 
 \begin_layout Standard
-Function names are placed in the .strtab section in the ELF file.
+Symbols such as function names are placed in the .strtab section in the ELF
+ file.
  When running readelf or objdump, the names are used to print nice output.
- However, function names of external symbols resolved at run-time does affect
+ However, names of external symbols resolved at run-time does in fact affect
  code layout.
  Longer function names (or more external dependencies) will offset the text
  segment because of allocable segments related to dynamic linking is placed
  before text.
  This includes dynsym, dynstr, gnu.version and rela sections in an executable
  made with GCC.
- Details for each of the ELF sections on GNU platform can be found in the
- man pages 
+ Details for each of the ELF sections can be found in the man pages 
 \begin_inset Foot
 status open
 
@@ -8293,14 +8291,15 @@ Changing interpreter
 
 \begin_layout Standard
 When executing an ELF binary, the first thing that happens is to load and
- run an interpreter.
+ run an interpreter/dunamic linker.
  The interpreter is responsible for unpacking the object file and map all
- the allocable sections to virtual memory.
- The path to the interpreter itself is located in the 
+ the allocable sections to virtual memory, as well as loading any external
+ dependencies.
+ The path to the interpreter itself is located in the ELF 
 \begin_inset Quotes eld
 \end_inset
 
-interp
+.interp
 \begin_inset Quotes erd
 \end_inset
 
@@ -8315,24 +8314,49 @@ interp
 
 , which should be common on 64 bit Linux systems.
  Other loaders can be specified, either at compile time or by patching the
- object file [footnote, patchelf].
- Because the string is allocated to virtual memory before the text segment,
- the size (in characters) can offset code addresses.
- Consider experimenting with a custom loader, for example linking with 
-\begin_inset Quotes eld
+ object file
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://nixos.org/patchelf.html"
+target "http://nixos.org/patchelf.html"
+
 \end_inset
 
--Wl,-dynamic-linker,/home/me/very/long/path/to/another/loader.symlink.so.2
-\begin_inset Quotes erd
+
+\end_layout
+
 \end_inset
 
 .
- Doing this can actually offset text segment of ELF binaries.
- 
+ Specifying an alternative interpreter at compile time can be done with
+ a linker flag, for example:
 \end_layout
 
-\begin_layout Subsection
-Summary and Optimization Guidelines
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+-Wl,-dynamic-linker,/home/me/very/long/path/to/an/alternative/loader.symlink.so.2
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The string containing the path to the interpreter is actually allocated
+ to virtual memory, before the text segment.
+ This means that the string length (in characters) can offset code addresses.
+ 
 \end_layout
 
 \begin_layout Chapter
@@ -8815,7 +8839,7 @@ status open
 There are actually two separate implementations provided, one specifically
  optimized for architectures supporting fused multiply-add instructions.
  FFTW is compiled with FMA disabled in our case, as there are no such instructio
-ns on the Ivy Bridge.
+ns on Ivy Bridge.
 \end_layout
 
 \end_inset
