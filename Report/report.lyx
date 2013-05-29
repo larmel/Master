@@ -10880,7 +10880,7 @@ Ivy Bridge
 \end_inset
 
  architecture.
- The premiss for our work relies heavily in previous work done by Mytkowitch
+ The premiss for our work relies heavily in previous work done by Mytkowicz
  et al.
  Their study of measurement bias in earlier architectures showed that changes
  to environment variables and link order could heavily impact performance.
@@ -10975,20 +10975,65 @@ Contributions
 \end_layout
 
 \begin_layout Standard
-Throughout this thesis we have documented two architecture-specific properties
- causing bias
+The main purpose of this work was to gain an understanding of the underlying
+ effects causing measurement bias.
+ We have identified and documented two such architecture-specific properties
+ of the Intel Core 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+;
 \end_layout
 
 \begin_layout Itemize
-4K address aliasing
+4K address aliasing: Alias on the last 12 bits can cause false conflicts
+ in the memory ordering system, biasing performance towards certain data
+ layouts.
 \end_layout
 
 \begin_layout Itemize
-Loop Stream Detector
+Loop Stream Detector: Limitations in micro-op caches favors code with certain
+ static code layouts.
 \end_layout
 
 \begin_layout Standard
-Of course.
+It is important to point out that limitations of the LSD and the existence
+ of 4K aliasing is not new or unknown.
+ Although scarcely documented, both of these issues are discussed to some
+ extent in the processor vendor manuals.
+ However, modern CPU architectures are tremendously complicated, and very
+ few people would even care to read the manuals for arcane details of these
+ topics.
+ 
+\end_layout
+
+\begin_layout Standard
+Our work serves as an extension to the documented processor behaviour, and
+ links these properties to the concept of 
+\begin_inset Quotes eld
+\end_inset
+
+measurement bias
+\begin_inset Quotes erd
+\end_inset
+
+.
+ We show how code and data layout in memory can affect program performance,
+ finally providing satisfactory explanations of measurement bias that can
+ be observed from changing link order or environment varibles.
+ Unlike stated in previous work, we find that bias is in fact 
+\emph on
+not
+\emph default
+ entirelly unpredictable.
+ Furthermore, a clear understanding of what causes bias is necessary in
+ order achieve optimal performance in real applications.
+ Our results are relevant to anyone that care about optimizing program performan
+ce on modern Intel architectures.
 \end_layout
 
 \begin_layout Section
@@ -11010,6 +11055,10 @@ In the end, we managed to document two bias effects; 4K aliasing and LSD.
 
 \begin_layout Standard
 LSD uop cache
+\end_layout
+
+\begin_layout Standard
+Haswell
 \end_layout
 
 \begin_layout Standard
