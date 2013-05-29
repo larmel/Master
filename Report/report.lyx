@@ -10958,8 +10958,37 @@ In our case studies, we chose to concentrate on highly optimized numerical
  
 \end_layout
 
+\begin_layout Standard
+Lastly, we wanted to investigate wether BLAS libraries also suffered from
+ bias.
+ We suspected that certain operations might be sensitive to aliasing between
+ heap buffers, similar to the effects observed in Chapter 3.
+ The impact of address aliasing in matrix-vector multiplication proved to
+ be huge, even for an automatically tuned ATLAS installation.
+ By manually adjusting alignment of matrix and vector buffers, speedups
+ of over 30 % can be achieved for repeated invocations of dgemv.
+ 
+\end_layout
+
 \begin_layout Section
 Contributions
+\end_layout
+
+\begin_layout Standard
+Throughout this thesis we have documented two architecture-specific properties
+ causing bias
+\end_layout
+
+\begin_layout Itemize
+4K address aliasing
+\end_layout
+
+\begin_layout Itemize
+Loop Stream Detector
+\end_layout
+
+\begin_layout Standard
+Of course.
 \end_layout
 
 \begin_layout Section
@@ -10967,7 +10996,7 @@ Challenges
 \end_layout
 
 \begin_layout Section
-Future Work
+Directions for Future Work
 \end_layout
 
 \begin_layout Standard
