@@ -11174,6 +11174,49 @@ all
 \end_layout
 
 \begin_layout Subsection
+Library Optimizations
+\end_layout
+
+\begin_layout Standard
+In our case studies, we found that bias effects from address aliasing affected
+ both FFTW and ATLAS.
+ For highly optimized numerical libraries in particular, there should be
+ incentive to account for address aliasing to improve performance.
+ 
+\end_layout
+
+\begin_layout Standard
+In cases where aliasing depend on heap allocated memory, a possible solution
+ could be to provide special-purpose wrappers around malloc.
+ FFTW already has fftw_malloc, which would be a perfect place to encode
+ knowledge about aliasing.
+ We did not find any effects from conflicts between heap areas in the case
+ of FFTW, but prividing a similar function for BLAS implementations is an
+ option.
+ 
+\end_layout
+
+\begin_layout Standard
+There is probably also opportunities for writing code that is less sensitive
+ to data alignment.
+ In the case of matrix-vector multiplication, it might be possible to access
+ data in a different order depending on heap addresses.
+ By explicitly checking the addresses of input parameters, different code
+ paths can be chosen to avoid aliasing.
+ There is an overhead to this, but with potential for over 30 % performance
+ improvement in the worst case, the cost and complexity is probably acceptable.
+ 
+\end_layout
+
+\begin_layout Standard
+The extent and impact of bias in other libraries is also an open question.
+ Of the two we studied, we were able to identify address aliasing fairly
+ easily.
+ We suspect that this is a common phenomenon, and worth investigating for
+ developers of performance critical applications.
+\end_layout
+
+\begin_layout Subsection
 Other Architectures
 \end_layout
 
@@ -11207,8 +11250,28 @@ key "Intel:2012:OptimizationManual"
  
 \end_layout
 
-\begin_layout Subsection
-Library Optimizations
+\begin_layout Standard
+Processor architectures changes at a rapid pace, and by the time this thesis
+ is published the 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ will have been replaced by 
+\begin_inset Quotes eld
+\end_inset
+
+Haswell
+\begin_inset Quotes erd
+\end_inset
+
+.
+ We are interested to see whether anything will change regarding the LSD
+ or 4K aliasing in newer architectures.
+ 
 \end_layout
 
 \begin_layout Standard
