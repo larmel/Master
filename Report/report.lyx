@@ -108,6 +108,22 @@ None really knows what is happening inside the CPU...
 k_sarnath - Intel forums.
 \end_layout
 
+\begin_layout Quotation
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pagenumbering{roman}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Abstract
 Performance analysis of software is subject to measurement bias.
  Seemingly innocious properties of the environment, such as the contents
@@ -240,8 +256,15 @@ Acknowledgements
 I would like to thank my supervisor, Anne Cathrine Elster, for her support
  and feedback during this past year.
  A special thanks to Rune Erlend Jensen, whose continuous assistance and
- expertise on performance counters, helped me navigate through this challenging
- topic.
+ expertise on performance counters helped me navigate through through this
+ challenging topic.
+\end_layout
+
+\begin_layout Standard
+The HPC-lab at NTNU provided the hardware and resources necessary to complete
+ this work, for which I am grateful.
+ I would also like to thank the other master students there, for providing
+ a great work environment and invaluable feedback.
 \end_layout
 
 \begin_layout Standard
@@ -258,6 +281,18 @@ Introduction
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pagenumbering{arabic}
+\end_layout
+
+\end_inset
+
 In this thesis, we will look at how external properties of the execution
  context affects the performance of computer programs.
  A number of factors determines how fast or slow a program executes
@@ -11037,19 +11072,19 @@ ce on modern Intel architectures.
 \end_layout
 
 \begin_layout Section
-Challenges
-\end_layout
-
-\begin_layout Section
 Directions for Future Work
 \end_layout
 
 \begin_layout Standard
-In the end, we managed to document two bias effects; 4K aliasing and LSD.
- A lot of experimental work on other potential effects are left our of the
- thesis.
- With very limited knowledge of architectural details, it is challenging
- to design code that exhibits some form of bias.
+When we started our investigations, the processor was a 
+\begin_inset Quotes eld
+\end_inset
+
+black box
+\begin_inset Quotes erd
+\end_inset
+
+.
  
 \end_layout
 
