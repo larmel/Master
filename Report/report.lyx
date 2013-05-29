@@ -126,19 +126,27 @@ In this thesis we will study bias effects that can be experienced by changing
  In effect, both of these leads to different virtual memory layouts, which
  is what actually triggers the performance cliffs.
  Through experimentation and careful measurement using hardware performance
- counters, we identify several potential sources of bias.
+ counters, we identify several potential sources of bias on the Intel 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ architecture.
  Limitations imposed by the Loop Stream Detector hardware optimization is
  revealed, along with effects from 4K address aliasing.
- We show that environment bias is in fact not completely unpredictable,
- and discuss measures can be made to try to avoid it.
+ We show that bias is in fact not completely unpredictable, and discuss
+ measures for avoiding it.
 \end_layout
 
 \begin_layout Abstract
-Finally, we show that even highly optimized FFT and linear algebra libraries
- are prone to bias.
- Stack alignment plays a vital role in the performance of FFTW, and more
- than 30 % performance gain can be made by avoiding address aliasing in
- BLAS matrix-vector multiplication.
+Case studies show that even highly optimized fourier transform and linear
+ algebra libraries are prone to bias.
+ We find that stack alignment significantly affects the performance of FFTW,
+ and that more than 30 % performance gain can be made by avoiding address
+ aliasing in BLAS matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
@@ -229,7 +237,11 @@ Acknowledgements
 \end_layout
 
 \begin_layout Standard
-I would like to thank ...
+I would like to thank my supervisor, Anne Cathrine Elster, for her support
+ and feedback during this past year.
+ A special thanks to Rune Erlend Jensen, whose continuous assistance and
+ expertise on performance counters, helped me navigate through this challenging
+ topic.
 \end_layout
 
 \begin_layout Standard
