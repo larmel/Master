@@ -11098,7 +11098,30 @@ key "Intel:2012:OptimizationManual"
 
  is a good starting point for further reasearch, describing how various
  hardware features interact and operate.
- Further work is needed to lift more of the knowledge buried among technical
+ Some of the features we think might be worthwile to investigate include;
+\end_layout
+
+\begin_layout Itemize
+Decoded ICache limitations: We observed corner cases of the Loop Stream
+ Detector that were probably related to micro-ops not being cached.
+ Figuring out the exact parameters for the micro-op cache could help compilers
+ generate optimal code layout.
+ 
+\end_layout
+
+\begin_layout Itemize
+Hyperthreading: This feature was disabled througout our testing to avoid
+ any interference.
+ We imagine there are many interesting performance implication occuring
+ from threads competing about resources.
+ For example, the LSD micro-op limitation being shared between logical cores
+ is clearly a potential source of bias towards systems without hyperthreading
+ enabled.
+ 
+\end_layout
+
+\begin_layout Standard
+Further work is needed to lift more of the knowledge buried among technical
  details in official manuals.
  With increased awareness of these effects, there is clearly a potential
  for improving performance of existing programs.
@@ -11111,6 +11134,25 @@ Compiler Optimizations
 \begin_layout Standard
 The most natural place to encode architectural-specific knowledge used for
  optimization is of course in compilers.
+ In an ideal world, programmers would not need to care about intricate corner
+ cases in hardware to achieve the best performance.
+ Optimizing code layout for maximal usage of the Loop Stream Detector could
+ be a worthwile endeavor.
+ We did not investigate to what degree this is handled by modern compilers
+ other than GCC, but would not be surprised if there is considerable room
+ for improvement.
+ 
+\end_layout
+
+\begin_layout Standard
+Generating alias-free code could potentially also be done by the compiler.
+ We show how aliasing can be avoided by adding alternative code paths in
+ Chapter 3, which at least in principle shows that compilers could handle
+ this in some cases.
+ Code that relies on heap-allocated buffers seems like a particularly difficult
+ thing to optimize for.
+ A starting point could be to detect functions that might suffer from aliasing
+ via some static analysis, perhaps issuing a warning.
 \end_layout
 
 \begin_layout Subsection
@@ -11118,14 +11160,17 @@ Alias-free Allocators
 \end_layout
 
 \begin_layout Standard
-We show that typical memory allocators are prone to rsultin bad performance
- in all cases, because heap memory is often page aligned.
- As far as we are aware, there are no malloc implementations that specifically
+We show that typical memory allocators are prone to cause aliasing in 
+\emph on
+all
+\emph default
+ cases, because heap memory is often page aligned.
+ As far as we know, there are no malloc implementations that specifically
  addresses aliasing issues.
  Developing good heuristics on the optimal heap addresses to return from
  malloc would be an interesting topic for further research.
  An obvious improvement would be to perturb addresses of allocations done
- with mmap, avoiding identical 12 bit address suffixes of all large allocations.
+ with mmap, avoiding identical 12 bit address suffixes of large allocations.
 \end_layout
 
 \begin_layout Subsection
@@ -11133,7 +11178,33 @@ Other Architectures
 \end_layout
 
 \begin_layout Standard
-We limited our study to one specific architecture, thus i
+We limited our study to one specific architecture, the at the time of writing
+ most recent 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ from Intel.
+ An intereresting question is whether effects from LSD limitations and 4K
+ aliasing translate to other CPU architectures.
+ Limitations of the Loop Stream Detector have changed through the last several
+ generations, suggesting that the particular examples we present might not
+ behave similarly on other Intel processors.
+ Effects from 4K aliasing are documented in architectures as far back as
+ the first Core processors 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ It would be interesting to see a comparison of performance implications
+ from 4K aliasing between processor generations.
+ 
 \end_layout
 
 \begin_layout Subsection
