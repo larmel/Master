@@ -10889,7 +10889,8 @@ Ivy Bridge
  Questions of what actually causes bias are left largely unanswered, which
  leaves room for valuable research.
  Our goal was to gain a better understanding of the mechanisms causing bias
- effects, and if possible use this knowledge to improve program performance.
+ effects, and if possible use this knowledge to improve performance of real
+ world applications.
 \end_layout
 
 \begin_layout Standard
@@ -10930,8 +10931,31 @@ With an understanding of the possible performance penalties incurred from
 \begin_layout Standard
 The Loop Stream Detector had been previously mentioned as a possible cause
  of bias.
- We wanted to know wether this was true for  Our study of this proved somewhat
- challenging by tha
+ Studying the LSD proved to be challenging, because most of the documentation
+ was either incomplete or misleading.
+ With a couple of hand coded assembly programs, we were able to identify
+ the correct parameters for the Ivy Bridge LSD.
+ Interestingly, the capacity was improved compared to previous generations,
+ not reflected in the documentation.
+ With a clear understanding of the chunk fetch limit, we were able to identify
+ cases where link ordering caused serious bias effects.
+ The underlying reason proved to be code layout with respect to 32 byte
+ chunks, where a maximum of 12 chunks would fit in the LSD cache.
+ 
+\end_layout
+
+\begin_layout Standard
+In our case studies, we chose to concentrate on highly optimized numerical
+ libraries.
+ Applications like these are more likely to encorporate extremely processor
+ specific optimizations, in order to achieve the maximum possible performance.
+ We chose to focus mainly on FFTW because of some previous experiences with
+ this library from other coursework at NTNU.
+ We are able to identify bias towards certain stack positions for small
+ kernels, caused by 4K aliasing.
+ Unfortunately, the effects are so minor that any intrusive fixes to the
+ kernels themselves quickly incur too large overhead to be worth it.
+ 
 \end_layout
 
 \begin_layout Section
@@ -10953,6 +10977,10 @@ In the end, we managed to document two bias effects; 4K aliasing and LSD.
  With very limited knowledge of architectural details, it is challenging
  to design code that exhibits some form of bias.
  
+\end_layout
+
+\begin_layout Standard
+LSD uop cache
 \end_layout
 
 \begin_layout Standard
