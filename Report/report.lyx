@@ -5016,7 +5016,9 @@ Example of Heap Address Conflicts
 \end_layout
 
 \begin_layout Standard
-Consider the function shown in Listing 
+Knowing that heap allocated memory is likely to alias, we can try to come
+ up with scenarios where this will lead to bad performance.
+ Consider the function shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:convolution"
@@ -5024,8 +5026,7 @@ reference "alg:convolution"
 \end_inset
 
 , computing the convolution between an input array and a fixed kernel, writing
- the result to another array.
- Endpoints are skipped for simplicity.
+ the result to another array (endpoints skipped for simplicity).
  
 \end_layout
 
@@ -5101,51 +5102,9 @@ void convolve(int size, float *input, float *output)
 }
 \end_layout
 
-\end_inset
-
-
-\end_layout
-
 \begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "alg:convolution"
-
-\end_inset
-
-Convolution kernel
-\end_layout
-
-\end_inset
-
 
 \end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We use malloc to allocate two reasonably sized arrays for input and output,
- with 
-\begin_inset Formula $N=$
-\end_inset
-
- 0x10000.
- A float is 4 byte, thus each array is of size 4 MiB.
- Initialization is skipped to save some cycles.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},language=C"
-inline false
-status open
 
 \begin_layout Plain Layout
 
@@ -5182,8 +5141,40 @@ int main() {
 
 \end_layout
 
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:convolution"
+
+\end_inset
+
+Convolution kernel which is vulnerable to aliasing between input and output
+ arrays.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
-The program is compiled with GCC and optimization level O3.
+We use malloc to allocate two reasonably sized arrays for input and output,
+ with 
+\begin_inset Formula $N=$
+\end_inset
+
+ 0x10000.
+ A float is 4 byte, thus each array is of size 4 MiB.
+ Initialization is skipped to save some cycles.
+ The program is compiled with GCC and optimization level O3.
  Output from perf stat is shown below, measuring number of cycles, address
  alias (r0107:u), resource stalls (r01a2:u) and number of retired instructions.
  We see that a very large number of alias events and resource stalls are
@@ -5270,32 +5261,12 @@ status open
 
 \begin_layout Plain Layout
 
-int main() {
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *input  = malloc( N     *sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
     float *output = malloc((N + x)*sizeof(float));
 \end_layout
 
 \begin_layout Plain Layout
 
     convolve(N, input, (output + x));
-\end_layout
-
-\begin_layout Plain Layout
-
-    return 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
 \end_layout
 
 \end_inset
@@ -5390,21 +5361,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Note that the number of alias conflicts reduces with increasing offset.
- This is likely because adjacent indeces are accessed in the loop.
- We find that as many as 16 is needed on the highest level of optimization,
- illustrating the depth of speculative execution of memory operations.
- 
-\end_layout
-
-\begin_layout Standard
-Interestingly, neither O1, O2 or O3 was able to do anything about this --
- yet a very simple change with no obvious significance gave a speedup of
- over 1.4x.
- 
 \end_layout
 
 \begin_layout Subsection
@@ -6250,7 +6206,7 @@ Most allocators focus on efficiency in a multithreaded environment, and
 \end_layout
 
 \begin_layout Subsection
-Summary and Optimization Guidelines
+Optimization Guidelines
 \end_layout
 
 \begin_layout Standard
