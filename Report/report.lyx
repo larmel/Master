@@ -11076,7 +11076,9 @@ Directions for Future Work
 \end_layout
 
 \begin_layout Standard
-When we started our investigations, the processor was a 
+Studying sources of bias effects proved to be complicated and challenging.
+ One of the main problems is lack of accurate documentation, making the
+ processor a kind of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -11085,15 +11087,57 @@ black box
 \end_inset
 
 .
- 
+ We believe that we have only scratched the surface when it comes to interesting
+ and lesser known architectural features.
+ The optimization manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+ is a good starting point for further reasearch, describing how various
+ hardware features interact and operate.
+ Further work is needed to lift more of the knowledge buried among technical
+ details in official manuals.
+ With increased awareness of these effects, there is clearly a potential
+ for improving performance of existing programs.
+\end_layout
+
+\begin_layout Subsection
+Compiler Optimizations
 \end_layout
 
 \begin_layout Standard
-LSD uop cache
+The most natural place to encode architectural-specific knowledge used for
+ optimization is of course in compilers.
+\end_layout
+
+\begin_layout Subsection
+Alias-free Allocators
 \end_layout
 
 \begin_layout Standard
-Haswell
+We show that typical memory allocators are prone to rsultin bad performance
+ in all cases, because heap memory is often page aligned.
+ As far as we are aware, there are no malloc implementations that specifically
+ addresses aliasing issues.
+ Developing good heuristics on the optimal heap addresses to return from
+ malloc would be an interesting topic for further research.
+ An obvious improvement would be to perturb addresses of allocations done
+ with mmap, avoiding identical 12 bit address suffixes of all large allocations.
+\end_layout
+
+\begin_layout Subsection
+Other Architectures
+\end_layout
+
+\begin_layout Standard
+We limited our study to one specific architecture, thus i
+\end_layout
+
+\begin_layout Subsection
+Library Optimizations
 \end_layout
 
 \begin_layout Standard
