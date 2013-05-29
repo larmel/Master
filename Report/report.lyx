@@ -2303,9 +2303,9 @@ Address space randomization is a technique employed by the operating system
  By default, the placement of stack, heap (initial position of brk) and
  location of dynamically linked libraries will vary between each run of
  a program.
- For a controlled execution environment we will need to manually disable
+ For a controlled execution environment, we will need to manually disable
  address randomization in many cases.
- This is done by overwriting the randomize_va_space file.
+ This can be done by overwriting the randomize_va_space file.
  
 \end_layout
 
@@ -2326,10 +2326,31 @@ bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
 \end_layout
 
 \begin_layout Standard
-The default value is 2, indicating full randomization.
- For randomizing only (??), a value of 1 can be written instead.
+The default value is 2, indicating full randomization
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+A description of the different values can be found in the documentation
+ for sysctl, 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
+target "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ For randomizing disabling heap randomization, a value of 1 can be written
+ instead.
  We will use zero to disable all randomization, making virtual memory layout
  completely deterministic between each run.
+ 
 \end_layout
 
 \begin_layout Subsubsection*
@@ -2516,7 +2537,7 @@ Executing the same program multiple times with ASLR enabled will yield different
 The actual memory map from running processes can be obtained by reading
  the file 
 \family typewriter
-/proc/$id/maps
+/proc/<id>/maps
 \family default
  for some process id.
  A sample output from a run of the previous hello world example is shown
@@ -2964,7 +2985,7 @@ LD_BLOCKS_PARTIAL.ADDRESS_ALIAS False dependencies in Memory Order Buffer
 The Memory Order Buffer refers to a collection of load/store buffers within
  the L1 data cache.
  It buffers loads and stores of not yet retired instructions, enabling speculati
-ve and out-of-order execution while ensuring that no dependencies are violated
+ve and out of order execution while ensuring that no dependencies are violated
  
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -2973,8 +2994,8 @@ key "Doweck:InsideIntelCoreMicroarchitecture,Intel:2012:OptimizationManual"
 \end_inset
 
 .
- The optimization manual provides a more to-the-point explanation of the
- counter, stating it 
+ The optimization manual provides a more concrete explanation of the counter,
+ stating it 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4150,8 +4171,34 @@ Among all the performance counters supported on our architecture, only a
 \end_layout
 
 \begin_layout Itemize
-Address aliasing have a near perfect correlation, indicating that false
- memory dependencies causes a performance hit.
+Address aliasing (
+\shape smallcaps
+ld_blocks_partial.address_alias
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+)
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ have a near perfect correlation, indicating that false memory dependencies
+ causes a performance hit.
 \end_layout
 
 \begin_layout Itemize
@@ -4168,7 +4215,7 @@ resource related reasons
 \begin_inset Quotes erd
 \end_inset
 
-.
+, paraphrasing the manual.
  
 \shape smallcaps
 cycle_activity.cycles_ldm_pending
@@ -4380,6 +4427,40 @@ ng observer effects.
 \left(\text{g},\text{i}\right) & \rightarrow & \left(\text{0x7fffffffe028},\text{0x601028}\right)\\
 \left(\text{inc},\text{j}\right) & \rightarrow & \left(\text{0x7fffffffe02c},\text{0x60102c}\right)
 \end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/loop/memory-layout.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+With just the right environment size, stack allocated variables end up with
+ the same address suffix as static variables
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
