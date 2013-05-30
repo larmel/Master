@@ -14,7 +14,7 @@ conv-O3-gcc: convolution-simple.c
 
 # Plotting a few offsets on O3 with GCC
 bin/offsets-O3-gcc.csv: conv-O3-gcc
-	../lperf ./$+ -e cycles:u,r0107:u -o $@ -n 21 -r 10 \
+	../lperf ./$+ -e cycles:u,r0107:u,r40d1:u,r01d1:u,r02d1:u,r04d1:u,r20d1:u,r024c:u -o $@ -n 21 -r 10 \
 		--environment-increment 0 --argument-increment 1
 
 #
@@ -27,10 +27,14 @@ perf-offsets-O3: conv-O3-gcc
 
 #
 # Figure: Plot over different offsets with GCC and only O3
+#         Show L1 hits, all other cache counters are trivially small (a couple of thousands)
 bin/offsets-O3-gcc.eps: bin/offsets-O3-gcc.csv
-	../lplot $+ -e cycles:u,r0107:u --export $@ \
+	../lplot $+ -e cycles:u,r0107:u,r01d1:u --export $@ \
 		--legend 'upper right' \
-		--labels 'Cycles, cycles:u' 'Address alias, r0107:u'
+		--labels 'Cycles, cycles:u' 'Address alias, r0107:u' 'L1 hit, r01d1:u'
+
+
+
 
 
 

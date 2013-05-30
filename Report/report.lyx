@@ -5102,9 +5102,56 @@ void convolve(int size, float *input, float *output)
 }
 \end_layout
 
-\begin_layout Plain Layout
+\end_inset
+
 
 \end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:convolution"
+
+\end_inset
+
+Convolution kernel which is vulnerable to aliasing between input and output
+ arrays.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Default Alignment
+\end_layout
+
+\begin_layout Standard
+We use malloc to allocate two reasonably sized arrays for input and output,
+ using 
+\begin_inset Formula $N=$
+\end_inset
+
+ 0x100000.
+ A float is 4 byte, thus each array is of size 4 MiB.
+ Initialization is skipped to save some cycles.
+ The program is compiled with GCC and optimization level O3.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},language=C"
+inline false
+status open
 
 \begin_layout Plain Layout
 
@@ -5141,89 +5188,6 @@ int main() {
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "alg:convolution"
-
-\end_inset
-
-Convolution kernel which is vulnerable to aliasing between input and output
- arrays.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We use malloc to allocate two reasonably sized arrays for input and output,
- with 
-\begin_inset Formula $N=$
-\end_inset
-
- 0x10000.
- A float is 4 byte, thus each array is of size 4 MiB.
- Initialization is skipped to save some cycles.
- The program is compiled with GCC and optimization level O3.
- Output from perf stat is shown below, measuring number of cycles, address
- alias (r0107:u), resource stalls (r01a2:u) and number of retired instructions.
- We see that a very large number of alias events and resource stalls are
- generated compared to cycle count.
- Considering this is compiled with optimization enabled, the instruction
- per cycle metric is not very impressive for such a simple function.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-        12,100,699 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         9,176,205 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         7,797,070 r01a2:u
-\end_layout
-
-\begin_layout Plain Layout
-
-        11,165,929 instructions:u
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.004837679 seconds time elapsed
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Standard
 Malloc is using 
 \family typewriter
@@ -5240,16 +5204,130 @@ output[i]
 \family default
  in convolve.
  Although distinct memory locations, the processor assumes there are dependencie
-s between them, apparently with a significant performance penalty in this
- program.
+s between them.
+ Performance statistics from running perf is shown below.
  
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="2">
+<features tabularvalignment="middle">
+<column alignment="right" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12,100,699
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycle count, cycles:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9,176,205
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+ld_blocks_partial.address_alias
+\shape default
+, r0107:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7,797,070
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+resource_stalls.all
+\shape default
+, r01a2:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11,165,929
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instructions, instructions:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We see that a very large number of alias events and resource stalls are
+ generated compared to cycle count.
+ Considering this is compiled with optimization enabled, the instruction
+ per cycle metric is not very impressive for such a simple function.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Avoiding Alias
 \end_layout
 
 \begin_layout Standard
 Aliasing can be accounted for in software by offseting one of the arrays
  before calling convolve.
  We allocate some extra padding for output, and use pointer arithmetic to
- adjust the buffer before passing the pointer to convolve.
+ adjust the buffer before passing the pointer to the function.
  
 \end_layout
 
@@ -5261,6 +5339,16 @@ status open
 
 \begin_layout Plain Layout
 
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *input  = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
     float *output = malloc((N + x)*sizeof(float));
 \end_layout
 
@@ -5269,13 +5357,135 @@ status open
     convolve(N, input, (output + x));
 \end_layout
 
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-\begin_inset Float table
+The difference modulo 4096 between input and output arrays now becomes 4x
+ bytes.
+ Plotting this for increasing values of x shows that virtually all aliasing
+ is removed after offseting with 12 or more elements.
+ The best parameter is found to be at a 16 element difference in alignment
+ between input and output (or 64 bytes).
+ Simply altering addresses yields more than 2x speedup.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="2">
+<features tabularvalignment="middle">
+<column alignment="right" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5,600,499
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycle count, cycles:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1,192
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+ld_blocks_partial.address_alias
+\shape default
+, r0107:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1,298,975
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+resource_stalls.all
+\shape default
+, r01a2:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11,166,799
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instructions, instructions:u
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
 wide false
 sideways false
 status open
@@ -5294,6 +5504,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:convolution-O3-graph"
+
+\end_inset
+
 Performance statistics for convolution with increasing separation of input
  and output addresses suffixes.
  Graph plots 
@@ -5314,53 +5530,69 @@ convolve(N, input, (output + x))
 
 \end_layout
 
-\begin_layout Standard
-The difference mod 4096 between input and output arrays is 4x bytes.
- Plotting this for increasing values of x shows that virtually all aliasing
- is removed after offseting with 12 or more elements.
- The best parameter is found to be at a 16 element difference in alignment
- between input and output.
- Simply altering addresses yields more than 2x speedup.
+\begin_layout Subsubsection*
+Cache efficiency
 \end_layout
 
 \begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-         5,600,499 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-             1,192 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         1,298,975 r01a2:u
-\end_layout
-
-\begin_layout Plain Layout
-
-        11,166,799 instructions:u
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.002889411 seconds time elapsed
-\end_layout
+Given that we are working with relatively large amounts of data (more than
+ what fits in L1 or L2 cache), one might suspect that cache misses impacts
+ the cycle count.
+ The hit rate of different cache levels can be identified by measuring counters
+ under the 
+\shape smallcaps
+mem_load_uops_retired
+\shape default
+ event code 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
 
 \end_inset
 
+:
+\end_layout
 
+\begin_layout Itemize
+
+\shape smallcaps
+hit_lfb
+\shape default
+: Hits in Line Feed Buffer, between L1 and L2 cache
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+L1_hit
+\shape default
+ 
+\end_layout
+
+\begin_layout Itemize
+L2_HIT
+\end_layout
+
+\begin_layout Itemize
+LLC_HIT: Load uops that hit last level cache (L3)
+\end_layout
+
+\begin_layout Itemize
+LLC_MISS: Load operations that miss last level cache
+\end_layout
+
+\begin_layout Standard
+We find that cache behaviour does not change with any correlation to cycle
+ count or alias events.
+ L1 hits is shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:convolution-O3-graph"
+
+\end_inset
+
+, completely stable through all tests.
+ 
 \end_layout
 
 \begin_layout Subsection

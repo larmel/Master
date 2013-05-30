@@ -19,20 +19,34 @@ DTLB_LOAD_MISSES.MISS_CAUSES_A_WALK
 EOF
 
 # Memory micro-ops, all retired loads and stores
-perf stat -x"$separator" -e r81d0:u,r82d0:u $program $args 0> temp
+perf stat -x"$separator" -e r82d0:u $program $args 0> temp
 cat << 'EOF' | paste -d"$separator" temp - >> $outfile
-MEM_UOPS_RETIRED.LOADS
 MEM_UOPS_RETIRED.STORES
 EOF
 
 # Micro-ops cache events
-perf stat -x"$separator" -e r01d1:u,r02d1:u,r04d1:u,r20d1:u $program $args 0> temp
+perf stat -x"$separator" -e r81d0:u,r40d1:u,r01d1:u,r02d1:u $program $args 0> temp
 cat << 'EOF' | paste -d"$separator" temp - >> $outfile
+MEM_UOPS_RETIRED.LOADS
+MEM_LOAD_UOPS_RETIRED.HIT_LFB
 MEM_LOAD_UOPS.RETIRED.L1_HIT
 MEM_LOAD_UOPS.RETIRED.L2_HIT
+EOF
+
+perf stat -x"$separator" -e r04d1:u,r20d1:u,r01d2:u $program $args 0> temp
+cat << 'EOF' | paste -d"$separator" temp - >> $outfile
 MEM_LOAD_UOPS.RETIRED.LLC_HIT
 MEM_LOAD_UOPS.RETIRED.LLC_MISS
+MEM_LOAD_UOPS_LLC_HIT_RETIRED.XSNP_MISS
 EOF
+
+perf stat -x"$separator" -e r02d2:u,r04d2:u $program $args 0> temp
+cat << 'EOF' | paste -d"$separator" temp - >> $outfile
+MEM_LOAD_UOPS_LLC_HIT_RETIRED.XSNP_HIT
+MEM_LOAD_UOPS_LLC_HIT_RETIRED.XSNP_HITM
+EOF
+
+
 
 # Other cache events
 perf stat -x"$separator" -e r0151:u $program $args 0> temp
