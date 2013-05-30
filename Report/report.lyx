@@ -5012,7 +5012,7 @@ always
 \end_layout
 
 \begin_layout Subsection
-Example of Heap Address Conflicts
+Heap Address Conflicts
 \end_layout
 
 \begin_layout Standard
@@ -5430,7 +5430,7 @@ convolve(N, input, (output + x))
 \end_layout
 
 \begin_layout Subsubsection*
-Cache efficiency
+Cache Efficiency
 \end_layout
 
 \begin_layout Standard
@@ -5460,9 +5460,9 @@ reference "fig:convolution-O3-graph"
 \end_inset
 
 , with no correlation with cycle count.
- We also measure L1 hit, L2 hit, LLC hit and LLC miss, but they all have
- values of less than 1 % of L1 hits.
- We conclude that cache have no impact on the results we observe.
+ We also measure hits in Line Feed Buffer, L2 hit, LLC hit and LLC miss,
+ but they all have values of less than 1 % of L1 hits.
+ We can safely conclude that cache have no impact on the results we observe.
  
 \end_layout
 
@@ -5471,9 +5471,20 @@ Architectural Optimization
 \end_layout
 
 \begin_layout Standard
-Because address aliasing is an artifact of intricacies in the processor
- architecture, we could hope that GCC will help when asked to compile for
- a specific target machine
+Address aliasing is an artifact of intricacies in the processor architecture.
+ Ideally, we would like the compiler to create efficient code without having
+ to manually offset heap pointers.
+ On optimization O3 however, the compiler will optimize for a 
+\begin_inset Quotes eld
+\end_inset
+
+generic
+\begin_inset Quotes erd
+\end_inset
+
+ machine.
+ We could hope that aliasing effects are considered when the compiler is
+ asked to target our Intel architecture specifically 
 \begin_inset Foot
 status open
 
@@ -5490,30 +5501,10 @@ target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.
 
 \end_inset
 
-.
- In the documentation we find four possible architecture specifications;
+, which can be done by specifying -march=native.
+ This includes using instructions that are not necessarily portable, for
+ example AVX instructions.
  
-\emph on
-native
-\emph default
-, 
-\emph on
-core2
-\emph default
-, 
-\emph on
-corei7
-\emph default
- and 
-\emph on
-corei7-avx
-\emph default
-.
- Using the -march=native flag does indeed prodice better code, but not as
- efficient as offseting arrays manually and not specifying any particular
- architecture.
- Note that code compiled with these flags are not guaranteed to work on
- other architectures, reducing portability.
 \end_layout
 
 \begin_layout Standard
@@ -5522,9 +5513,14 @@ We can provide additional information to the compiler's optimizer by using
 \family typewriter
 restrict
 \family default
- qualifier, which was added in the C99 standard.
- It functions as a type qualifier for pointers, specifying that no pointer
- aliases exists.
+ qualifier, explicitly stating that no pointer aliases exists.
+ By marking input and output as restrict, we guarantee they are the only
+ pointers to their respective memory areas, and not accesses through any
+ other (aliased) pointers.
+ This benefits code generation and optimization, potentially improving performan
+ce.
+ Additionally, the input array should be specified as const, guaranteeing
+ that only read operations are done to that array.
  
 \end_layout
 
@@ -5545,14 +5541,8 @@ void convolve(int size, const float * restrict input, float * restrict output)
 \end_layout
 
 \begin_layout Standard
-By marking input and output as restrict, we guarantee they are the only
- pointers to their respective memory areas, and not accesses through any
- other (aliased) pointers.
- This benefits code generation and optimization, potentially improving performan
-ce.
- Additionally, the input array should be specified as const, guaranteeing
- that only read operations are done to that array.
- We find that the following compile parameters gives the best performance.
+Together with the function signature changes, we find that the following
+ compile parameters gives the best performance.
 \end_layout
 
 \begin_layout Standard
@@ -5563,7 +5553,7 @@ status open
 
 \begin_layout Plain Layout
 
-cc -O3 -std=c99 -march=native
+gcc -O3 -std=c99 -march=native
 \end_layout
 
 \end_inset
@@ -5572,46 +5562,209 @@ cc -O3 -std=c99 -march=native
 \end_layout
 
 \begin_layout Standard
-We see that the cycle count is drastically reduced, down to about 3.5 million.
- However, we still have over 1 million resource stalls, and 250 thousand
- alias events, which might indicate that even providing restrict is not
- enough.
- 
+Compared to only using O3, the speedup is quite significant (as before,
+ we use N = 0x100000).
+ Specifying restrict seems to have the most impact on performance.
+ Nevertheless, we still see a fairly hight alias event count.
+ As shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:convolution-native-gcc"
+
+\end_inset
+
+, with the default heap alignment there are over 250,000 alias events.
+ Compared to the much lower cycle count, this is still a significant amount.
+ Attempting to manually offset the output array again, we find the best
+ parameter to be 48 or more (a minimum difference of 192 bytes).
+ Even with every opportunity given to the compiler to account for aliasing,
+ we are still able to squeeze out a speedup of 16 % by manually adjusting
+ memory addresses.
+ This speedup is also consistent through other input sizes.
 \end_layout
 
 \begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
+\begin_inset Float table
+wide false
+sideways false
 status open
 
 \begin_layout Plain Layout
-
-         3,565,704 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-           258,469 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         1,065,207 r01a2:u
-\end_layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features tabularvalignment="middle">
+<column alignment="right" valignment="top" width="0pt">
+<column alignment="right" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
 
 \begin_layout Plain Layout
 
-         3,299,634 instructions:u
+\series bold
+Default
 \end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Offset 48
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
 
 \begin_layout Plain Layout
 
 \end_layout
 
-\begin_layout Plain Layout
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
 
-       0.002281839 seconds time elapsed
+\begin_layout Plain Layout
+3,565,704
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,070,418
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycle count (cycles:u)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+258,469
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+206
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Address alias (r0107:u)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1,065,207
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+580,203
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Resource stalls (r01a2:u)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,299,634
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,299,634
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instructions (instructions:u)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:convolution-native-gcc"
+
+\end_inset
+
+Performance counter statistics for optimal compiler optimization flags.
+ Showing default heap addresses, and offset of output by 0x30.
 \end_layout
 
 \end_inset
@@ -5619,63 +5772,9 @@ status open
 
 \end_layout
 
-\begin_layout Standard
-Again, we test the hypothesis by incrementing an offset to the ouput pointer
- before calling convolve.
- At 0x30, we find the optimal configuration.
- We reduce the number of alias effects to a neglegtible amount, and numberof
- resource stalls is cut in half.
- Even with every opportunity for optimization given to the compiler, we
- are still able to squeeze out a speedup of 1.16x just by changing memory
- addresses.
- This speedup is consistent through input sizes, similar for 0x1000000.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-         3,070,418 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-               206 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-           580,203 r01a2:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         3,299,634 instructions:u
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.002118936 seconds time elapsed
-\end_layout
-
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Note that the resulting binaries, providing no offset and offset of 0x30,
- were checked with 'diff'.
- They only differ in two lines in main, where a leaq is used instead of
- move (for addition), and different register for another movq instruction.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -5683,17 +5782,51 @@ Other Compilers
 \end_layout
 
 \begin_layout Standard
-The alias effects on this particular example is most prominent on GNU's
- cc.
- We have tested on clang and icc as well -- with varying results.
- 
+In addition to GCC, we made similar experiments with LLVM's clang
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+clang: a C language family frontend for LLVM, 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://clang.llvm.org/"
+target "http://clang.llvm.org/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ version 3.0, and Intel's icc
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://software.intel.com/en-us/intel-compilers/"
+target "http://software.intel.com/en-us/intel-compilers/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ version 13.
+ Of the compilers we tested, none of them generated code that could not
+ be improved by manually offseting heap area.
 \end_layout
 
 \begin_layout Description
-clang behaves similar to cc with respect to offsets to minimize alias.
- However, we only need to add 0x10 to get rid of aliasing.
- The change in cycle count is not as clear (Need more controlled benchmark).
- A lot less efficient code is generated, almost ten times as many dynamic
+clang behaves similar to GCC with respect to offsets to minimize alias.
+ However, we only need to add 16 to get rid of aliasing.
+ The change in cycle count is not as clear.
+ A lot less efficient code is generated, with almost ten times as many dynamic
  instructions executed.
 \end_layout
 
@@ -5701,11 +5834,9 @@ clang behaves similar to cc with respect to offsets to minimize alias.
 icc produces code that performs reasonably well with respect to alias count
  on no additional offset.
  Interestingly, a very similar count of address alias events are recorded
- for code compiled with cc, about 260,000 for N = 0x100000.
+ for code compiled with GCC, about 260,000 for N = 0x100000.
  Alias can be eliminated almost completely, but that requires an offset
- of 0xa0.
- Performance actually worsenes with smaller offsets, increasing alias count
- significantly.
+ of 160.
 \end_layout
 
 \begin_layout Subsection
