@@ -5379,109 +5379,8 @@ The difference modulo 4096 between input and output arrays now becomes 4x
  is removed after offseting with 12 or more elements.
  The best parameter is found to be at a 16 element difference in alignment
  between input and output (or 64 bytes).
- Simply altering addresses yields more than 2x speedup.
-\end_layout
-
-\begin_layout Standard
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="4" columns="2">
-<features tabularvalignment="middle">
-<column alignment="right" valignment="top" width="0">
-<column alignment="left" valignment="top" width="0">
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-5,600,499
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Cycle count, cycles:u
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-1,192
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\shape smallcaps
-ld_blocks_partial.address_alias
-\shape default
-, r0107:u
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-1,298,975
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\shape smallcaps
-resource_stalls.all
-\shape default
-, r01a2:u
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="right" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-11,166,799
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Instructions, instructions:u
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
+ By simply altering the default addresses given by malloc, we are able to
+ get more than 2x speedup.
 \end_layout
 
 \begin_layout Standard
@@ -5550,40 +5449,9 @@ key "Intel:2012:OptimizationManual"
 
 \end_inset
 
-:
-\end_layout
-
-\begin_layout Itemize
-
-\shape smallcaps
-hit_lfb
-\shape default
-: Hits in Line Feed Buffer, between L1 and L2 cache
-\end_layout
-
-\begin_layout Itemize
-
-\shape smallcaps
-L1_hit
-\shape default
- 
-\end_layout
-
-\begin_layout Itemize
-L2_HIT
-\end_layout
-
-\begin_layout Itemize
-LLC_HIT: Load uops that hit last level cache (L3)
-\end_layout
-
-\begin_layout Itemize
-LLC_MISS: Load operations that miss last level cache
-\end_layout
-
-\begin_layout Standard
-We find that cache behaviour does not change with any correlation to cycle
- count or alias events.
+.
+ Measuring all the relevant counters, we find that cache behaviour appears
+ to be completely unaffected by aliasing.
  L1 hits is shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -5591,7 +5459,10 @@ reference "fig:convolution-O3-graph"
 
 \end_inset
 
-, completely stable through all tests.
+, with no correlation with cycle count.
+ We also measure L1 hit, L2 hit, LLC hit and LLC miss, but they all have
+ values of less than 1 % of L1 hits.
+ We conclude that cache have no impact on the results we observe.
  
 \end_layout
 
