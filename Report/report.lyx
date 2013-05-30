@@ -253,11 +253,11 @@ Acknowledgements
 \end_layout
 
 \begin_layout Standard
-I would like to thank my supervisor, Anne Cathrine Elster, for her support
- and feedback during this past year.
- A special thanks to Rune Erlend Jensen, whose continuous assistance and
- expertise on performance counters helped me navigate through through this
- challenging topic.
+I would like to thank my supervisor Anne Cathrine Elster for her support
+ during this past year.
+ A special thanks to my co-supervisor and ph.d.
+ student Rune Erlend Jensen, whose continuous assistance and expertise on
+ performance counters helped me navigate through this challenging topic.
 \end_layout
 
 \begin_layout Standard
@@ -293,9 +293,31 @@ pagenumbering{arabic}
 
 \end_inset
 
-In this thesis, we will look at how external properties of the execution
- context affects the performance of computer programs.
- A number of factors determines how fast or slow a program executes
+Performance of computer programs is not just a function of the collection
+ of machine instructions executed.
+ Various external properties, such as the operating system, or even room
+ temperature, can have have an impact on program execution; Micro-chips
+ can be sensitive to temperature, possibly performing better in cold environment
+s.
+ Characteristics of the operating system can decide things like the placement
+ of code and data in virtual memory, which in turn interacts with numerous
+ hardware mechanisms.
+ The set of conditions under which a program executes is called the execution
+ context.
+ 
+\end_layout
+
+\begin_layout Standard
+Previous work on measurement bias 
+\end_layout
+
+\begin_layout Standard
+In this thesis, we will study how the layout of code and data in memory
+ affects hardware optimizations in recent Intel microarchitectures.
+ Some of these effects have already been studied to some extent, and found
+ to potentially have significant performance impact.
+ Previous work on measurement bias Modern CPU architectures are extremely
+ complex
 \end_layout
 
 \begin_layout Section
@@ -318,11 +340,11 @@ key "Mytkowicz:2009:WrongData"
 
 \end_inset
 
-, the authors show how simple changes to the execution environment can heavily
- impact performance of programs.
+, the authors show how simple changes to the execution environment can have
+ an impact performance.
  One of the parameters they studied was the size of Unix environment variables.
  Environment variables contain various information about the system, for
- instance the name of the currently logged in user, and current directory
+ instance the name of the currently logged in user, home- and current directory
  path.
  It seems unlikely that the contents of these variables should have any
  significance on program performance, yet previous work show that the effects
@@ -490,7 +512,8 @@ reference "fig:motivation"
  Plotting the number of cycles executed for different environment sizes,
  we see that the cycle count suddenly increases by more than 20 %.
  In principle, the length of your name -- by extension you user login --
- could be the tipping point between good and bad performance in this case.
+ could be the tipping point between good and bad performance when running
+ this program.
  
 \end_layout
 
@@ -503,10 +526,15 @@ correct
 \begin_inset Quotes erd
 \end_inset
 
- cycle count for this program? One could say that in most cases, it should
- be around 700'000, although on average it is somewhat higher.
+ cycle count here? One could say that in most cases, it should be around
+ 700'000, although on average it is somewhat higher.
  If you are unlucky, sitting on a machine with just the right environment
  size, you might declare that the cycle count is about 850'000.
+ This illustrates how external properties can 
+\emph on
+bias
+\emph default
+ performance towards certain environments.
  Previous work focuses mostly on how to mitigate effects of bias, and avoid
  drawing the wrong conclusions based on misleading measurements.
  Our goal is to gain a better understanding on exactly what mechanism of
@@ -520,10 +548,6 @@ spikes
 \end_inset
 
  in performance, and gain a real speedup on average.
-\end_layout
-
-\begin_layout Section
-Contributions
 \end_layout
 
 \begin_layout Section
@@ -542,8 +566,8 @@ Chapter
 2 presents some of the previous work done on measurement bias, showing its
  severity as well as proposed solutions to mitigate or compensate for it.
  A brief introduction to the Ivy Bridge architecture and use of hardware
- performance monitoring is given, as well as a discussion of virtual memory
- on 64 bit Linux systems.
+ performance monitoring is given, as well as a discussion of the execution
+ context on 64 bit Linux systems.
 \end_layout
 
 \begin_layout Description
@@ -552,8 +576,8 @@ Chapter
 \end_inset
 
 3 investigates several potential causes of measurement bias, showing how
- specific hardware features is sensitive to changes in memory layout.
- Specifically, we show how address aliasing and the Loop Stream Detector
+ specific hardware features are sensitive to changes in virtual memory layout.
+ Specifically, we show how 4K address aliasing and the Loop Stream Detector
  can explain effects observed by increasing environment size or changing
  link order.
 \end_layout
@@ -563,8 +587,8 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 applies knowledge of bias effects from Chapter 3, showing how they apply
- to real world applications.
+4 applies knowledge of bias effects from the previous chapter, looking at
+ how they apply to real world applications.
  We take an in-depth look at FFTW, showing how this highly optimized fourier
  transform library affected by memory layout.
  We also show how to get significant performance gains for BLAS matrix-vector
@@ -592,11 +616,11 @@ name "chap:Background"
 
 \end_inset
 
-In this chapter, we begin by presenting some of the previous work done on
- measurement bias in performance analysis.
+We begin by presenting some of the previous work done on measurement bias
+ in performance analysis.
  An introduction to virtual memory, linking and loading on 64 bit Linux
- architectures is provided as background material -- explaining what we
- mean by the program environment.
+ architectures is provided as background material -- explaining important
+ factors of the program execution environment.
  A brief overview of the Intel Core 
 \begin_inset Quotes eld
 \end_inset
