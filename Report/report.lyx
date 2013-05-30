@@ -309,15 +309,10 @@ s.
 
 \begin_layout Standard
 Variations within the execution context have been previously studied in
- the context of measurement bias
-\end_layout
-
-\begin_layout Standard
-In this thesis, we will study bias effects in recent Intel microarchitectures.
- Some of these effects have already been studied to some extent, and found
- to potentially have significant performance impact.
- Previous work on measurement bias Modern CPU architectures are extremely
- complex
+ the context of measurement bias.
+ In this thesis, we will study bias effects in recent Intel microarchitectures
+ ...
+ 
 \end_layout
 
 \begin_layout Section
@@ -5254,7 +5249,7 @@ s between them.
 \begin_inset Text
 
 \begin_layout Plain Layout
-Cycle count, cycles:u
+Cycle count (cycles:u)
 \end_layout
 
 \end_inset
@@ -5274,11 +5269,7 @@ Cycle count, cycles:u
 \begin_inset Text
 
 \begin_layout Plain Layout
-
-\shape smallcaps
-ld_blocks_partial.address_alias
-\shape default
-, r0107:u
+Address alias (r0107:u)
 \end_layout
 
 \end_inset
@@ -5298,11 +5289,7 @@ ld_blocks_partial.address_alias
 \begin_inset Text
 
 \begin_layout Plain Layout
-
-\shape smallcaps
-resource_stalls.all
-\shape default
-, r01a2:u
+Resource stalls (r01a2:u)
 \end_layout
 
 \end_inset
@@ -5322,7 +5309,7 @@ resource_stalls.all
 \begin_inset Text
 
 \begin_layout Plain Layout
-Instructions, instructions:u
+Instructions (instructions:u)
 \end_layout
 
 \end_inset
@@ -5401,8 +5388,8 @@ The difference modulo 4096 between input and output arrays now becomes 4x
  bytes.
  Plotting this for increasing values of x shows that virtually all aliasing
  is removed after offseting with 12 or more elements.
- The best parameter is found to be at a 16 element difference in alignment
- between input and output (or 64 bytes).
+ The best parameter is found to be at a 16 or more elements difference in
+ alignment between input and output (at least 64 bytes).
  By simply altering the default addresses given by malloc, we are able to
  get more than 2x speedup.
 \end_layout
@@ -5417,6 +5404,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/alias/offsets-O3-gcc.eps
+	width 100col%
 
 \end_inset
 
@@ -5486,7 +5474,7 @@ reference "fig:convolution-O3-graph"
 , with no correlation with cycle count.
  We also measure hits in Line Feed Buffer, L2 hit, LLC hit and LLC miss,
  but they all have values of less than 1 % of L1 hits.
- We can safely conclude that cache have no impact on the results we observe.
+ We can safely rule out cache as a contributing factor.
  
 \end_layout
 
@@ -5597,11 +5585,17 @@ reference "tab:convolution-native-gcc"
 
 \end_inset
 
-, with the default heap alignment there are over 250,000 alias events.
+, there are more than 250,000 alias events with the default heap alignment.
  Compared to the much lower cycle count, this is still a significant amount.
  Attempting to manually offset the output array again, we find the best
  parameter to be 48 or more (a minimum difference of 192 bytes).
- Even with every opportunity given to the compiler to account for aliasing,
+ Separating the heap buffers aliminates almost all aliasing, while also
+ significantly improving cycle count.
+ 
+\end_layout
+
+\begin_layout Standard
+Even with every opportunity given to the compiler to account for aliasing,
  we are still able to squeeze out a speedup of 16 % by manually adjusting
  memory addresses.
  This speedup is also consistent through other input sizes.
@@ -5618,11 +5612,11 @@ status open
 \begin_inset Tabular
 <lyxtabular version="3" rows="5" columns="3">
 <features tabularvalignment="middle">
-<column alignment="right" valignment="top" width="0pt">
-<column alignment="right" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
 <column alignment="left" valignment="top" width="0">
 <row>
-<cell alignment="right" valignment="top" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5633,7 +5627,7 @@ Default
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5655,7 +5649,7 @@ Offset 48
 </cell>
 </row>
 <row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5664,7 +5658,7 @@ Offset 48
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5684,7 +5678,7 @@ Cycle count (cycles:u)
 </cell>
 </row>
 <row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5693,7 +5687,7 @@ Cycle count (cycles:u)
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5713,7 +5707,7 @@ Address alias (r0107:u)
 </cell>
 </row>
 <row>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5722,7 +5716,7 @@ Address alias (r0107:u)
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5742,7 +5736,7 @@ Resource stalls (r01a2:u)
 </cell>
 </row>
 <row>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -5751,11 +5745,11 @@ Resource stalls (r01a2:u)
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell multicolumn="2" alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-3,299,634
+
 \end_layout
 
 \end_inset
@@ -5787,8 +5781,10 @@ name "tab:convolution-native-gcc"
 
 \end_inset
 
-Performance counter statistics for optimal compiler optimization flags.
- Showing default heap addresses, and offset of output by 0x30.
+Performance counter statistics for optimal compiler optimization flags on
+ GCC.
+ Showing default heap addresses, and programmatically offset of output buffer
+ by 48.
 \end_layout
 
 \end_inset
