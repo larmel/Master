@@ -2079,14 +2079,24 @@ The Execution Context
 \end_layout
 
 \begin_layout Standard
-To understand why some of the bias effects occur, it is necessary to understand
+In order to understand why bias effects occur, it is necessary to look at
  some of the low-level aspects of how processes and memory is managed by
  the operating system.
  In particular, we will see that changes to memory layout in virtual address
  space is an important factor.
- Some knowledge of ELF executables and virtual memory is necessary.
- We will provide a brief introduction into how code and data is mapped to
- virtual memory on 64 bit Linux systems.
+ Some knowledge of ELF executables and virtual memory is necessary for the
+ remainder of the thesis.
+ We will provide a brief overview of how code and data is mapped to virtual
+ memory on 64 bit Linux systems.
+ For a more comprehensive reference to topics in operating system, refer
+ to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Tanenbaum:2008:ModernOperatingSystems"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -2094,7 +2104,14 @@ Virtual Memory
 \end_layout
 
 \begin_layout Standard
-Virtual memory is an abstraction over the physical memory (RAM).
+Virtual memory is an abstraction over the physical memory (RAM) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Tanenbaum:2008:ModernOperatingSystems"
+
+\end_inset
+
+.
  Every program has its own virtual address space, typically split into pages
  of size 4 KiB
 \begin_inset Foot
@@ -2112,16 +2129,111 @@ To avoid any confusion with SI units, we will use KiB (kibibyte), MiB etc
  Pages are mapped to frames in physical memory.
  Translation from virtual to physical addresses are done with a lookup in
  the page table (managed by the operating system), or by a dedicated hardware
- cache called translation lookaside buffer (TLB) 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Tanenbaum:2008:ModernOperatingSystems"
+ cache called translation lookaside buffer (TLB) .
+ 
+\end_layout
+
+\begin_layout Standard
+A running process is divided into several sections within the virtual address
+ space.
+ The most important are stack, heap, bss, data and text, as illustrated
+ in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:virtual-address-space"
 
 \end_inset
 
 .
- The placement of code and data in virtual address space is decided either
- statically at compile time, or dynamically at run time.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/unix-vm-all.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:virtual-address-space"
+
+\end_inset
+
+Organization of virtual memory of a running process on a typical 64 bit
+ Linux system
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+stack Stack frames with function parameters and local variables.
+ Located somewhere around the top (address 0x7fff'ffffffff) and expanding
+ downwards with each stack frame.
+ 
+\end_layout
+
+\begin_layout Description
+heap Dynamically allocated area.
+ Located above the text and data segments, and growing upwards as programs
+ request more memory.
+ 
+\end_layout
+
+\begin_layout Description
+bss Uninitialized data, containing variables with no value specified.
+ This area is implicitly initialized to zero.
+ 
+\end_layout
+
+\begin_layout Description
+data Initialized data, variables that have some assigned value at compile
+ time.
+ 
+\end_layout
+
+\begin_layout Description
+text Executable binary code.
+ Typically located at the lower end of the virtual address space.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that effectively only 48 out of 64 available bits are used for addressing.
+ The lower 0x0 through 0x7fff'ffffffff is addressable to user programs,
+ while the upper segment of addresses from 0xffff8000'00000000 through 0xfffffff
+f'ffffffff is reserved for the operating system.
+ This leaves a large gap of addresses that are not used, as current hardware
+ does not actually support addressing the whole 64 bit range 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lomont:2012:x64Assembly"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -2236,12 +2348,13 @@ ELF files is structured in a set of sections, such as
 \emph on
 allocable
 \emph default
-, meaning they are loaded into virtual memory once the program is executed.
+, meaning they are copied into virtual memory before the program is executed.
  An example of an allocable section is the .text area, which contains all
  the executable machine code.
- The virtual addresses of program code can be read directly from the executable.
+ Virtual addresses of code or data stored in allocable section are determined
+ statically, and can be found by reading the contents of the ELF file.
  The following example shows the first few instruction in the main function
- of a program, which starts at address 0x400544 
+ of a program, which in this case starts at address 0x400544 
 \begin_inset Foot
 status open
 
@@ -2303,8 +2416,8 @@ Loading
 \end_layout
 
 \begin_layout Standard
-Before a program can be run, it needs to be loaded into virtual memory in
- some way.
+Before a program can be executed, it needs to be loaded into virtual memory
+ in some way.
  The ELF executable file includes the path to an interpreter, a program
  that is responsible for loading code and data, setting up a stack, and
  loading any dependencies.
@@ -2315,13 +2428,14 @@ Before a program can be run, it needs to be loaded into virtual memory in
 \family default
 .
  This file can be a symbolic link to the actual program.
- The loader then places each 
-\emph on
-allocable
-\emph default
- section of the object file in virtual address space.
- The most important sections include the stack, heap, bss, data and text,
- as shown in Figure 
+ 
+\end_layout
+
+\begin_layout Standard
+The loader maps each allocable section of the object file into virtual address
+ space, such as the text and data areas.
+ Stack and heap areas are initialized, resulting in a process image like
+ the one shown in 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:virtual-address-space"
@@ -2329,123 +2443,7 @@ reference "fig:virtual-address-space"
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/unix-vm-all.eps
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:virtual-address-space"
-
-\end_inset
-
-Organization of virtual memory on a typical 64 bit Linux system.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Effectively, only 48 out of 64 available bits are used for addressing.
- The lower 
-\family typewriter
-0x0
-\family default
- through 
-\family typewriter
-0x7fff'ffffffff
-\family default
- is addressable to user programs.
- The upper segment of addresses 
-\family typewriter
-0xffff8000'00000000
-\family default
- through 
-\family typewriter
-0xffffffff'ffffffff
-\family default
- is reserved for the operating system .
- Note that this leaves a large gap of unused addresses, as current hardware
- does not actually support addressing the whole 64 bit range 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Lomont:2012:x64Assembly"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-A running process is divided into several sections within the virtual address
- space:
-\end_layout
-
-\begin_layout Description
-stack Stack frames with parameters and local variables for function calls.
- Allocated starting somewhere around the top (address 
-\family typewriter
-0x7fff'ffffffff
-\family default
-) and expanding downwards.
- 
-\end_layout
-
-\begin_layout Description
-heap Dynamically allocated memory, allocated above the text and data segments
- and growing upwards as programs request more memory.
- The start of heap is marked by 'brk'.
- A Linux system call to sbrk adjust the current limit.
- 
-\end_layout
-
-\begin_layout Description
-bss Uninitialized data.
- This segment occupies no space in the object file, only the size is needed.
- Everything is initialized to zero.
- 
-\end_layout
-
-\begin_layout Description
-data Initialized data, variables that have some assigned value at compile
- time.
- 
-\end_layout
-
-\begin_layout Description
-text Executable binary code.
- This segment is placed at the lower end of virtual address space.
- 
-\end_layout
-
-\begin_layout Standard
-Dynamically loaded libraries are mapped into virtual memory as well.
+ Dynamically loaded libraries are mapped into virtual memory as well.
  They typically end up with high addresses, located relatively close to
  the stack.
  
@@ -2544,10 +2542,10 @@ key "Mytkowicz:2009:WrongData"
 
 , the size of a user's Unix environment variable can affect the placement
  of stack.
- Environment variables are allocated above the stack, pushing the first
- possible stack starting address downwards.
- With ASLR disabled, the initial stack address can be manipulated by manually
- changing environment variables.
+ Environment variables are allocated above the stack, pushing the initial
+ stack address downwards.
+ Because of this, the position of stack can be manipulated by manually changing
+ environment variables.
 \end_layout
 
 \begin_layout Subsection
@@ -2565,8 +2563,7 @@ reference "alg:c-context"
 \end_inset
 
  contains four variables, utilizing both initialized and unitialized data,
- as well as dynamically allocated data on heap and automatic stack allocated
- variables.
+ dynamically allocated data on heap, and stack allocated variables.
 \end_layout
 
 \begin_layout Standard
@@ -2681,7 +2678,7 @@ key "Kernighan:1988:CProgrammingLanguage"
 \end_layout
 
 \begin_layout Itemize
-The address returned by malloc and stored in variable d points to a location
+The address returned by malloc and stored in variable d, points to a location
  on the heap.
  The exact address depends on the implementation of malloc, as well as the
  initial position of the heap segment, and is also impossible to predict
@@ -2719,7 +2716,7 @@ The actual memory map from running processes can be obtained by reading
  for some process id.
  A sample output from a run of the previous hello world example is shown
  below.
- Recognize [stack] located on high address, and [heap]
+ 
 \end_layout
 
 \begin_layout Standard
