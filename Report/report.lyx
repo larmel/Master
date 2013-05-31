@@ -2104,16 +2104,9 @@ Virtual Memory
 \end_layout
 
 \begin_layout Standard
-Virtual memory is an abstraction over the physical memory (RAM) 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Tanenbaum:2008:ModernOperatingSystems"
-
-\end_inset
-
-.
- Every program has its own virtual address space, typically split into pages
- of size 4 KiB
+Virtual memory is an abstraction over the physical memory (RAM) .
+ Every program operate within its own virtual address space, which is typically
+ split into pages of 4 KiB
 \begin_inset Foot
 status open
 
@@ -2129,7 +2122,14 @@ To avoid any confusion with SI units, we will use KiB (kibibyte), MiB etc
  Pages are mapped to frames in physical memory.
  Translation from virtual to physical addresses are done with a lookup in
  the page table (managed by the operating system), or by a dedicated hardware
- cache called translation lookaside buffer (TLB) .
+ cache called translation lookaside buffer (TLB) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Tanenbaum:2008:ModernOperatingSystems"
+
+\end_inset
+
+.
  
 \end_layout
 
@@ -2327,19 +2327,11 @@ ELF files is structured in a set of sections, such as
 \begin_inset Quotes erd
 \end_inset
 
-, 
+ and 
 \begin_inset Quotes eld
 \end_inset
 
 .symtab
-\begin_inset Quotes erd
-\end_inset
-
-, and 
-\begin_inset Quotes eld
-\end_inset
-
-.bss
 \begin_inset Quotes erd
 \end_inset
 
@@ -2349,19 +2341,19 @@ ELF files is structured in a set of sections, such as
 allocable
 \emph default
 , meaning they are copied into virtual memory before the program is executed.
- An example of an allocable section is the .text area, which contains all
+ An example of an allocable section is the text area, which contains all
  the executable machine code.
  Virtual addresses of code or data stored in allocable section are determined
  statically, and can be found by reading the contents of the ELF file.
- The following example shows the first few instruction in the main function
- of a program, which in this case starts at address 0x400544 
+ The following example shows disassembly of the first few instruction in
+ the main function of a program, which in this case starts at address 0x400544
+ 
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
-Output is generated using the objdump utility, part of GNU Binary Utilities
- -- also providing readelf, which is another useful program for analyzing
- ELF files.
+Output is generated using the objdump utility, part of GNU Binary Utilities.
+ readelf is another useful program for analyzing ELF files.
 \end_layout
 
 \end_inset
