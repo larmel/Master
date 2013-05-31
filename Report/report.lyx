@@ -2125,8 +2125,7 @@ The operating system is a vital part of the execution environment.
  Because of time limitations we have not considered bias effects due to
  specific variations in OS-es, but rather specific variations within the
  execution context provided by the operating system.
- For all our results, we have used the latest stable release of Ubuntu,
- which is 12.04 LTS.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2139,7 +2138,40 @@ To understand why some of the bias effects occur, it is necessary to understand
 \end_layout
 
 \begin_layout Subsection
-Object Files
+ELF
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/elf/compilation.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Overview of important steps of the compilation process
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
