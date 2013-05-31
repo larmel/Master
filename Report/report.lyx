@@ -1824,8 +1824,7 @@ The set of performance counters is divided into two categories;
 \emph on
 architectural
 \emph default
- counters, which are defined across families of microarchitectures, and
- 
+ counters, supported across families of microarchitectures, and 
 \emph on
 non-architectural
 \emph default
@@ -1942,45 +1941,6 @@ status open
 \begin_layout Plain Layout
 
 perf stat -e cycles ls
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-As output, we see something like the following.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
- Performance counter stats for 'ls':
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-                 0 cycles                    #    0.000 GHz             
-       
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.010666675 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -2119,30 +2079,58 @@ The Execution Context
 \end_layout
 
 \begin_layout Standard
-The operating system is a vital part of the execution environment.
- Running tests on a particular operating system might very well result in
- big performance differences.
- Because of time limitations we have not considered bias effects due to
- specific variations in OS-es, but rather specific variations within the
- execution context provided by the operating system.
- 
-\end_layout
-
-\begin_layout Standard
 To understand why some of the bias effects occur, it is necessary to understand
  some of the low-level aspects of how processes and memory is managed by
  the operating system.
  In particular, we will see that changes to memory layout in virtual address
- space can lead to performance variations.
- 
+ space is an important factor.
+ Some knowledge of ELF executables and virtual memory is necessary.
+ We will provide a brief introduction into how code and data is mapped to
+ virtual memory on 64 bit Linux systems.
 \end_layout
 
 \begin_layout Subsection
-ELF
+Virtual Memory
+\end_layout
+
+\begin_layout Standard
+Virtual memory is an abstraction over the physical memory (RAM).
+ Every program has its own virtual address space, typically split into pages
+ of size 4 KiB
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+To avoid any confusion with SI units, we will use KiB (kibibyte), MiB etc
+ for numbers with base 2.
+ 1 KiB is 1024 bytes, 1 MiB is 1024 KiB, and so on.
+\end_layout
+
+\end_inset
+
+.
+ Pages are mapped to frames in physical memory.
+ Translation from virtual to physical addresses are done with a lookup in
+ the page table (managed by the operating system), or by a dedicated hardware
+ cache called translation lookaside buffer (TLB) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Tanenbaum:2008:ModernOperatingSystems"
+
+\end_inset
+
+.
+ The placement of code and data in virtual address space is decided either
+ statically at compile time, or dynamically at run time.
+\end_layout
+
+\begin_layout Subsubsection*
+Linking
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
+placement h
 wide false
 sideways false
 status open
@@ -2161,6 +2149,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:elf"
+
+\end_inset
+
 Overview of important steps of the compilation process
 \end_layout
 
@@ -2174,14 +2168,146 @@ Overview of important steps of the compilation process
 
 \end_layout
 
-\begin_layout Subsection
-Virtual Memory
+\begin_layout Standard
+Modern Unix systems represent executable program files in the Executable
+ and Linkable Format (ELF) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
+ The same format also handles object files (.o) and shared libraries (.so).
+ The different steps in a typical compilation process leading up to an ELF
+ executable is shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:elf"
+
+\end_inset
+
+.
+ One or more source files (for example written in C) are first translated
+ to assembly code by a compiler.
+ An assembler translates the assembly code to machine code, wrapped in an
+ ELF file format.
+ Multiple object files can be linked together, forming a single executable
+ file.
+ The linker resolves any symbols and dependencies between the object files.
+ 
 \end_layout
 
 \begin_layout Standard
-Before a program can be run, it needs to be loaded into memory in some way.
- The ELF file includes the path to an interpreter, a program that is responsible
- for loading code and data, setting up a stack, and loading any dependencies.
+ELF files is structured in a set of sections, such as 
+\begin_inset Quotes eld
+\end_inset
+
+.text
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+.data
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+.symtab
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+.bss
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Some sections are 
+\emph on
+allocable
+\emph default
+, meaning they are loaded into virtual memory once the program is executed.
+ An example of an allocable section is the .text area, which contains all
+ the executable machine code.
+ The virtual addresses of program code can be read directly from the executable.
+ The following example shows the first few instruction in the main function
+ of a program, which starts at address 0x400544 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Output is generated using the objdump utility, part of GNU Binary Utilities
+ -- also providing readelf, which is another useful program for analyzing
+ ELF files.
+\end_layout
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+0000000000400544 <main>:
+\end_layout
+
+\begin_layout Plain Layout
+
+  400544:	55                   	push   %rbp
+\end_layout
+
+\begin_layout Plain Layout
+
+  400545:	48 89 e5             	mov    %rsp,%rbp
+\end_layout
+
+\begin_layout Plain Layout
+
+  400548:	48 83 ec 10          	sub    $0x10,%rsp
+\end_layout
+
+\begin_layout Plain Layout
+
+  40054c:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+\end_layout
+
+\begin_layout Plain Layout
+
+  400553:	bf 04 00 00 00       	mov    $0x4,%edi
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Loading
+\end_layout
+
+\begin_layout Standard
+Before a program can be run, it needs to be loaded into virtual memory in
+ some way.
+ The ELF executable file includes the path to an interpreter, a program
+ that is responsible for loading code and data, setting up a stack, and
+ loading any dependencies.
  Files compiled for execution on a 64 bit Linux platform will typically
  point to a loader in 
 \family typewriter
@@ -2207,7 +2333,7 @@ reference "fig:virtual-address-space"
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -2342,10 +2468,11 @@ key "Shackham:2004:ASLR"
 
 .
  If an attacker manages to inject malicous code, he can use the known virtual
- addresses to access data or call any function.
+ addresses to access data or call specific functions.
  One technique known as 'return to libc' attacks uses this knowledge to
  call functions in the C standard library, which will be loaded in most
  scenarios.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2397,8 +2524,7 @@ target "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
 \end_inset
 
 .
- For randomizing disabling heap randomization, a value of 1 can be written
- instead.
+ To disable heap randomization, a value of 1 can be written instead.
  We will use zero to disable all randomization, making virtual memory layout
  completely deterministic between each run.
  
@@ -2429,8 +2555,8 @@ Memory Context of C Programs
 \end_layout
 
 \begin_layout Standard
-Recognizing that the location of variables in virtual memory is significant,
- it is useful to have an idea of where data might end up in actual programs.
+To make things more concrete, we will illustrate how a typical C program
+ maps to virtual address space.
  The program in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -2445,7 +2571,7 @@ reference "alg:c-context"
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -3051,11 +3177,11 @@ key "Doweck:InsideIntelCoreMicroarchitecture,Intel:2012:OptimizationManual"
 \end_inset
 
 Counts the number of loads that have partial address match with preceding
- stores, causing the load to be reissued.
+ stores, causing the load to be reissued
 \begin_inset Quotes erd
 \end_inset
 
-
+.
 \end_layout
 
 \begin_layout Standard
