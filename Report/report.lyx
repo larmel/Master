@@ -255,9 +255,9 @@ Acknowledgements
 \begin_layout Standard
 I would like to thank my supervisor Anne Cathrine Elster for her support
  during this past year.
- A special thanks to my co-supervisor and ph.d.
- student Rune Erlend Jensen, whose continuous assistance and expertise on
- performance counters helped me navigate through this challenging topic.
+ A special thanks to my co-supervisor Rune Erlend Jensen, whose continuous
+ assistance and expertise on performance counters helped me navigate through
+ this challenging topic.
 \end_layout
 
 \begin_layout Standard
@@ -6681,12 +6681,16 @@ It should be noted that the effects of 4K aliasing is discussed to some
  There are even concrete suggestions for how to deal with it:
 \end_layout
 
-\begin_layout Paragraph
-User/Source Coding Rule 8.
- (H impact, ML generality) 
-\end_layout
+\begin_layout Quote
 
-\begin_layout Standard
+\series bold
+User/Source Coding Rule 8.
+ (H impact, ML generality)
+\series default
+
+\begin_inset Newline newline
+\end_inset
+
 Consider using a special memory allocation library with address offset capabilit
 y to avoid aliasing 
 \begin_inset CommandInset citation
@@ -6698,12 +6702,34 @@ key "Intel:2012:OptimizationManual"
 
 \end_layout
 
-\begin_layout Paragraph
-User/Source Coding Rule 9.
- (M impact, M generality) 
+\begin_layout Standard
+It looks like Intel recognizes the performance impacts from always aligning
+ heap memory to the same 12 bit address suffixes.
+ This rule is classified as high (H) impact and medium/low genenerality,
+ suggesting that it occurs relatively often, and with significant performance
+ implications.
+ We have already verified that the performance can be severely diminished
+ by aliasing, easily with more than 
+\begin_inset Formula $2x$
+\end_inset
+
+ difference in cycle count.
+ Given the the behaviour we observe for common allocators, is is not unreasonabl
+e to suspect this is a common occurence in real appliactions.
+ Still, to our knowledge there are no allocators that specifically addresses
+ this issue.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Quote
+
+\series bold
+User/Source Coding Rule 9.
+ (M impact, M generality)
+\series default
+
+\begin_inset Newline newline
+\end_inset
+
 When padding variable declarations to avoid aliasing, the greatest benefit
  comes from avoiding aliasing on second-level cache lines, suggesting an
  offset of 128 bytes or more 
@@ -6714,6 +6740,37 @@ key "Intel:2012:OptimizationManual"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Padding variable declarations was basically what we did with manually offseting
+ pointers returned by malloc.
+ A minimum difference of 128 bytes, or 32 
+\family typewriter
+float
+\family default
+ addresses, is suggested.
+ For the O3 convolution example, 16 elements was enough, while on highler
+ optimization as much as 48 was needed to eliminate alias.
+ Although we did not analyze in detail which assembly instructions actually
+ collided in those cases, the exceeded limit of 32 elements can probably
+ be explained by wider SSE or AVX memory accesses.
+ 
+\end_layout
+
+\begin_layout Standard
+Notice that Intel actually considers padding of variables as a 
+\begin_inset Quotes eld
+\end_inset
+
+User/Source Coding
+\begin_inset Quotes erd
+\end_inset
+
+ rule.
+ This suggests that address aliasing is something that should be considered
+ not only by compilers, but also by programmers.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -6729,9 +6786,8 @@ The Loop Stream Detector
 
 \begin_layout Standard
 Typical software spends most of the time executing the same instructions
- repeatedly in a loop.
- For each iteration, the same branch predictions are made, and the same
- instructions are fetched and decoded.
+ repeatedly in a loop, where the same branches are taken, and the same instructi
+ons are fetched and decoded.
  The Loop Stream Detector (LSD) is a front-end hardware optimization that
  is able to detect small software loops 
 \begin_inset CommandInset citation
@@ -6784,8 +6840,8 @@ Loop Stream Detector circumvents branch prediction, fetch and decode for
 
 \begin_layout Standard
 This optimization is affecting both performance and power efficiency.
- Power savings come from disabling the branch prediction, fetch and decode
- components when the LSD is active.
+ Power savings come from disabling front-end components such as fetch and
+ decode when the LSD is active.
  In cases where instruction fetch is the bottleneck, streaming already decoded
  micro-operations can also increase performance.
  
