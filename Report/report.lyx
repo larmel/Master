@@ -6629,22 +6629,33 @@ Addresses returned when allocating two float arrays of the same size, examples
 
 \end_layout
 
-\begin_layout Standard
-The libraries produce very different results.
- The default implementation alternates between using the regular heap (non-align
-ed low addresses) and mmap on higher segments.
- Interestingly, TCMalloc tends to put variables on page boundaries also
- for small sizes, returning addresses ending in 0x000 in all cases.
- Hoard also tends to align on page boundaries for larger requests, with
- addresses ending in 0x070.
+\begin_layout Itemize
+The default implementation (ptmalloc) is consistently using the regular
+ heap (non-aligned low addresses) for smaller allocations, and mmap for
+ larger requests.
+ 
+\end_layout
+
+\begin_layout Itemize
+TCMalloc seems to be using the normal heap area exclusively.
+ Interestingly, memory is aligned on page boundaries also for small sizes,
+ always returning addresses ending in 0x000.
+ 
+\end_layout
+
+\begin_layout Itemize
+Hoard also tends to align on page boundaries for larger requests, with addresses
+ ending in 0x070.
+ Unlike the other two, it looks like Hoard never utilizes normal heap area.
  
 \end_layout
 
 \begin_layout Standard
-We see that potential for address alias conflicts depends on the particular
- implementation of malloc used.
+Each library produces very different results, and we see that potential
+ for address alias conflicts depends on the particular implementation of
+ malloc used.
  There are several examples of cases where switching library can eliminate
- alias by changing suffix on pointers.
+ alias by changing address suffixes.
  For the convolution example, using ptmalloc or Hoard is very likely to
  outperform TCMalloc for 
 \begin_inset Formula $n=\text{0x1234}$
@@ -6665,15 +6676,44 @@ Optimization Guidelines
 \end_layout
 
 \begin_layout Standard
+It should be noted that the effects of 4K aliasing is discussed to some
+ extent in the Optimization manual.
+ There are even concrete suggestions for how to deal with it:
+\end_layout
+
+\begin_layout Paragraph
 User/Source Coding Rule 8.
- (H impact, ML generality) Consider using a special memory allocation library
- with address offset capability to avoid aliasing.
- ..
- 3-76 
+ (H impact, ML generality) 
 \end_layout
 
 \begin_layout Standard
-(Similar for LSD, compiler guideline).
+Consider using a special memory allocation library with address offset capabilit
+y to avoid aliasing 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+User/Source Coding Rule 9.
+ (M impact, M generality) 
+\end_layout
+
+\begin_layout Standard
+When padding variable declarations to avoid aliasing, the greatest benefit
+ comes from avoiding aliasing on second-level cache lines, suggesting an
+ offset of 128 bytes or more 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
