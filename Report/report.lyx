@@ -6064,11 +6064,18 @@ Bias from Dynamic Libraries
 
 \begin_layout Standard
 The previous example does not show measurement bias per se, but rather an
- artifact of the particular implementation of malloc.
+ artifact of the particular implementation of malloc used.
  A perfectly legal implementation of malloc could insert offsets on every
- other large request.
- Bottom line is: dynamically linked libraries are part of the execution
- environment.
+ other large request, avoiding bad performance in cases when mmap is used
+ internally.
+ Variations between different versions of libc, or local configurations
+ on parameters such as 
+\family typewriter
+M_MMAP_THRESHOLD
+\family default
+, could have a huge impact on performance.
+ In general, one must consider dynamic libraries as an important part of
+ the execution context.
  
 \end_layout
 
@@ -6077,33 +6084,32 @@ Memory Allocators
 \end_layout
 
 \begin_layout Standard
-In the case of memory allocators alone, there are several options: The one
- used in GNU's libc is 
-\series bold
-ptmalloc
-\series default
-
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "http://www.malloc.de/en/"
-target "http://www.malloc.de/en/"
+In the case of memory allocators alone, there are several alternatives to
+ libc.
+ One of the key issues different allocators tries to address is contention
+ in a multithreaded environment.
+ Heap management is a natural bottleneck for multithreaded applications,
+ as all threads share the same address space.
+ A naive allocator will force serialization of calls to malloc and free
+ from different threads 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Berger:2000:Hoard"
 
 \end_inset
 
-
+.
+ 
 \end_layout
 
-\end_inset
-
-, which is based on Doug Lea's malloc
+\begin_layout Standard
+The implementation used in GNU libc is called ptmalloc, which is based on
+ Doug Lea's malloc
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
+Doug Lea, A Memory Allocator, 
 \begin_inset CommandInset href
 LatexCommand href
 name "http://g.oswego.edu/dl/html/malloc.html"
@@ -6116,18 +6122,13 @@ target "http://g.oswego.edu/dl/html/malloc.html"
 
 \end_inset
 
-, Hoard 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Berger:2000:Hoard"
-
-\end_inset
-
-
+.
+ We will look at two alternatives, Hoard
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
+The Hoard Memory Allocator, 
 \begin_inset CommandInset href
 LatexCommand href
 name "http://www.hoard.org/"
@@ -6140,28 +6141,12 @@ target "http://www.hoard.org/"
 
 \end_inset
 
-, nedmalloc 
+ and TCMalloc
 \begin_inset Foot
 status open
 
 \begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "http://www.nedprod.com/programs/portable/nedmalloc/"
-target "http://www.nedprod.com/programs/portable/nedmalloc/"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- and tcmalloc
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
+Thread-Caching Malloc, 
 \begin_inset CommandInset href
 LatexCommand href
 name "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
@@ -6174,48 +6159,56 @@ target "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
 
 \end_inset
 
-.
- Many allocators try to battle lock contention for multithreaded programs,
- where all threads share a common heap space.
- Allocating and freeing dynamic memory from a shared pool must be synchronized
- in some way.
+, both explicitly targeting multithreaded code.
+ Implementations of malloc and related functions are typically provided
+ as shared libraries.
+ Both Hoard and TCMalloc can be used as drop-in replacements for already
+ compiled code using the 
+\family typewriter
+LD_PRELOAD
+\family default
+ environment variable.
+ Directories specified this way will be searched first by the dynamic linker,
+ resolving references to malloc to the alternative library.
  
 \end_layout
 
-\begin_layout Description
-Hoard Same behaviour on large allocations.
- Returned addresses always ends in 0x070.
- Significantly larger cycle count, but same number of address alias events.
- Could not compile from source, linked with dynamic library.
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ LD_PRELOAD=~/Allocators/Hoard/libhoard.so ./test
 \end_layout
 
-\begin_layout Description
-nedmalloc Did not compile -- no prebuilt binary.
-\end_layout
+\end_inset
 
-\begin_layout Description
-tcmalloc Aligns at page boundary, ending in 0x000.
- Uses low addresses, 0xa49000 etc.
- Returns page-aligned areas for smaller allocations as well -- possible
- environment bias.
+
 \end_layout
 
 \begin_layout Standard
-We did some testing with three of the libraries, allocating two arrays of
- equal length for different sizes.
- The libraries produce very different results.
- The default implementation alternates between using the regular heap (non-align
-ed low addresses) and mmap on higher segments.
- Tcmalloc tends to put variables on page boundaries also for small sizes,
- returning addresses ending in 0x000.
- Hoard tends to align on page boundaries for larger requests, with addresses
- ending in 0x070.
+We did some testing with each of the libraries, observing the addresses
+ returned when allocating two equally large 
+\family typewriter
+float
+\family default
+ arrays.
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:malloc-impl-tuples"
+
+\end_inset
+
+ shows a comparison for different request sizes.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float table
-placement H
 wide false
 sideways false
 status open
@@ -6252,7 +6245,7 @@ Default (ptmalloc)
 \begin_inset Text
 
 \begin_layout Plain Layout
-tcmalloc
+TCMalloc
 \end_layout
 
 \end_inset
@@ -6637,25 +6630,34 @@ Addresses returned when allocating two float arrays of the same size, examples
 \end_layout
 
 \begin_layout Standard
-Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:malloc-impl-tuples"
-
-\end_inset
-
- shows that potential for address alias conflicts depends on the particular
- implementation of malloc used.
- We see several examples of cases where switching library can eliminate
- alias by changing suffix on pointers.
- Note that tcmalloc aligns to page boundary in all cases.
+The libraries produce very different results.
+ The default implementation alternates between using the regular heap (non-align
+ed low addresses) and mmap on higher segments.
+ Interestingly, TCMalloc tends to put variables on page boundaries also
+ for small sizes, returning addresses ending in 0x000 in all cases.
+ Hoard also tends to align on page boundaries for larger requests, with
+ addresses ending in 0x070.
  
 \end_layout
 
 \begin_layout Standard
-Most allocators focus on efficiency in a multithreaded environment, and
- we find that none of the alternatives tested attempts to solve the aliasing
- problem for aligned arrays.
+We see that potential for address alias conflicts depends on the particular
+ implementation of malloc used.
+ There are several examples of cases where switching library can eliminate
+ alias by changing suffix on pointers.
+ For the convolution example, using ptmalloc or Hoard is very likely to
+ outperform TCMalloc for 
+\begin_inset Formula $n=\text{0x1234}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Most allocators seem focus mostly on efficiency in a multithreaded environment,
+ and we find that none of the alternatives tested attempts to solve the
+ aliasing problem for aligned arrays.
 \end_layout
 
 \begin_layout Subsection
