@@ -268,7 +268,8 @@ Loop Stream Detector
 
 \lang norsk
 Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
- viser at særlig alias-effekter ofte kan gi signifikante ytelsesforskjeller.
+ viser at særlig alias-effekter ofte kan gi signifikante ytelsesforskjeller
+ i praksis.
  Både FFTW og ATLAS viser seg å være sårbare mot bias.
  For eksempel kan riktig plassering av data i minne kan gi over 30 % forbedring
  av allerede høyt optimaliserte rutiner for matrise-vektor-multiplikasjon.
