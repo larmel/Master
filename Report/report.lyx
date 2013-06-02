@@ -78,7 +78,11 @@
 \begin_body
 
 \begin_layout Title
-Analyzing Context Bias on Modern Architectures
+Analyzing Contextual Bias on Modern CPU Architectures:
+\begin_inset Newline newline
+\end_inset
+
+How Memory Layout Impacts Performance
 \end_layout
 
 \begin_layout Author
@@ -141,12 +145,13 @@ Performance analysis of software is subject to measurement bias.
 \end_layout
 
 \begin_layout Abstract
-In this thesis we will study bias effects that can be experienced by changing
- the Unix environment variables, or altering the program link order.
+In this thesis, we will study bias effects that can be experienced by changing
+ the Unix environment variables or altering the program link order.
  In effect, both of these leads to different virtual memory layouts, which
  is what actually triggers the performance cliffs.
  Through experimentation and careful measurement using hardware performance
- counters, we identify several potential sources of bias on the Intel 
+ counters, we identify several potential sources of bias on the Intel Core
+ 
 \begin_inset Quotes eld
 \end_inset
 
@@ -188,7 +193,85 @@ status open
 \begin_layout Abstract
 
 \lang norsk
-Sammendrag på norsk
+Ytelsesvurdering av programvare er påvirket av mange forskjellige, og tilsynelat
+ende uviktige, egenskaper ved maskinen man gjør målinger på.
+ For eksempel kan innholdet i miljøvariabler, eller rekkefølgen man linker
+ programfiler på, være signifikant.
+ Variasjoner som følge av slike eksterne egenskaper klassifiseres som 
+\emph on
+bias
+\emph default
+.
+ Den egentlige årsaken viser seg ofte å være endringer i organiseringen
+ av minne.
+ Restriksjoner ved den underliggende maskinvaren introduserer 
+\begin_inset Quotes eld
+\end_inset
+
+hopp
+\begin_inset Quotes erd
+\end_inset
+
+ i ytelse; på en maskin kan en kodesnutt få plass i én linje i hurtigminnet,
+ mens på en annen kan den bli fragmentert i flere.
+ Slike effekter kan være signifikante, men er også funnet å være vanskelige
+ å forutse eller motvirke.
+\end_layout
+
+\begin_layout Abstract
+
+\lang norsk
+Denne oppgaven dreier seg om å studere årsaken til bias-effekter som kan
+ forekomme av å endre minneaddresser for programkode og data.
+ Hovedfokus vil være på Intel Core 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ -arkitekturen.
+ Gjennom eksperimenter og nøyaktig måling ved bruk av 
+\begin_inset Quotes eld
+\end_inset
+
+performance counters
+\begin_inset Quotes erd
+\end_inset
+
+, kan vil identifisere flere arkitekturspesifikke egenskaper ved prosessoren
+ som fører til variasjoner i ytelse.
+ Vi avslører hvordan konkrete maskinvarekomponenter kan forklare ytelsesforskjel
+ler som observeres som bias.
+ Begrensninger i 
+\begin_inset Quotes eld
+\end_inset
+
+Loop Stream Detector
+\begin_inset Quotes erd
+\end_inset
+
+, samt en effekt kjent som 
+\begin_inset Quotes eld
+\end_inset
+
+4K aliasing
+\begin_inset Quotes erd
+\end_inset
+
+ studeres i detalj.
+ 
+\end_layout
+
+\begin_layout Abstract
+
+\lang norsk
+Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
+ viser at særlig alias-effekter ofte kan gi signifikante ytelsesforskjeller.
+ Både FFTW og ATLAS viser seg å være sårbare mot bias.
+ For eksempel kan riktig plassering av data i minne kan gi over 30 % forbedring
+ av allerede høyt optimaliserte rutiner for matrise-vektor-multiplikasjon.
 \end_layout
 
 \begin_layout Standard
@@ -300,7 +383,7 @@ pagenumbering{arabic}
 Performance of computer programs is not just a function of the collection
  of machine instructions executed.
  Various external properties, such as the operating system, or even room
- temperature, can have have an impact on program execution; Micro-chips
+ temperature, can have have an impact on how fast programs execute: Micro-chips
  can be sensitive to temperature, possibly performing better in cold environment
 s.
  Characteristics of the operating system can decide things like the placement
@@ -510,9 +593,9 @@ reference "fig:motivation"
  Ivy Bridge architecture.
  Plotting the number of cycles executed for different environment sizes,
  we see that the cycle count suddenly increases by more than 20 %.
- In principle, the length of your name -- by extension you user login --
- could be the tipping point between good and bad performance when running
- this program.
+ The length of your name -- by extension you user login -- could in principle
+ be the tipping point between good and bad performance when running this
+ program.
  
 \end_layout
 
@@ -554,7 +637,7 @@ Outline
 \end_layout
 
 \begin_layout Standard
-The remaining parts of this thesisis structured as follows
+The remaining parts of this thesis structured as follows
 \end_layout
 
 \begin_layout Description
