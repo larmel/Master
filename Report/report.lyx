@@ -2241,7 +2241,7 @@ key "Lomont:2012:x64Assembly"
 \end_layout
 
 \begin_layout Subsubsection*
-Linking
+ELF
 \end_layout
 
 \begin_layout Standard
@@ -2489,7 +2489,7 @@ status open
 
 \begin_layout Plain Layout
 
-bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+$ bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
 \end_layout
 
 \end_inset
@@ -4397,11 +4397,11 @@ cycle_activity.cycles_ldm_pending
 
 \begin_layout Itemize
 The remaining counters appears to be less interesting.
- Bus cycles and 
+ 
 \shape smallcaps
 cpl_cycles.ring123
 \shape default
- will naturally correlate with cycle count.
+ and bus cycles will naturally correlate with cycle count.
  There are differences in the way micro-operations are scheduled between
  dispatch ports, which seems more like a by-product of the other events.
  
@@ -4726,7 +4726,6 @@ reference "alg:loop-micro-kernel-fixed"
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement t
 wide false
 sideways false
 status open
@@ -4944,7 +4943,7 @@ reference "fig:loop-fixed"
  of offset.
  This covers a whole period of 12 bit address suffixes, showing that the
  aliasing is not merely moved to another offset.
- With only neglegtibe overhead from additional code size and instructions
+ With only neglectable overhead from additional code size and instructions
  executed, we are able to completely remove negative bias effects caused
  by stack position for this program.
  
@@ -5136,7 +5135,7 @@ For small requests of
 \begin_inset Formula $n=10$
 \end_inset
 
- bytes, we get get the following addresses for five concecutive allocations:
+ bytes, we get the following addresses for five concecutive allocations:
  0x1541010, 0x1541030, 0x1541050, 0x1541070, 0x1541090.
  With address layout randomization enabled, the initial heap page can vary.
 \end_layout
@@ -5146,7 +5145,7 @@ For larger requests of
 \begin_inset Formula $n=1000000$
 \end_inset
 
- bytes, we get: 0x7ff1b13ce
+ bytes; 0x7ff1b13ce
 \series bold
 010
 \series default
@@ -5179,7 +5178,7 @@ always
  have alias on the last 12 bits.
  This is true in all cases where mmap is used internally, as it explicitly
  guarantees the return value to be page aligned.
- Note that this is not affected by address randomization.
+ Note that this property of malloc is not affected by address randomization.
  
 \end_layout
 
@@ -5238,6 +5237,7 @@ key "Intel:2012:OptimizationManual"
 
 \begin_layout Standard
 \begin_inset Float algorithm
+placement h
 wide false
 sideways false
 status open
@@ -5409,8 +5409,8 @@ int main() {
 \end_layout
 
 \begin_layout Standard
-Performance statistics from running perf is shown below, measuring cycles,
- 
+Performance statistics from running perf is shown below, measuring cycle
+ count, 
 \shape smallcaps
 ld_blocks_partial.address_alias
 \shape default
@@ -5457,8 +5457,8 @@ status open
 \end_layout
 
 \begin_layout Standard
-We see that a very large number of alias events and resource stalls are
- generated compared to cycle count.
+A very large number of alias events and resource stalls are generated compared
+ to cycle count.
  On optimization O3 enabled, GCC generates vectorized code, making it harder
  to determine exactly where the aliasing happens.
  However, it is not hard to imagine what is the likely cause of aliasing
@@ -5567,7 +5567,6 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/alias/offsets-O3-gcc.eps
-	width 100col%
 
 \end_inset
 
@@ -5590,8 +5589,19 @@ Performance statistics for convolution with increasing separation of input
 \family typewriter
 convolve(N, input, (output + x))
 \family default
- for increasing values of x, separating array addresses by x floats (or
- 4x bytes) modulo 4096.
+ for increasing values of x, separating array addresses by 
+\begin_inset Formula $x$
+\end_inset
+
+ 
+\family typewriter
+float
+\family default
+ elements (or 
+\begin_inset Formula $4x$
+\end_inset
+
+ bytes) modulo 4096.
 \end_layout
 
 \end_inset
@@ -5987,7 +5997,11 @@ name "tab:convolution-native-gcc"
 Performance counter statistics for optimal compiler optimization flags on
  GCC.
  Showing default heap addresses, and programmatically offset of output buffer
- by 48.
+ by 48 
+\family typewriter
+float
+\family default
+ elements.
 \end_layout
 
 \end_inset
@@ -6681,8 +6695,8 @@ Optimization Guidelines
 
 \begin_layout Standard
 It should be noted that the effects of 4K aliasing is discussed to some
- extent in the Optimization manual.
- There are even concrete suggestions for how to deal with it:
+ extent in the optimization manual from Intel.
+ There are even some concrete suggestions for how to deal with it:
 \end_layout
 
 \begin_layout Quote
@@ -6754,8 +6768,8 @@ Padding variable declarations was basically what we did with manually offseting
 float
 \family default
  addresses, is suggested.
- For the O3 convolution example, 16 elements was enough, while on highler
- optimization as much as 48 was needed to eliminate alias.
+ For the O3 convolution example, 16 elements was enough, while on higher
+ optimization levels as much as 48 was needed to eliminate alias.
  Although we did not analyze in detail which assembly instructions actually
  collided in those cases, exceeding the limit of 32 elements can probably
  be explained by wider SSE or AVX memory accesses.
@@ -7247,8 +7261,11 @@ lea
 \family typewriter
 add
 \family default
-) blocks of exactly 32 bytes are inserted until LSD.UOPS shows the Loop Stream
- Detector is no longer active.
+) blocks of exactly 32 bytes are inserted until 
+\shape smallcaps
+lsd.uops
+\shape default
+ shows the Loop Stream Detector is no longer active.
 \end_layout
 
 \end_inset
@@ -7287,7 +7304,7 @@ reference "alg:lsd-chunks"
 
 \end_inset
 
-, written in GNU x86_64 assembly.
+, written in GNU x86-64 assembly.
  The idea is to execute a minimal amount of instructions at the start of
  each block, and immediately jump on to the next.
  Blocks are labeled 
@@ -7321,11 +7338,8 @@ Output shows disassembly generated by the objdump utility, part of GNU Binutils
 \end_inset
 
 .
- We see that the first compare instruction starts on address 
-\family typewriter
-0x400500
-\family default
-, aligned to 32 byte.
+ We see that the first compare instruction starts on address 0x400500, aligned
+ to 32 byte.
  Because 
 \family typewriter
 %ebx
@@ -7470,7 +7484,11 @@ je
 \family default
  instructions should be fused to a single micro-op, so we should not be
  hitting the micro-op limit.
- We find that the LSD.UOPS counter reports high values through 
+ We find that the 
+\shape smallcaps
+lsd.uops
+\shape default
+ counter reports high values through 
 \begin_inset Formula $N=11$
 \end_inset
 
@@ -7538,6 +7556,11 @@ main:
 \begin_layout Plain Layout
 
     (...)
+\end_layout
+
+\begin_layout Plain Layout
+
+    add %ebx, %ecx
 \end_layout
 
 \begin_layout Plain Layout
@@ -7611,9 +7634,16 @@ key "Intel:2012:OptimizationManual"
 \end_inset
 
 .
- We verify this restriction by measuring LSD_OVERFLOW and LSD.UOPS for loops
- of increasing size, adding instructions one by one until the performance
- counter statistics report the LSD is inactive.
+ We verify this restriction by measuring 
+\shape smallcaps
+lsd_overflow
+\shape default
+ and 
+\shape smallcaps
+lsd.uops
+\shape default
+ for loops of increasing size, adding instructions one by one until the
+ performance counter statistics report the LSD is inactive.
  Our micro-kernel is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -7832,7 +7862,11 @@ perf
 \family default
  reveals that the Loop Stream Detector is not enabled.
  Only a neglegtible amount of micro-ops are delivered by the LSD, as reported
- by LSD.UOPS (r01a8).
+ by 
+\shape smallcaps
+lsd.uops
+\shape default
+ (r01a8).
 \end_layout
 
 \begin_layout Standard
@@ -8371,8 +8405,9 @@ target "http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html"
 \end_inset
 
 , enabled by default in O2 and O3, which allows the assembler align loops
- by inserting necessary padding .
- On optimization O3, the following assembly directives
+ by inserting necessary padding.
+ On optimization O3, the following assembly directives are inserted before
+ the first instruction that is part of the loop in loop.c
 \begin_inset Foot
 status open
 
@@ -8390,10 +8425,6 @@ target "http://tigcc.ticalc.org/doc/gnuasm.html"
 
 \end_inset
 
- are inserted before the first loop instruction, compiled with 
-\family typewriter
-cc -O3 -S loop.c
-\family default
 .
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
@@ -8438,16 +8469,18 @@ Link order
 \emph on
 main.c, loop.c, foo.c
 \emph default
-: The first loop instruction is aligned to 
-\family typewriter
-0x400590
-\family default
-, an offset of 0x10 into the 0x4005
+: The first loop instruction is aligned to 0x400590, an offset of 0x10 into
+ the 0x4005
 \series bold
 80
 \series default
  chunk.
  Covering 13 chunks, the Loop Stream Detector can not be utilized.
+ r01a8:u measures 
+\shape smallcaps
+lsd.uops
+\shape default
+.
  
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
@@ -8485,12 +8518,9 @@ Link order
 \emph on
 main.c, foo.c, loop.c
 \emph default
-: The first loop instruction is aligned to 
-\family typewriter
-0x4005
+: The first loop instruction is aligned to 0x4005
 \series bold
 a0
-\family default
 \series default
 , right at the start of a chunk.
  Cycle count is reduced by more than 50% from utilizing the LSD.
@@ -9182,7 +9212,6 @@ After attempting a couple of different configurations for tranform size
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -9191,7 +9220,6 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/fft/default.eps
-	width 100col%
 
 \end_inset
 
@@ -9858,7 +9886,6 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/fft/modified.eps
-	width 100col%
 
 \end_inset
 
@@ -10176,7 +10203,6 @@ status open
 \align center
 \begin_inset Graphics
 	filename Img/fft/worstcase.eps
-	width 100col%
 
 \end_inset
 
@@ -10282,12 +10308,15 @@ reference "fig:fftw-kernels"
 \end_inset
 
 .
- 
+\end_layout
+
+\begin_layout Standard
+Each kernel shows a different pattern, with clear bias towards some stack
+ positions that performs noticably better than others.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -10332,11 +10361,6 @@ Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Each kernel shows a different pattern, with clear bias towards some stack
- positions that performs noticably better than others.
 \end_layout
 
 \begin_layout Subsection
@@ -13003,10 +13027,6 @@ name "chap:list-of-performance-counters"
 
 \end_layout
 
-\begin_layout Section
-Architectural Counters
-\end_layout
-
 \begin_layout Standard
 \align center
 \begin_inset ERT
@@ -13761,7 +13781,7 @@ endgroup
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Section*
 Non-Architectural Counters
 \end_layout
 
@@ -13817,7 +13837,7 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="19" columns="4">
+<lyxtabular version="3" rows="28" columns="4">
 <features booktabs="true" islongtable="true" longtabularalignment="center">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="center" valignment="top" width="9text%">
@@ -14088,6 +14108,46 @@ LSD_OVERFLOW
 
 \begin_layout Plain Layout
 Counts number of loops that can't stream from the instruction queue
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x4C
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+LOAD_HIT_PRE.HW_PF
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Non-SW-prefetch load dispatches that hit fill buffer allocated for H/W prefetch.
 \end_layout
 
 \end_inset
@@ -15260,7 +15320,7 @@ Cycles of dispatch stalls
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -15269,7 +15329,7 @@ Cycles of dispatch stalls
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -15278,7 +15338,7 @@ Cycles of dispatch stalls
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -15287,11 +15347,468 @@ LSD.UOPS
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 Counts the number of micro-ops delivered by loop stream detector
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xD0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+\end_layout
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+LOADS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Qualify retired memory uops that are loads.
+ Combine with umask 0x10, 0x20, 0x40, 0x80.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xD0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ STORES
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Qualify retired memory uops that are stores.
+ Combine with umask 0x10, 0x20, 0x40, 0x80.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xD0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x80
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ ALL
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Qualify any retired memory uops.
+ Must combine with umask 0x01, 0x02, to produce counts.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0xD1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ L1_HIT
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Retired load uops with L1 cache hits as data sources.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0xD1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ L2_HIT
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Retired load uops with L2 cache hits as data sources.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0xD1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x04
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ LLC_HIT
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Retired load uops whose data source was LLC hit with no snoop required.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0xD1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x20
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ LLC_MISS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Retired load uops whose data source is LLC miss
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0xD1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x40
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\shape smallcaps
+MEM_UOPS_RETIRED.
+ HIT_LFB
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Retired load uops which data sources were load uops missed L1 but hit FB
+ due to preceding miss to the same cache line with data not ready.
 \end_layout
 
 \end_inset
