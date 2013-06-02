@@ -383,23 +383,67 @@ pagenumbering{arabic}
 Performance of computer programs is not just a function of the collection
  of machine instructions executed.
  Various external properties, such as the operating system, or even room
- temperature, can have have an impact on how fast programs execute: Micro-chips
- can be sensitive to temperature, possibly performing better in cold environment
-s.
+ temperature, can have have an impact on how fast programs execute: Modern
+ microchips can be sensitive to temperature, possibly performing better
+ in cold environments.
  Characteristics of the operating system can decide things like the placement
  of code and data in memory, which in turn interacts with various hardware
  mechanisms.
- The set of conditions under which a program executes is called the execution
- context.
+ Corner cases in hardware introduces potential 
+\emph on
+performance cliffs
+\emph default
+; If for example a memory access happens to cross a page boundary, the cost
+ of an additional TLB miss can be significant.
+ The set of conditions under which a program executes is called the 
+\emph on
+execution context
+\emph default
+, which includes virtual memory layout in particular.
+ Variations within contexts can lead to programs being 
+\emph on
+biased
+\emph default
+ towards certain configurations.
+ Executing the same program on two machines with identical hardware can
+ sometimes yield significantly different results, an effect known as 
+\emph on
+measurement bias
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+Previous work has studied parameters such as the size of Unix environment
+ variables and program link order.
+ Both are found to have a significant effect on performance, even on standardize
+d benchmarks.
+ Unfortunately, the effects also appear to be unpredictable, and therefore
+ difficult to deal with.
+ This poses a problem for researchers and performance analysts, who will
+ need to account for effects of measurement bias with more rigorous methodologie
+s and statistical methods.
  
 \end_layout
 
 \begin_layout Standard
-Variations within the execution context have been previously studied in
- the context of measurement bias.
- In this thesis, we will study bias effects in recent Intel microarchitectures
- ...
- 
+In this thesis, we will try to unveil the actual causes of bias that can
+ be experienced by altering memory layout.
+ Both the size of environment variables and link ordering ultimately has
+ an effect on virtual memory of running processes.
+ Because these effects are intrinsically connected to various hardware features,
+ we will focus on the Intel Core i7 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ architecture specifically.
+ The goal is to identify and model the causes of measurement bias, and hopefully
+ develop enough of an understanding to be able to not only predict, but
+ also avoid cases with bad performance.
 \end_layout
 
 \begin_layout Section
