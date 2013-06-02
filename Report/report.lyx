@@ -56,6 +56,10 @@
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 3cm
+\topmargin 4cm
+\rightmargin 3cm
+\bottommargin 4cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -6753,7 +6757,7 @@ float
  For the O3 convolution example, 16 elements was enough, while on highler
  optimization as much as 48 was needed to eliminate alias.
  Although we did not analyze in detail which assembly instructions actually
- collided in those cases, the exceeded limit of 32 elements can probably
+ collided in those cases, exceeding the limit of 32 elements can probably
  be explained by wider SSE or AVX memory accesses.
  
 \end_layout

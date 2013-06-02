@@ -43,11 +43,10 @@
 \shortcut idx
 \color #008000
 \end_index
-\leftmargin 4cm
-\topmargin 2.5cm
-\rightmargin 2.5cm
-\bottommargin 2.5cm
-\footskip 1cm
+\leftmargin 3cm
+\topmargin 3.6cm
+\rightmargin 3cm
+\bottommargin 4cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -868,6 +867,28 @@ Link order is more dubious.
  order, leaving it up to the particular linker implementation on the target
  machine to decide the order.
  
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Testing footnote
+\end_layout
+
+\end_inset
+
+.
+ 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+There will be up to 2, maybe even three footnotes on a page (might need
+ to refactor some of those to references though ...)
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
