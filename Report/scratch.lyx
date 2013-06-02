@@ -272,6 +272,54 @@ Instructions, instructions:u
 
 \end_layout
 
+\begin_layout Description
+(a) 
+\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x607010}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x607010}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+(b) 
+\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x607010}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x6170b0}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+(c) 
+\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x6073d0}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x6173e0}$
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
 Depending on the virtual heap addresses of 
 \begin_inset Formula $A$

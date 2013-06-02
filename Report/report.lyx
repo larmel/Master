@@ -10844,7 +10844,9 @@ key "Whaley:2000:ATLAS"
 \end_layout
 
 \begin_layout Subsection
-Matrix-Vector Multiplication
+Cost of Address Aliasing in 
+\family typewriter
+cblas_dgemv
 \end_layout
 
 \begin_layout Standard
@@ -10956,6 +10958,7 @@ reference "alg:blas-gemv"
 CblasColMajor
 \family default
 , meaning we impose a column major ordering of the data.
+ The prefix indicates data type, in this case d for double.
  
 \end_layout
 
@@ -10997,6 +11000,9 @@ We find that typical BLAS implementations are vulnerable to aliasing in
 \end_inset
 
 .
+ As might be suspected, the worst case seems to be when all memory buffers
+ align closely on the same 12 bit suffix.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -11051,8 +11057,6 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-
-\family typewriter
 &x
 \end_layout
 
@@ -11062,8 +11066,6 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-
-\family typewriter
 &y
 \end_layout
 
@@ -11340,12 +11342,6 @@ Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
 
 \end_layout
 
-\begin_layout Subsubsection*
-Cost of Aliasing in 
-\family typewriter
-dgemv
-\end_layout
-
 \begin_layout Standard
 Performance counter statistics shown in Table 
 \begin_inset CommandInset ref
@@ -11354,10 +11350,10 @@ reference "tab:dgemv"
 
 \end_inset
 
- are obtained from invoking cblas_dgemv in the main function of a small
- C program.
+ are obtained from invoking cblas_dgemv once, in the main function of a
+ small C program.
  Still, the measurement does not represent the true cost of aliasing for
- dgemv, as overhead from things like allocating memory is also counted.
+ dgemv, as overhead from things like memory allocation is also counted.
  
 \end_layout
 
@@ -11463,8 +11459,8 @@ dgemv
 \end_layout
 
 \begin_layout Standard
-To better be able to asses the effects of aliasing, we need to isolate the
- call to gemv.
+To better be able to assess the effects of aliasing, the call to gemv needs
+ to be isolated.
  We use the program from Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -11485,7 +11481,7 @@ reference "alg:blas-gemv"
  as 
 \begin_inset Formula 
 \[
-\text{cost}=\frac{t_{K=101}-t_{K=1}}{100}
+t_{\text{estimate}}=\frac{t_{K=101}-t_{K=1}}{100}
 \]
 
 \end_inset
@@ -11499,8 +11495,11 @@ Where
 \end_inset
 
  represents some metric, such as the number of cycles.
- Subtracting the run with a single invocation of gemv removes the constant
- overhead from the 
+ Subtracting the 
+\begin_inset Formula $K=1$
+\end_inset
+
+ run removes the constant overhead from the 
 \begin_inset Formula $K=101$
 \end_inset
 
@@ -11510,7 +11509,7 @@ Where
 \end_inset
 
  averages the values from the remaining iterations.
- 
+ Other iteration counts could have been used as well.
 \end_layout
 
 \begin_layout Standard
@@ -11536,14 +11535,52 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="13" columns="4">
+<lyxtabular version="3" rows="12" columns="4">
 <features booktabs="true" tabularvalignment="middle">
 <column alignment="left" valignment="top" width="0">
 <column alignment="right" valignment="top" width="0pt">
 <column alignment="right" valignment="top" width="0">
 <column alignment="right" valignment="top" width="0">
 <row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(a)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(b)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(c)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11564,7 +11601,7 @@ UnHalted Core Cycles
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11585,7 +11622,7 @@ UnHalted Core Cycles
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11606,7 +11643,7 @@ UnHalted Core Cycles
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12243,82 +12280,6 @@ mem_load_uops.retired.llc_miss
 \begin_layout Plain Layout
 
 \shape smallcaps
-load_hit_pre.sw_pf
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-3,915
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-1,502
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-8,926
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\shape smallcaps
 load_hit_pre.hw_pf
 \end_layout
 
@@ -12389,7 +12350,7 @@ load_hit_pre.hw_pf
 </cell>
 </row>
 <row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12400,7 +12361,7 @@ cycle_activity.cycles_ldm_pending
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12421,7 +12382,7 @@ cycle_activity.cycles_ldm_pending
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12442,82 +12403,6 @@ cycle_activity.cycles_ldm_pending
 
 \end_inset
 </cell>
-<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-91,998,759
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\shape smallcaps
-cycle_activity.cycles_l1d_pending
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-317,531,914
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-213,509,937
-\end_layout
-
-\end_inset
-</cell>
 <cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
@@ -12534,7 +12419,7 @@ cycle_activity.cycles_l1d_pending
 \uwave off
 \noun off
 \color none
-175,685,526
+91,998,759
 \end_layout
 
 \end_inset
@@ -12570,20 +12455,30 @@ name "tab:gemv-estimate"
 
 \end_inset
 
-Estimated cost of a single invocation of dgemv with matrix size 
+Estimated cost of a single invocation of 
+\family typewriter
+cblas_dgemv
+\family default
+ with matrix size 
 \begin_inset Formula $8192\times8192$
 \end_inset
 
  in ATLAS.
- Each column shows statistics for different heap addresses, refering to
- cases a, b, c from Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:dgemv"
-
+ Each column shows statistics for different heap addresses.
+ The 12 bit address suffixes for 
+\begin_inset Formula $A$
 \end_inset
 
-.
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+ in each case is (0x010, 0x010, 0x020) for column a, (0x010, 0x010, 0xb0)
+ for b and (0x010, 0x3d0, 0x3e0) for c.
 \end_layout
 
 \end_inset
@@ -12598,6 +12493,13 @@ reference "tab:dgemv"
 
 \begin_layout Standard
 Performance counter statistics for each of the three address configurations
+ from Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:dgemv"
+
+\end_inset
+
  are shown in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -12606,113 +12508,20 @@ reference "tab:gemv-estimate"
 \end_inset
 
 .
- 
-\end_layout
-
-\begin_layout Description
-(a) 
-\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x607010}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x607010}$
-\end_inset
-
-.
- This is the worst case scenario, with a number of alias events of more
- than 50 % of cycle count.
- 
-\end_layout
-
-\begin_layout Description
-(b) 
-\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x607010}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x6170b0}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Description
-(c) 
-\begin_inset Formula $A\rightarrow\text{0x2aaaac292010}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}\rightarrow\text{0x6073d0}$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{y}\rightarrow\text{0x6173e0}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-This can done by performing two benchmarks, one with gemv called once, and
- another with gemv called 
-\begin_inset Formula $K$
-\end_inset
-
- times.
- 
-\end_layout
-
-\begin_layout Standard
-Depending on the virtual heap addresses of 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
-, performance of a typical BLAS implementation can vary significantly.
- Table shows performance counter statistics for three independent executions
- with 
-\begin_inset Formula $N=M=8196$
-\end_inset
-
-, and varying memory addresses for each heap area.
-\end_layout
-
-\begin_layout Standard
-As might be suspected, the worst case configuration is observed when all
- arrays align closely on the last 12 bits.
- Between the best and worst configuration, there is a potential for 1.074x
- speedup.
- We conclude that the most probable cause of bias must be falsely predicted
- dependencies due to address aliasing.
- For the worst case, the number of alias events is about 18 % of cycle count,
- indicating many missed opportunities for out of order execution.
- Supporting this hypothesis, we find no apparent correlation between cycle
- count and cache efficiency.
- The L3 performance counters shown in Table shows little variation, and
- does not explain the performance variations.
- 
-\end_layout
-
-\begin_layout Standard
-The bias effects can be amplified by calling dgemv multiple times in a loop,
- avoiding overhead from malloc.
- With repeated invocations on the same data, we are able to get more than
- 1.30x speedup between the worst and best case.
+ In addition to cycle count and alias events, a number of relevant metrics
+ such as cache hit rates are included.
+ Notice that almost all load micro-ops are served by either the line feed
+ buffer or L1 cache in all cases.
+ Only a small amount of loads comes from L2, and almost none from L3.
+ The hit rate for L1 actually decreases somewhat (considering LFB as well)
+ with better execution time.
+ This could be explained by less time for prefetchers to feed the L1 cache
+ with data.
+ The hardware prefetch counter indicates more hits in cases a and b.
+ Again, we find that cache efficiency does not explain the performance cliffs
+ we observe.
+ Our results show that variations in memory addresses alone can give a speedup
+ of more than 31 % for matrix-vector multiplication in ATLAS.
  
 \end_layout
 
@@ -12788,14 +12597,17 @@ y += 0x100
 \end_layout
 
 \begin_layout Standard
-In many cases it will be possible to accurately predict the address of larger
- matrices such as 
-\begin_inset Formula $A$
+Another option is to explicitly account for 
+\begin_inset Quotes eld
 \end_inset
 
-.
- For larger requests, malloc will call mmap and always align to page boundary.
- Taking advantage of this can simplify the calculations somewhat.
+worst cases
+\begin_inset Quotes erd
+\end_inset
+
+ in the implementation of routines that are vulnerable to aliasing.
+ Addresses can be explicitly checked for potential conflicts in cblas_dgemv,
+ and if possible branch to code that will not suffer from aliasing.
  
 \end_layout
 
