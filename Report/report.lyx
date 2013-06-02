@@ -78,7 +78,7 @@
 \begin_body
 
 \begin_layout Title
-Analyzing Contextual Bias on Modern CPU Architectures:
+Analyzing Contextual Bias in Modern CPU Architectures:
 \begin_inset Newline newline
 \end_inset
 
@@ -151,7 +151,7 @@ In this thesis, we will study bias effects that can be experienced by changing
  is what actually triggers the performance cliffs.
  Through experimentation and careful measurement using hardware performance
  counters, we identify several potential sources of bias on the Intel Core
- 
+ i7 
 \begin_inset Quotes eld
 \end_inset
 
@@ -223,7 +223,7 @@ hopp
 \lang norsk
 Denne oppgaven dreier seg om å studere årsaken til bias-effekter som kan
  forekomme av å endre minneaddresser for programkode og data.
- Hovedfokus vil være på Intel Core 
+ Hovedfokus vil være på Intel Core i7 
 \begin_inset Quotes eld
 \end_inset
 
@@ -441,9 +441,11 @@ Ivy Bridge
 \end_inset
 
  architecture specifically.
- The goal is to identify and model the causes of measurement bias, and hopefully
- develop enough of an understanding to be able to not only predict, but
- also avoid cases with bad performance.
+ The goal is to identify specific hardware features that causes measurement
+ bias, and model how they interact with software programs.
+ With a better understanding of intricate properties of the CPU, we will
+ be able to not only predict, but also explicitly optimize for beneficial
+ memory layouts.
 \end_layout
 
 \begin_layout Section
@@ -481,6 +483,7 @@ key "Mytkowicz:2009:WrongData"
 \begin_layout Standard
 \noindent
 \begin_inset Float figure
+placement h
 wide false
 sideways false
 status open
@@ -653,14 +656,11 @@ correct
 \end_inset
 
  cycle count here? One could say that in most cases, it should be around
- 700'000, although on average it is somewhat higher.
+ 700,000, although on average it is somewhat higher.
  If you are unlucky, sitting on a machine with just the right environment
- size, you might declare that the cycle count is about 850'000.
- This illustrates how external properties can 
-\emph on
-bias
-\emph default
- performance towards certain environments.
+ size, you might declare that the cycle count is about 850,000.
+ This illustrates how external properties can bias performance towards certain
+ environments.
  Previous work focuses mostly on how to mitigate effects of bias, and avoid
  drawing the wrong conclusions based on misleading measurements.
  Our goal is to gain a better understanding on exactly what mechanism of
