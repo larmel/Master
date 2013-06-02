@@ -272,6 +272,325 @@ Instructions, instructions:u
 
 \end_layout
 
+\begin_layout Standard
+Depending on the virtual heap addresses of 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+, performance of a typical BLAS implementation can vary significantly.
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:blas-dgemv-perf"
+
+\end_inset
+
+ shows performance counter statistics for three independent executions with
+ 
+\begin_inset Formula $N=M=8196$
+\end_inset
+
+, and varying memory addresses for each heap area.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="5">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="right" valignment="top" width="20text%">
+<column alignment="center" valignment="top" width="15text%">
+<column alignment="center" valignment="top" width="19text%">
+<column alignment="center" valignment="top" width="15text%">
+<column alignment="center" valignment="top" width="15text%">
+<row>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Address of 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+, and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycles, cycles:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Address alias, r0107:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L3 cache misses
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L3 cache references
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac292010 0x605010 0x615020
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+194,224,356
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+34,108,038
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6,633
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15,267
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac292010 0x605010 0x6150b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+186,370,424
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5,723,056
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7,271
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17,773
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2aaaac292010 0x6053d0 0x6153e0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+180,791,072
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+37,079
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6,230
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15,328
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:blas-dgemv-perf"
+
+\end_inset
+
+Performance counter statistics for automatically tuned ATLAS implementation
+ of 
+\family typewriter
+dgemv
+\family default
+, calculating 
+\begin_inset Formula $\boldsymbol{y}=A\boldsymbol{x}$
+\end_inset
+
+ with matrix size 
+\begin_inset Formula $8192\times8192$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As might be suspected, the worst case configuration is observed when all
+ arrays align closely on the last 12 bits.
+ Between the best and worst configuration, there is a potential for 1.074x
+ speedup.
+ We conclude that the most probable cause of bias must be falsely predicted
+ dependencies due to address aliasing.
+ For the worst case, the number of alias events is about 18 % of cycle count,
+ indicating many missed opportunities for out of order execution.
+ Supporting this hypothesis, we find no apparent correlation between cycle
+ count and cache efficiency.
+ The L3 performance counters shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:blas-dgemv-perf"
+
+\end_inset
+
+ shows little variation, and does not explain the performance variations.
+ 
+\end_layout
+
+\begin_layout Standard
+The bias effects can be amplified by calling dgemv multiple times in a loop,
+ avoiding overhead from malloc.
+ With repeated invocations on the same data, we are able to get more than
+ 1.30x speedup between the worst and best case.
+ 
+\end_layout
+
 \begin_layout Section
 4K Alias
 \end_layout
