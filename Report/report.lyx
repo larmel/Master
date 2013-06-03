@@ -497,7 +497,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "35col%"
+width "43col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -525,37 +525,37 @@ int main() {
 
 \begin_layout Plain Layout
 
-  int g = 0, inc = 1;
+    int g = 0, inc = 1;
 \end_layout
 
 \begin_layout Plain Layout
 
-  for(;g<65536;g++){
+    for (;g<65536;g++) {
 \end_layout
 
 \begin_layout Plain Layout
 
-    i += inc;
+        i += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-    j += inc;
+        j += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-    k += inc;
+        k += inc;
 \end_layout
 
 \begin_layout Plain Layout
 
-  }
+    }
 \end_layout
 
 \begin_layout Plain Layout
 
-  return 0;
+    return 0;
 \end_layout
 
 \begin_layout Plain Layout
@@ -578,7 +578,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "57col%"
+width "47col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -586,7 +586,7 @@ status open
 
 \begin_layout Plain Layout
 \noindent
-\align right
+\align left
 \begin_inset Graphics
 	filename Img/loop/motivation.eps
 
@@ -2073,6 +2073,46 @@ status open
 \begin_layout Plain Layout
 
 perf stat -e cycles ls
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The output looks something like the following.
+ We will be using the format directly in some cases.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+ Performance counter stats for 'ls':
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+         1,748,096 cycles
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.000731187 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5557,17 +5597,17 @@ status open
 
 \begin_layout Plain Layout
 
-        12,100,699 cycles:u       
+        12,032,225 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         9,176,205 r01a8:u   
+         9,197,081 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-         7,797,070 r01a2:u   
+         7,737,754 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -5576,7 +5616,7 @@ status open
 
 \begin_layout Plain Layout
 
-               ??? seconds time elapsed
+       0.004800780 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -5682,7 +5722,7 @@ reference "fig:convolution-O3-graph"
  The best parameter is found to be at a 16 or more elements difference in
  alignment between input and output (at least 64 bytes).
  Running the same performance counters with offset 16, we see that aliasing
- and resource stalls are almost eliminated.
+ is almost eliminated, and number of resource stalls is significantly reduced.
 \end_layout
 
 \begin_layout Standard
@@ -5750,17 +5790,17 @@ status open
 
 \begin_layout Plain Layout
 
-               ??? cycles:u       
+         5,591,035 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-               ??? r01a8:u 
+             1,254 r0107:u
 \end_layout
 
 \begin_layout Plain Layout
 
-               ??? r01a2:u    
+         1,291,413 r01a2:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -5769,17 +5809,13 @@ status open
 
 \begin_layout Plain Layout
 
-       1.078952880 seconds time elapsed
+       0.002849316 seconds time elapsed
 \end_layout
 
 \end_inset
 
 By simply altering the default addresses given by malloc, we are able to
- get more than 
-\begin_inset Formula $2x$
-\end_inset
-
- speedup.
+ reduce the cycle count by more than 50 %.
 \end_layout
 
 \begin_layout Subsubsection*

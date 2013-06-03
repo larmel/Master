@@ -19,6 +19,7 @@ def parse_arguments():
     parser.add_argument('--export', default='Figure 1')
     parser.add_argument('--labels', nargs='+')
     parser.add_argument('--ticks', type=int)
+    parser.add_argument('--ybins', type=int)
     parser.add_argument('--stride', type=int, default=1)
     parser.add_argument('--ylim', type=int)
     parser.add_argument('--ytickformat', choices=['millions', 'commas'], default='commas')
@@ -54,6 +55,8 @@ def plot(data, args):
 
     if args.ylim != None:
         plt.gca().set_ylim([0,args.ylim])
+    if args.ybins != None:
+        plt.locator_params(axis = 'y', nbins=args.ybins)
     if args.ticks != None:
         locator = MultipleLocator(args.ticks)
         plt.gca().xaxis.set_major_locator(locator)

@@ -44,14 +44,15 @@ bin/fixed.csv: loop-fixed
 		--environment-offset $(ENV_OFFSET) --environment-increment 16
 
 bin/motivation.csv: loop
-	../lperf ./$+ -e $(COUNTERS) -o $@ -n 100 -r 100 \
+	../lperf ./$+ -e $(COUNTERS) -o $@ -n 100 -r 10 \
 		--environment-offset $(ENV_OFFSET) --environment-increment 2
 
 
 # Figure: Only cycle count
 bin/cycles.eps: bin/loop.csv
 	../lplot $+ -e cycles:u --export $@ \
-		--xlabel 'Bytes added to environment' --ticks 64
+		--xlabel 'Bytes added to environment' --ticks 64 \
+		--legend 'upper right' --labels 'Cycle count, cycles:u'
 
 # Figure: Counters with the most correlation to cycle count
 bin/correlation.eps: bin/loop.csv
@@ -78,9 +79,10 @@ bin/fixed.eps: bin/fixed.csv
 # Figure: Motivation, small graph with just the spike showing only cycle count. 
 bin/motivation.eps: bin/motivation.csv
 	../lplot $+ -e cycles:u --export $@ \
-		--xlabel 'Bytes added to environment' --ylabel 'Cycle count' \
+		--xlabel 'Bytes added to environment' \
+		--legend 'upper right' --labels 'CPU Cycles' \
 		--stride 2 \
-		--dimension 3.8 2.3
+		--dimension 3.5 2.3 --ybins 5
 
 
 clean:
