@@ -1265,7 +1265,7 @@ key "Patterson:2011:ComputerOrganization"
 To gain accurate measurements and diagnostics, we will use hardware performance
  counters.
  The Intel architecture has comprehensive monitoring capabilities, and we
- give a brief overview of how it can be used.
+ give a brief overview of how this can be utilized.
 \end_layout
 
 \begin_layout Subsection
@@ -1672,7 +1672,7 @@ Mnemonic
 \begin_layout Plain Layout
 
 \series bold
-Description
+Perf mnemonic
 \end_layout
 
 \end_inset
@@ -1734,7 +1734,7 @@ CPU_CLK_UNHALTED.THREAD_P
 \begin_inset Text
 
 \begin_layout Plain Layout
-UnHalted Core Cycles
+cycles
 \end_layout
 
 \end_inset
@@ -1820,7 +1820,7 @@ INST_RETIRED.ANY_P
 \begin_inset Text
 
 \begin_layout Plain Layout
-Instruction Retired
+instructions
 \end_layout
 
 \end_inset
@@ -1906,7 +1906,7 @@ RESOURCE_STALLS.ANY
 \begin_inset Text
 
 \begin_layout Plain Layout
-Cycles Allocation is stalled due to resource related reason
+
 \end_layout
 
 \end_inset
@@ -1952,19 +1952,6 @@ Some performance counters available on Ivy Bridge
 \end_layout
 
 \begin_layout Standard
-The set of performance counters is divided into two categories; 
-\emph on
-architectural
-\emph default
- counters, supported across families of microarchitectures, and 
-\emph on
-non-architectural
-\emph default
- counters, which are specific for each architecture.
- 
-\end_layout
-
-\begin_layout Standard
 The official documentation of available performance counters and their usage
  can be found in Volume 3B of the Software Developer's Manual 
 \begin_inset CommandInset citation
@@ -1982,7 +1969,7 @@ reference "chap:list-of-performance-counters"
 \end_inset
 
 , listing only counters that are relevant to the discussion throughout the
- thesis.
+ remainder of this thesis.
  
 \end_layout
 
@@ -2082,7 +2069,8 @@ perf stat -e cycles ls
 
 \begin_layout Standard
 The output looks something like the following.
- We will be using the format directly in some cases.
+ We will in some cases be using this format directly when presenting measurement
+s.
  
 \end_layout
 
@@ -2209,17 +2197,35 @@ In addition to unit mask and event code, the remaining bits can be set to
 Perf uses this bit-format fairly explicitly, meaning we can provide a hexadecima
 l number corresponding to the desired register value to specify which counter
  to use.
+ Arbitrary counters can be specified by concatenating their unit mask and
+ event code, forming the two least significant bytes of the event select
+ register.
+ The user mode bit can be toggled by appending a 'u' character, as in 
+\family typewriter
+event:u
+\family default
+.
  Let's say we want to count 
 \shape smallcaps
 resourse_stalls.any
 \shape default
- in user mode for ls.
- This corresponds to a bitfield containing 1 for User mode, followed by
- 0x01, 0xA2 for unit mask and event code respectively, resulting in the
- number 0x101A2.
- Instead of manually setting the user mode bit, we can append :u to the
- perf code.
- The syntax for invoking perf with this counter becomes
+ in user mode for 
+\family typewriter
+ls
+\family default
+.
+ This corresponds to a bitfield where the last two bytes are 0x01 and 0xA2
+ for unit mask and event code respectively.
+ The initial 'r' character signifies that a 
+\begin_inset Quotes eld
+\end_inset
+
+raw
+\begin_inset Quotes erd
+\end_inset
+
+ counter value is specified.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2239,7 +2245,10 @@ perf stat -e r01a2:u ls
 \end_layout
 
 \begin_layout Standard
-Simply concatenating unit mask and event code and appending a trailing :u
+Simply concatenating unit mask and event code and appending a trailing 
+\family typewriter
+:u
+\family default
  is what we want to do in most cases.
  Note that there are additional constraints and special cases for various
  counters.
@@ -2260,7 +2269,7 @@ In order to understand why bias effects occur, it is necessary to look at
  remainder of the thesis.
  We will provide a brief overview of how code and data is mapped to virtual
  memory on 64 bit Linux systems.
- For a more comprehensive reference to topics in operating system, refer
+ For a more comprehensive reference to topics in operating systems, refer
  to 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -2276,9 +2285,13 @@ Virtual Memory
 \end_layout
 
 \begin_layout Standard
-Virtual memory is an abstraction over the physical memory (RAM) .
- Every program operate within its own virtual address space, which is typically
- split into pages of 4 KiB
+Virtual memory is an abstraction over the physical memory (RAM), allowing
+ every program operate within its own virtual address space.
+ Virtual addresses are organized into 
+\emph on
+pages
+\emph default
+ of 4 KiB
 \begin_inset Foot
 status open
 
@@ -2290,11 +2303,15 @@ To avoid any confusion with SI units, we will use KiB (kibibyte), MiB etc
 
 \end_inset
 
-.
- Pages are mapped to frames in physical memory.
- Translation from virtual to physical addresses are done with a lookup in
- the page table (managed by the operating system), or by a dedicated hardware
- cache called translation lookaside buffer (TLB) 
+, and a 
+\emph on
+page table
+\emph default
+ managed by the operating system defines a mapping to 
+\emph on
+frames
+\emph default
+ in physical memory 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Tanenbaum:2008:ModernOperatingSystems"
@@ -2303,20 +2320,6 @@ key "Tanenbaum:2008:ModernOperatingSystems"
 
 .
  
-\end_layout
-
-\begin_layout Standard
-A running process is divided into several sections within the virtual address
- space.
- The most important are stack, heap, bss, data and text, as illustrated
- in Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:virtual-address-space"
-
-\end_inset
-
-.
 \end_layout
 
 \begin_layout Standard
@@ -2358,6 +2361,20 @@ Organization of virtual memory of a running process on a typical 64 bit
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+A running process is divided into several sections within the virtual address
+ space.
+ The most important are stack, heap, bss, data and text, as illustrated
+ in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:virtual-address-space"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Description
@@ -2413,6 +2430,36 @@ ELF
 \end_layout
 
 \begin_layout Standard
+Modern Unix systems represent executable program files in the Executable
+ and Linkable Format (ELF) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
+ The same format also handles object files (.o) and shared libraries (.so).
+ The different steps in a typical compilation process leading up to an ELF
+ executable is shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:elf"
+
+\end_inset
+
+.
+ One or more source files (for example written in C) are first translated
+ to assembly code by a compiler.
+ An assembler translates the assembly code to machine code, wrapped in an
+ ELF file format.
+ Multiple object files can be linked together, forming a single executable
+ file.
+ The linker resolves any symbols and dependencies between the object files.
+ 
+\end_layout
+
+\begin_layout Standard
 \begin_inset Float figure
 placement h
 wide false
@@ -2450,36 +2497,6 @@ Overview of important steps of the compilation process
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Modern Unix systems represent executable program files in the Executable
- and Linkable Format (ELF) 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SystemVABI"
-
-\end_inset
-
-.
- The same format also handles object files (.o) and shared libraries (.so).
- The different steps in a typical compilation process leading up to an ELF
- executable is shown in Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:elf"
-
-\end_inset
-
-.
- One or more source files (for example written in C) are first translated
- to assembly code by a compiler.
- An assembler translates the assembly code to machine code, wrapped in an
- ELF file format.
- Multiple object files can be linked together, forming a single executable
- file.
- The linker resolves any symbols and dependencies between the object files.
- 
 \end_layout
 
 \begin_layout Standard
@@ -2599,7 +2616,7 @@ Before a program can be executed, it needs to be loaded into virtual memory
 The loader maps each allocable section of the object file into virtual address
  space, such as the text and data areas.
  Stack and heap areas are initialized, resulting in a process image like
- the one shown in 
+ the one shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:virtual-address-space"
@@ -2739,18 +2756,18 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily},language=C,showstringspaces=false"
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C,showstringspaces=false"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-static int a;      // .bss
+static int a;      /* .bss */
 \end_layout
 
 \begin_layout Plain Layout
 
-static int b = 42; // .data
+static int b = 42; /* .data */
 \end_layout
 
 \begin_layout Plain Layout
@@ -2764,12 +2781,12 @@ int main() {
 
 \begin_layout Plain Layout
 
-    int c = 0; // .stack
+    int c = 0;     /* .stack */
 \end_layout
 
 \begin_layout Plain Layout
 
-    int *d = malloc(sizeof(int)); // .heap
+    int *d = malloc(sizeof(int)); /* .heap */
 \end_layout
 
 \begin_layout Plain Layout
@@ -2878,8 +2895,7 @@ The actual memory map from running processes can be obtained by reading
 /proc/<id>/maps
 \family default
  for some process id.
- A sample output from a run of the previous hello world example is shown
- below.
+ A sample output from a run of the previous example is shown below.
  
 \end_layout
 
@@ -13192,6 +13208,40 @@ name "chap:list-of-performance-counters"
 \end_layout
 
 \begin_layout Standard
+There are two categories of performance events; 
+\emph on
+architectural events
+\emph default
+ are defined across families of microarchitectures, where the same event
+ codes are supported on a range of processors.
+ 
+\emph on
+Non-architectural
+\emph default
+ events are specific to each architecture.
+ The following includes a reference of important counters discussed in this
+ thesis.
+ 
+\end_layout
+
+\begin_layout Section*
+Architectural Events
+\end_layout
+
+\begin_layout Standard
+The following architectural events are supported on processors based on
+ the Intel Core microarchitecture.
+ Adapted from Table 19-1 in the Software Developer's Manual 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
 \align center
 \begin_inset ERT
 status open
@@ -13946,12 +13996,12 @@ endgroup
 \end_layout
 
 \begin_layout Section*
-Non-Architectural Counters
+Non-Architectural Events
 \end_layout
 
 \begin_layout Standard
 This following table contains a subset of the non-architectural performance
- counters supported on 3rd generation Intel Core 
+ counters available on 3rd generation Intel Core 
 \begin_inset Quotes eld
 \end_inset
 
@@ -13977,8 +14027,7 @@ lsd_overflow
 \shape smallcaps
 lsd.uops
 \shape default
- are included in this list, dispite not being officially supported on our
- architecture.
+ are included in this list, dispite not being officially supported.
 \end_layout
 
 \begin_layout Standard
@@ -14001,7 +14050,7 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="28" columns="4">
+<lyxtabular version="3" rows="35" columns="4">
 <features booktabs="true" islongtable="true" longtabularalignment="center">
 <column alignment="center" valignment="top" width="8text%">
 <column alignment="center" valignment="top" width="9text%">
@@ -14272,6 +14321,165 @@ LSD_OVERFLOW
 
 \begin_layout Plain Layout
 Counts number of loops that can't stream from the instruction queue
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2E
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x4F
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LONGEST_LAT_CACHE.
+ REFERENCE
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+This event counts requests originating from the core that reference a cache
+ line in the last level cache.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x2E
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x41
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LONGEST_LAT_CACHE.MISS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+This event counts each cache miss condition for references to the last level
+ cache.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x3C
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CPU_CLK_UNHALTED.
+ THREAD_P
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Counts the number of thread cycles while the thread is not in a halt state.
+ The thread enters the halt state when it is running the HLT instruction.
+ The core frequency may change from time to time due to power or thermal
+ throttling.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x3C
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CPU_CLK_THREAD_UN- HALTED.REF_XCLK
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Increments at the frequency of XCLK (100 MHz) when not halted.
 \end_layout
 
 \end_inset
@@ -15516,6 +15724,122 @@ LSD.UOPS
 
 \begin_layout Plain Layout
 Counts the number of micro-ops delivered by loop stream detector
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xC0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+INST_RETIRED.ANY_P
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number of instructions at retirement.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xC4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+BR_INST_RETIRED.
+ ALL_BRANCHES
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Branch instructions at retirement.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xC5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+BR_MISP_RETIRED.
+ ALL_BRANCHES
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Mispredicted branch instructions at retirement.
 \end_layout
 
 \end_inset
