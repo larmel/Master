@@ -167,7 +167,7 @@ Ivy Bridge
 \end_layout
 
 \begin_layout Abstract
-Case studies show that even highly optimized fourier transform and linear
+Case studies show that even highly optimized Fourier transform and linear
  algebra libraries are prone to bias.
  We find that stack alignment significantly affects the performance of FFTW,
  and that more than 30 % performance gain can be made by avoiding address
@@ -294,7 +294,7 @@ Problem Description
 \begin_layout Standard
 Variations in execution context has been shown to affect performance of
  programs on recent CPUs.
- Previous work has looked at offseting the stack and changing link order
+ Previous work has looked at offsetting the stack and changing link order
  -- biasing performance measurements towards certain configurations.
  Variables such as the placement of stack, heap and text segments in memory,
  combined with memory access instructions, can impact program performance
@@ -717,7 +717,7 @@ Chapter
 4 applies knowledge of bias effects from the previous chapter, looking at
  how they apply to real world applications.
  We take an in-depth look at FFTW, showing how even this highly optimized
- fourier transform library can be affected by memory layout.
+ Fourier transform library can be affected by memory layout.
  We also show how to get significant performance gains for BLAS matrix-vector
  routines, by actively avoiding address aliasing of heap-allocated memory.
 \end_layout
@@ -829,11 +829,11 @@ Observer effect
 \begin_layout Standard
 Observer effect occurs when the act of observing something changes its character
 istics.
- In performance analysis, we are interested in observing a variaty of properties
-; A database application might be interested in the number of transactions
- per second, while the cycle count or number of cache misses might be more
- relevant when implementing a hash function.
- Many low level metrics, such as the number of CPU cycles used, can be aquired
+ In performance analysis, we are interested in observing a variety of properties
+; A useful property for evaluating a database application might be the number
+ of transactions per second, while the cycle count or number of cache misses
+ might be more relevant when implementing a hash function.
+ Many low level metrics, such as the number of CPU cycles used, can be acquired
  (or observed) using hardware performance counters.
  In other cases, we need to add instrumentation to the program being measured,
  for example in the form of incrementing counter variables for every function
@@ -841,9 +841,9 @@ istics.
  Mytkowitcz et al.
  show that both strict use of hardware counters, as well as adding software
  instrumentation, is vulnerable to observer effects.
- Dispite using techniques with minimal intrusion and overhead to the original
- program, observer effects can sometimes have a significant performance
- impact.
+ Despite using techniques with minimal intrusion and overhead to the original
+ program, observer effects can sometimes significantly skew performance
+ measurements.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -853,7 +853,7 @@ Measurement bias
 \begin_layout Standard
 The performance characteristics of software changes not only from observations,
  but also from external properties of the experimental setup.
- Two, seemingly innocious, properties of the execution environment are discussed
+ Two, seemingly innocuous, properties of the execution environment are discussed
 :
 \end_layout
 
@@ -954,7 +954,7 @@ Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
-Dispite demystifying the causes of bias to some degree, this paper provides
+Despite demystifying the causes of bias to some degree, this paper provides
  no satisfactory explanation of exactly how or what hardware mechanisms
  causes bias.
  
@@ -984,7 +984,7 @@ Randomize experimental setup, performing multiple measurements under different
 \end_layout
 
 \begin_layout Standard
-In literature survays, the authors find that almost no papers account for
+In literature surveys, the authors find that almost no papers account for
  measurement bias.
  This is problematic, because conclusions reached from running biased experiment
 s can easily be misleading, or even outright wrong.
@@ -1157,7 +1157,7 @@ Many more of these rules are encoded in MAO, resulting in reduced code size
 In addition to optimizing for the ISA, the code is also tuned for specific
  properties of Intel microarchitectures.
  As an example, MAO considers instruction address alignment for hot loops,
- inserting additional alignment directives if neccessary.
+ inserting additional alignment directives if necessary.
  By aligning frequently executed code segments to 16 byte boundaries, the
  instructions are more likely to fit in decode 
 \begin_inset Quotes eld
@@ -1248,7 +1248,7 @@ Ivy Bridge
  Of course, a comprehensive introduction to the inner working of any processor
  is way beyond the scope of this thesis.
  Instead, we will provide a brief overview of some architectural features,
- and in particular those that migth cause bias due to differences in virtual
+ and in particular those that might cause bias due to differences in virtual
  memory layout.
  For a general introduction to concepts in computer architecture, refer
  to 
@@ -1307,7 +1307,7 @@ Intel Core Microarchitecture Code Name Ivy Bridge
 .
  These are the terms that are used in the manuals, but we will refer to
  architectures mostly by code name throughout the rest of the thesis.
- Preceeding Ivy Bridge is 
+ Preceding Ivy Bridge is 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1563,8 +1563,8 @@ Memory Disambiguation
 \begin_layout Standard
 A load coming after a store with unresolved address can potentially have
  a dependency, and must wait until the store is complete.
- With memory disambiguation, the hardware makes a prediction on wether a
- conflict will occur, scheduling loads speculatively 
+ With memory disambiguation, the hardware makes a prediction on whether
+ a conflict will occur, scheduling loads speculatively 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficientPerformance"
@@ -1982,7 +1982,7 @@ perf
 \begin_layout Standard
 There are multiple ways of accessing the processor's performance monitoring
  facilities from software.
- Support is needed from the operating system, as kernel mode previliges
+ Support is needed from the operating system, as kernel mode privileges
  are needed to manage the low level PMU hardware.
  Linux systems provide a kernel interface called perf_events, which can
  be used along with the perf
@@ -2128,7 +2128,7 @@ event code
 \end_inset
 
 , available in the documentation.
- To get some intuition as to how this works exactly, it is worthwile to
+ To get some intuition as to how this works exactly, it is worthwhile to
  point out how performance counters are configured under the hood in hardware.
  Counters are set up by writing to special 32 bit model specific registers
  (MSR), Figure 
@@ -2207,14 +2207,14 @@ event:u
 .
  Let's say we want to count 
 \shape smallcaps
-resourse_stalls.any
+resource_stalls.any
 \shape default
  in user mode for 
 \family typewriter
 ls
 \family default
 .
- This corresponds to a bitfield where the last two bytes are 0x01 and 0xA2
+ This corresponds to a bit-field where the last two bytes are 0x01 and 0xA2
  for unit mask and event code respectively.
  The initial 'r' character signifies that a 
 \begin_inset Quotes eld
@@ -2646,7 +2646,7 @@ key "Shackham:2004:ASLR"
 \end_inset
 
 .
- If an attacker manages to inject malicous code, he can use the known virtual
+ If an attacker manages to inject malicious code, he can use the known virtual
  addresses to access data or call specific functions.
  One technique known as 'return to libc' attacks uses this knowledge to
  call functions in the C standard library, which will be loaded in most
@@ -2743,7 +2743,7 @@ reference "alg:c-context"
 
 \end_inset
 
- contains four variables, utilizing both initialized and unitialized data,
+ contains four variables, utilizing both initialized and uninitialized data,
  dynamically allocated data on heap, and stack allocated variables.
 \end_layout
 
@@ -3029,7 +3029,7 @@ Methodology and Experimental Setup
 \begin_layout Standard
 Measurement bias is by definition a product of variations in the environment.
  To produce reliable results, we need to properly control every variable
- that can affect mearurements.
+ that can affect measurements.
  We make the following configuration to our experimental setup:
 \end_layout
 
@@ -3246,7 +3246,7 @@ We use
 \family typewriter
 perf stat
 \family default
- to aquire hardware performance counter statistics, which should introduce
+ to acquire hardware performance counter statistics, which should introduce
  minimal overhead and observer effect.
  Plots are generated using Python's matplotlib 
 \begin_inset CommandInset citation
@@ -3379,7 +3379,7 @@ As shown in previous work, changing the Unix environment variables can sometimes
  It is typically not the content of environment variables that are important,
  but rather the effect their size has on stack position.
  Environment variables are allocated before the stack when programs are
- mapped into virtual memory, essentially offseting all the following call
+ mapped into virtual memory, essentially offsetting all the following call
  frames and stack allocated variables.
  
 \end_layout
@@ -3512,7 +3512,7 @@ The example code is simple and easy to analyze
 \end_layout
 
 \begin_layout Itemize
-No satisfactory explanaition as to what causes bias was given in the original
+No satisfactory explanation as to what causes bias was given in the original
  paper
 \end_layout
 
@@ -3553,7 +3553,7 @@ name "fig:loop-cycles-only"
 
 \end_inset
 
-Performance variations from offseting stack position by changing environment
+Performance variations from offsetting stack position by changing environment
  size
 \end_layout
 
@@ -4695,7 +4695,7 @@ static int i, j, k
 
 \begin_layout Standard
 Statically allocated variables have their virtual addresses determined at
- compile time, and are not affected by offseting stack address.
+ compile time, and are not affected by offsetting stack address.
  Inspecting the symbol table section of the ELF object file
 \begin_inset Foot
 status open
@@ -4765,8 +4765,8 @@ Variables g and inc are local automatic variables, which are allocated on
  It is difficult to observe the correct addresses of g and inc without introduci
 ng observer effects.
  Simply adding a call to printf for instance, completely changes the program
- behaviour with repect to bias.
- Insted, we use a small amount of assembly code to calculate the addresses
+ behavior with respect to bias.
+ Instead, we use a small amount of assembly code to calculate the addresses
  and print the numbers directly using system calls.
  We find that the spike in cycle count occurs when the address of g and
  inc are 0x7fffffffe028 and 0x7fffffffe02c, respectively.
@@ -4841,7 +4841,7 @@ key "Mytkowicz:2008:Easy"
 
 .
  The documentation states that this counter triggers on loads blocked by
- a preceeding store due to a variety of reasons, including the following
+ a preceding store due to a variety of reasons, including the following
  case:
 \end_layout
 
@@ -5171,14 +5171,14 @@ target "http://www.gnu.org/software/libc/"
 \end_layout
 
 \begin_layout Standard
-Aquiring dynamic memory at run time is usually done by calling 
+Acquiring dynamic memory at run time is usually done by calling 
 \family typewriter
 malloc
 \family default
 , which takes a number of bytes to allocate and returns a pointer to that
  area.
  Under the hood, a typical malloc implementation on Linux systems uses two
- different system calls to aquire more memory from the operating system
+ different system calls to acquire more memory from the operating system
 \begin_inset Foot
 status open
 
@@ -5319,7 +5319,7 @@ For small requests of
 \begin_inset Formula $n=10$
 \end_inset
 
- bytes, we get the following addresses for five concecutive allocations:
+ bytes, we get the following addresses for five consecutive allocations:
  0x1541010, 0x1541030, 0x1541050, 0x1541070, 0x1541090.
  With address layout randomization enabled, the initial heap page can vary.
 \end_layout
@@ -5670,7 +5670,7 @@ Avoiding Alias
 \end_layout
 
 \begin_layout Standard
-Aliasing can be accounted for in software by offseting one of the arrays
+Aliasing can be accounted for in software by offsetting one of the arrays
  before calling convolve.
  We allocate some extra padding for output, and use pointer arithmetic to
  adjust the initial address.
@@ -5726,7 +5726,7 @@ The address difference modulo 4096 between input and output arrays now becomes
 
  bytes.
  Plotting this for increasing values of x shows that virtually all aliasing
- is removed after offseting with 12 or more elements.
+ is removed after offsetting with 12 or more elements.
  Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -5855,7 +5855,7 @@ key "Intel:2012:OptimizationManual"
 \end_inset
 
 .
- Measuring all the relevant counters, we find that cache behaviour appears
+ Measuring all the relevant counters, we find that cache behavior appears
  to be completely unaffected by aliasing.
  L1 hits is shown in Figure 
 \begin_inset CommandInset ref
@@ -5982,7 +5982,7 @@ reference "tab:convolution-native-gcc"
  Compared to the much lower cycle count, this is still a significant amount.
  Attempting to manually offset the output array again, we find the best
  parameter to be 48 or more (a minimum difference of 192 bytes).
- Separating the heap buffers aliminates almost all aliasing, while also
+ Separating the heap buffers eliminates almost all aliasing, while also
  significantly improving cycle count.
  
 \end_layout
@@ -6236,7 +6236,7 @@ target "http://software.intel.com/en-us/intel-compilers/"
 
  version 13.
  Of the compilers we tested, none of them generated code that could not
- be improved by manually offseting heap area.
+ be improved by manually offsetting heap area.
 \end_layout
 
 \begin_layout Description
@@ -6285,8 +6285,8 @@ Memory Allocators
 In the case of memory allocators alone, there are several alternatives to
  libc.
  One of the key issues different allocators tries to address is contention
- in a multithreaded environment.
- Heap management is a natural bottleneck for multithreaded applications,
+ in a multi-threaded environment.
+ Heap management is a natural bottleneck for multi-threaded applications,
  as all threads share the same address space.
  A naive allocator will force serialization of calls to malloc and free
  from different threads 
@@ -6357,7 +6357,7 @@ target "http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html"
 
 \end_inset
 
-, both explicitly targeting multithreaded code.
+, both explicitly targeting multi-threaded code.
  Implementations of malloc and related functions are typically provided
  as shared libraries.
  Both Hoard and TCMalloc can be used as drop-in replacements for already
@@ -6864,7 +6864,7 @@ Each library produces very different results, and we see that potential
 \end_layout
 
 \begin_layout Standard
-Most allocators seem focus mostly on efficiency in a multithreaded environment,
+Most allocators seem focus mostly on efficiency in a multi-threaded environment,
  and we find that none of the alternatives tested attempts to solve the
  aliasing problem for aligned arrays.
 \end_layout
@@ -6903,17 +6903,16 @@ key "Intel:2012:OptimizationManual"
 \begin_layout Standard
 It looks like Intel recognizes the performance impacts from always aligning
  heap memory to the same 12 bit address suffixes.
- This rule is classified as high (H) impact and medium/low genenerality,
- suggesting that it occurs relatively often, and with significant performance
- implications.
+ This rule is classified as high (H) impact and medium/low generality, suggestin
+g that it occurs relatively often, and with significant performance implications.
  We have already verified that the performance can be severely diminished
  by aliasing, easily with more than 
 \begin_inset Formula $2x$
 \end_inset
 
  difference in cycle count.
- Given the the behaviour we observe for common allocators, is is not unreasonabl
-e to suspect this is a common occurence in real appliactions.
+ Given the the behavior we observe for common allocators, is is not unreasonable
+ to suspect this is a common occurrence in real applications.
  Still, to our knowledge there are no allocators that specifically addresses
  this issue.
 \end_layout
@@ -6941,7 +6940,7 @@ key "Intel:2012:OptimizationManual"
 \end_layout
 
 \begin_layout Standard
-Padding variable declarations was basically what we did with manually offseting
+Padding variable declarations was basically what we did with manually offsetting
  pointers returned by malloc.
  A minimum difference of 128 bytes, or 32 
 \family typewriter
@@ -6997,7 +6996,7 @@ key "Ramesh:i7PerformanceMonitoring"
 .
  Instead of repeatedly fetching and decoding the same instructions, loops
  can be streamed directly from a queue of already decoded micro operations.
- Normal operations is resumed once the inevetable branch mispredict occurs.
+ Normal operations is resumed once the inevitable branch mispredict occurs.
  
 \end_layout
 
@@ -7806,7 +7805,7 @@ The second requirement states that each loop can only contain a maximum
  with 28 entries for each logical core.
  One of the Front-end enhancement in Ivy Bridge is that all 56 entries in
  the queue can be used when only a single logical core is active, i.e.
- hyperthreading is disabled 
+ hyper-threading is disabled 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2012:OptimizationManual"
@@ -7849,7 +7848,7 @@ cmp
 jne
 \family default
 , the total is exactly 56 micro-operations per loop.
- With hyperthreading enabled, the number is cut in half to 28, as expected.
+ With hyper-threading enabled, the number is cut in half to 28, as expected.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -7882,7 +7881,7 @@ reference "alg:lsd-chunks-c"
 
  shows a simple loop that generates code much like the micro kernel used
  to test chunk fetch limit.
- Each of the if statements occupies exacly 32 byte in instruction memory
+ Each of the if statements occupies exactly 32 byte in instruction memory
  when compiled with gcc and no optimization.
  Including the instructions needed to compare and increment variable 
 \family typewriter
@@ -8041,7 +8040,7 @@ Even though we are within the limit, a quick test with
 perf
 \family default
  reveals that the Loop Stream Detector is not enabled.
- Only a neglegtible amount of micro-ops are delivered by the LSD, as reported
+ Only a negligible amount of micro-ops are delivered by the LSD, as reported
  by 
 \shape smallcaps
 lsd.uops
@@ -8093,7 +8092,7 @@ c0
 40
 \series default
  chunk.
- Dispite covering less than 
+ Despite covering less than 
 \begin_inset Formula $12\times32$
 \end_inset
 
@@ -8900,7 +8899,7 @@ cc -std=c99
  spans far less than 12 chunks.
  Counting LSD.UOPS, we see that the Loop Stream Detector is not in use.
  However, by removing the printf statement the loop alignment is moved from
- 0x400517 to 0x4004c1, and the LSD is suddently working.
+ 0x400517 to 0x4004c1, and the LSD is suddenly working.
  We did not investigate the actual cause of this any further, but speculate
  that specific alignments prevents all micro-ops to reside in ICache simultaneou
 sly.
@@ -9010,7 +9009,7 @@ Changing interpreter
 
 \begin_layout Standard
 When executing an ELF binary, the first thing that happens is to load and
- run an interpreter/dunamic linker.
+ run an interpreter/dynamic linker.
  The interpreter is responsible for unpacking the object file and map all
  the allocable sections to virtual memory, as well as loading any external
  dependencies.
@@ -9343,14 +9342,14 @@ fftw_plan_dft_1d This creates a
 \emph on
 plan
 \emph default
- for how to most efficiently compute a discrete fourier transform of size
+ for how to most efficiently compute a discrete Fourier transform of size
  
 \begin_inset Formula $N$
 \end_inset
 
 .
- This step encapsules the auto-tuning part of FFTW, as plans can be constructed
- based on actual measurements and benchmarks done on the current machine.
+ This step encapsulates the auto-tuning part of FFTW, as plans can be constructe
+d based on actual measurements and benchmarks done on the current machine.
  Knowledge of well performing plans is stored as 
 \emph on
 wisdom
@@ -9360,7 +9359,7 @@ wisdom
 
 \begin_layout Description
 fftw_execute Perform the computations specified by the given plan, calculating
- the Fourier tranform of 
+ the Fourier transform of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -9384,7 +9383,7 @@ Impact of Stack Position for Small Transforms
 \end_layout
 
 \begin_layout Standard
-After attempting a couple of different configurations for tranform size
+After attempting a couple of different configurations for transform size
  and iteration count, we find that computing transforms of size 16 have
  noticeable bias to stack position.
  
@@ -9836,7 +9835,7 @@ vaddpd -56(%rsp), %ymm7, %ymm12
 \end_layout
 
 \begin_layout Standard
-This suggests that merely offseting the rsp register within the 
+This suggests that merely offsetting the rsp register within the 
 \family typewriter
 n1fv_16
 \family default
@@ -10302,7 +10301,7 @@ Creating the Worst Case
 \begin_layout Standard
 With the static alignment in place, it is not hard to imagine where the
  modified version will fail.
- If input and ouput buffers happen to reside on the opposite of the 4 KiB
+ If input and output buffers happen to reside on the opposite of the 4 KiB
  segment, we should see consistently bad performance for all environment
  sizes.
  By allocating another buffer of 7400B using regular malloc before calling
@@ -10345,7 +10344,7 @@ name "fig:fftw-worstcase-4k"
 
 \end_inset
 
-Offseting heap addresses to always overlap with fixed stack pointer
+Offsetting heap addresses to always overlap with fixed stack pointer
 \end_layout
 
 \end_inset
@@ -10492,7 +10491,7 @@ reference "fig:fftw-kernels"
 
 \begin_layout Standard
 Each kernel shows a different pattern, with clear bias towards some stack
- positions that performs noticably better than others.
+ positions that performs noticeably better than others.
 \end_layout
 
 \begin_layout Standard
@@ -10556,7 +10555,7 @@ The main problem we faced when trying to do anything about aliasing within
 \emph on
 before
 \emph default
- the loop, adding only a neglegtible overhead.
+ the loop, adding only a negligible overhead.
  The relevant parts of our modified main function is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -10885,8 +10884,8 @@ Cycle count statistics over 512 runs, sampling uniformly over two 4KiB stack
 There is clearly a potential for speedup of FFTW kernels by accounting for
  aliasing in some way.
  However, requiring users of the library to fiddle with the stack before
- calling fftw_execute is not a satifactory solution.
- A more reasonable approach would be to encorporate these ideas in the steps
+ calling fftw_execute is not a satisfactory solution.
+ A more reasonable approach would be to incorporate these ideas in the steps
  performed 
 \emph on
 prior
@@ -10933,7 +10932,7 @@ FFTW_MEASURE
 \end_layout
 
 \begin_layout Enumerate
-Multiple alternative kernels with varying alias characteristcs exists.
+Multiple alternative kernels with varying alias characteristics exists.
  
 \end_layout
 
@@ -10969,7 +10968,7 @@ FFTW comes with fftw_malloc, which is a wrapper around regular malloc with
  solution.
  For the n1fv_16 kernel, we found that alias in heap addresses did not matter.
  However, this is not necessarily true for all kernels.
- Looking into possible improvements here might be worthwile.
+ Looking into possible improvements here might be worthwhile.
  
 \begin_inset Newpage clearpage
 \end_inset
@@ -10982,7 +10981,7 @@ BLAS
 \end_layout
 
 \begin_layout Standard
-Basic Linear Algebra Subroutines (BLAS), is the de-facto standard API for
+Basic Linear Algebra Subroutines (BLAS), is the de facto standard API for
  high performance linear algebra routines 
 \begin_inset Foot
 status open
@@ -12744,8 +12743,8 @@ Users of BLAS packages are probably more willing to invest in hand optimizing
 \end_layout
 
 \begin_layout Standard
-For the particular case we investigated, a good heuristic is to alignin
- heap segments 
+For the particular case we investigated, a good heuristic is to align heap
+ segments 
 \begin_inset Quotes eld
 \end_inset
 
@@ -12830,7 +12829,7 @@ Ivy Bridge
 \end_inset
 
  architecture.
- The premiss for our work relies heavily in previous work done by Mytkowicz
+ The premise for our work relies heavily in previous work done by Mytkowicz
  et al.
  Their study of measurement bias in earlier architectures showed that changes
  to environment variables and link order could heavily impact performance.
@@ -12897,7 +12896,7 @@ The Loop Stream Detector had been previously mentioned as a possible cause
 \begin_layout Standard
 In our case studies, we chose to concentrate on highly optimized numerical
  libraries.
- Applications like these are more likely to encorporate extremely processor
+ Applications like these are more likely to incorporate extremely processor
  specific optimizations, in order to achieve the maximum possible performance.
  We chose to focus mainly on FFTW because of some previous experiences with
  this library from other coursework at NTNU.
@@ -12962,16 +12961,16 @@ It is important to point out that limitations of the LSD and the existence
 \end_layout
 
 \begin_layout Standard
-Our work serves as an extension to the documented processor behaviour, and
+Our work serves as an extension to the documented processor behavior, and
  links these properties to the concept of measurement bias.
  We show how code and data layout in memory can affect program performance,
  finally providing satisfactory explanations of measurement bias that can
- be observed from changing link order or environment varibles.
+ be observed from changing link order or environment variables.
  Unlike stated in previous work, we find that bias is in fact 
 \emph on
 not
 \emph default
- entirelly unpredictable.
+ entirely unpredictable.
  Furthermore, a clear understanding of what causes bias is necessary in
  order achieve optimal performance in real applications.
  Our results are relevant to anyone who care about optimizing program performanc
@@ -13003,9 +13002,9 @@ key "Intel:2012:OptimizationManual"
 
 \end_inset
 
- is a good starting point for further reasearch, describing how various
- hardware features interact and operate.
- Some of the features we think might be worthwile to investigate include;
+ is a good starting point for further research, describing how various hardware
+ features interact and operate.
+ Some of the features we think might be worthwhile to investigate include;
 \end_layout
 
 \begin_layout Itemize
@@ -13017,12 +13016,12 @@ Decoded ICache limitations: We observed corner cases of the Loop Stream
 \end_layout
 
 \begin_layout Itemize
-Hyperthreading: This feature was disabled througout our testing to avoid
+Hyper-threading: This feature was disabled throughout our testing to avoid
  any interference.
- We imagine there are many interesting performance implication occuring
+ We imagine there are many interesting performance implication occurring
  from threads competing about resources.
  For example, the LSD micro-op limitation being shared between logical cores
- is clearly a potential source of bias towards systems without hyperthreading
+ is clearly a potential source of bias towards systems without hyper-threading
  enabled.
  
 \end_layout
@@ -13044,7 +13043,7 @@ The most natural place to encode architectural-specific knowledge used for
  In an ideal world, programmers would not need to care about intricate corner
  cases in hardware to achieve the best performance.
  Optimizing code layout for maximal usage of the Loop Stream Detector could
- be a worthwile endeavor.
+ be a worthwhile endeavor.
  We did not investigate to what degree this is handled by modern compilers
  other than GCC, but would not be surprised if there is considerable room
  for improvement.
@@ -13098,7 +13097,7 @@ In cases where aliasing depend on heap allocated memory, a possible solution
  FFTW already has fftw_malloc, which would be a perfect place to encode
  knowledge about aliasing.
  We did not find any effects from conflicts between heap areas in the case
- of FFTW, but prividing a similar function for BLAS implementations is an
+ of FFTW, but providing a similar function for BLAS implementations is an
  option.
  
 \end_layout
@@ -13138,7 +13137,7 @@ Ivy Bridge
 \end_inset
 
  from Intel.
- An intereresting question is whether effects from LSD limitations and 4K
+ An interesting question is whether effects from LSD limitations and 4K
  aliasing translate to other CPU architectures.
  Limitations of the Loop Stream Detector have changed throughout the last
  several generations, suggesting that the particular examples we present
@@ -14027,7 +14026,7 @@ lsd_overflow
 \shape smallcaps
 lsd.uops
 \shape default
- are included in this list, dispite not being officially supported.
+ are included in this list, despite not being officially supported.
 \end_layout
 
 \begin_layout Standard
