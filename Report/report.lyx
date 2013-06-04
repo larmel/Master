@@ -113,7 +113,7 @@ None really knows what is happening inside the CPU...
 \end_layout
 
 \begin_layout Quotation
-k_sarnath - Intel forums.
+k_sarnath -- Intel forums.
 \end_layout
 
 \begin_layout Quotation
@@ -134,7 +134,7 @@ pagenumbering{roman}
 
 \begin_layout Abstract
 Performance analysis of software is subject to measurement bias.
- Seemingly innocious properties of the environment, such as the contents
+ Seemingly innocuous properties of the environment, such as the contents
  of system environment variables, can impact the performance of computer
  programs.
  Features and restrictions of the underlying hardware introduces performance
@@ -147,8 +147,8 @@ Performance analysis of software is subject to measurement bias.
 \begin_layout Abstract
 In this thesis, we will study bias effects that can be experienced by changing
  the Unix environment variables or altering the program link order.
- In effect, both of these leads to different virtual memory layouts, which
- is what actually triggers the performance cliffs.
+ Both of these factors lead to different virtual memory layouts for code
+ and data, which in turn interacts with various hardware features.
  Through experimentation and careful measurement using hardware performance
  counters, we identify several potential sources of bias on the Intel Core
  i7 
@@ -171,7 +171,7 @@ Case studies show that even highly optimized fourier transform and linear
  algebra libraries are prone to bias.
  We find that stack alignment significantly affects the performance of FFTW,
  and that more than 30 % performance gain can be made by avoiding address
- aliasing in BLAS matrix-vector multiplication.
+ aliasing in ATLAS matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
@@ -221,8 +221,8 @@ hopp
 \begin_layout Abstract
 
 \lang norsk
-Denne oppgaven dreier seg om å studere årsaken til bias-effekter som kan
- forekomme av å endre minneaddresser for programkode og data.
+Denne oppgaven dreier seg om å studere underliggende årsaker til ytelsesforskjel
+ler som kan forekomme av å endre minneaddresser for programkode og data.
  Hovedfokus vil være på Intel Core i7 
 \begin_inset Quotes eld
 \end_inset
@@ -231,7 +231,7 @@ Ivy Bridge
 \begin_inset Quotes erd
 \end_inset
 
- -arkitekturen.
+-arkitekturen.
  Gjennom eksperimenter og nøyaktig måling ved bruk av 
 \begin_inset Quotes eld
 \end_inset
@@ -240,10 +240,8 @@ performance counters
 \begin_inset Quotes erd
 \end_inset
 
-, kan vil identifisere flere arkitekturspesifikke egenskaper ved prosessoren
- som fører til variasjoner i ytelse.
- Vi avslører hvordan konkrete maskinvarekomponenter kan forklare ytelsesforskjel
-ler som observeres som bias.
+, kan vi identifisere konkrete arkitekturspesifikke egenskaper ved prosessoren
+ som fører til bias.
  Begrensninger i 
 \begin_inset Quotes eld
 \end_inset
@@ -271,7 +269,7 @@ Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
  viser at særlig alias-effekter ofte kan gi signifikante ytelsesforskjeller
  i praksis.
  Både FFTW og ATLAS viser seg å være sårbare mot bias.
- For eksempel kan riktig plassering av data i minne kan gi over 30 % forbedring
+ For eksempel kan riktig plassering av data i minne gi over 30 % forbedring
  av allerede høyt optimaliserte rutiner for matrise-vektor-multiplikasjon.
 \end_layout
 
@@ -296,7 +294,7 @@ Problem Description
 \begin_layout Standard
 Variations in execution context has been shown to affect performance of
  programs on recent CPUs.
- Previous work has looked at offsetting the stack and changing link order
+ Previous work has looked at offseting the stack and changing link order
  -- biasing performance measurements towards certain configurations.
  Variables such as the placement of stack, heap and text segments in memory,
  combined with memory access instructions, can impact program performance
@@ -306,7 +304,7 @@ Variations in execution context has been shown to affect performance of
 
 \begin_layout Standard
 The goal of this project is to model some of these effects for common use
- cases, and methods for avoiding them, in order to avoiding bias and achieving
+ cases, and methods for avoiding them, in order to avoid bias and achieving
  peak performance.
  These effects might be highly platform dependent, so to limit the scope
  we will focus on a particular architecture, the Intel Core i7 
@@ -341,11 +339,11 @@ Acknowledgements
 \end_layout
 
 \begin_layout Standard
-I would like to thank my supervisor Anne Cathrine Elster for her support
- during this past year.
- A special thanks to my co-supervisor Rune Erlend Jensen, whose continuous
- assistance and expertise on performance counters helped me navigate through
- this challenging topic.
+I would like to thank my supervisor Anne C.
+ Elster for her support during this past year.
+ A special thanks to my co-supervisor Rune E.
+ Jensen, whose continuous assistance and expertise on performance counters
+ helped me navigate through this challenging topic.
 \end_layout
 
 \begin_layout Standard
@@ -406,8 +404,9 @@ execution context
 biased
 \emph default
  towards certain configurations.
- Executing the same program on two machines with identical hardware can
- sometimes yield significantly different results, an effect known as 
+ Measuring performance of the same program on two machines with identical
+ hardware can sometimes yield very different results, an effect known as
+ 
 \emph on
 measurement bias
 \emph default
@@ -417,8 +416,8 @@ measurement bias
 \begin_layout Standard
 Previous work has studied parameters such as the size of Unix environment
  variables and program link order.
- Both are found to have a significant effect on performance, even on standardize
-d benchmarks.
+ Both are found to potentially have a significant effect on performance,
+ even in standardized benchmarks.
  Unfortunately, the effects also appear to be unpredictable, and therefore
  difficult to deal with.
  This poses a problem for researchers and performance analysts, who will
@@ -470,7 +469,7 @@ key "Mytkowicz:2009:WrongData"
 \end_inset
 
 , the authors show how simple changes to the execution environment can have
- an impact performance.
+ an impact on performance.
  One of the parameters they studied was the size of Unix environment variables.
  Environment variables contain various information about the system, for
  instance the name of the currently logged in user, home- and current directory
@@ -611,7 +610,7 @@ name "fig:motivation"
 \end_inset
 
 A simple C program with significant performance variations under different
- environment sizes
+ Unix environment sizes
 \end_layout
 
 \end_inset
@@ -656,7 +655,7 @@ correct
 \begin_inset Quotes erd
 \end_inset
 
- cycle count here? One could say that in most cases, it should be around
+ number of cycles here? One could say that in most cases, it should be around
  700,000, although on average it is somewhat higher.
  If you are unlucky, sitting on a machine with just the right environment
  size, you might declare that the cycle count is about 850,000.
@@ -664,9 +663,10 @@ correct
  environments.
  Previous work focuses mostly on how to mitigate effects of bias, and avoid
  drawing the wrong conclusions based on misleading measurements.
- Our goal is to gain a better understanding on exactly what mechanism of
+ Our goal is to gain a better understanding of exactly what mechanisms of
  the processor causes these effects.
- With greater understanding comes the possibility to actively avoid 
+ With more accurate models of how bias occur, we will be able to actively
+ avoid these 
 \begin_inset Quotes eld
 \end_inset
 
@@ -692,9 +692,9 @@ Chapter
 
 2 presents some of the previous work done on measurement bias, showing its
  severity as well as proposed solutions to mitigate or compensate for it.
- A brief introduction to the Ivy Bridge architecture and use of hardware
- performance monitoring is given, as well as a discussion of the execution
- context on 64 bit Linux systems.
+ A brief introduction to the Ivy Bridge microarchitecture and use of hardware
+ performance monitoring is given as background material, as well as a discussion
+ of the execution context on 64 bit Linux systems.
 \end_layout
 
 \begin_layout Description
@@ -702,8 +702,8 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 investigates several potential causes of measurement bias, showing how
- specific hardware features are sensitive to changes in virtual memory layout.
+3 investigates several potential causes of bias, showing how certain hardware
+ features are sensitive to changes in virtual memory layout.
  Specifically, we show how 4K address aliasing and the Loop Stream Detector
  can explain effects observed by increasing environment size or changing
  link order.
@@ -716,10 +716,10 @@ Chapter
 
 4 applies knowledge of bias effects from the previous chapter, looking at
  how they apply to real world applications.
- We take an in-depth look at FFTW, showing how this highly optimized fourier
- transform library affected by memory layout.
+ We take an in-depth look at FFTW, showing how even this highly optimized
+ fourier transform library can be affected by memory layout.
  We also show how to get significant performance gains for BLAS matrix-vector
- routines by actively avoiding address aliasing.
+ routines, by actively avoiding address aliasing of heap-allocated memory.
 \end_layout
 
 \begin_layout Description
