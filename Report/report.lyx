@@ -745,9 +745,6 @@ name "chap:Background"
 
 We begin by presenting some of the previous work done on measurement bias
  in performance analysis.
- An introduction to virtual memory, linking and loading on 64 bit Linux
- architectures is provided as background material -- explaining important
- factors of the program execution environment.
  A brief overview of the Intel Core 
 \begin_inset Quotes eld
 \end_inset
@@ -759,6 +756,9 @@ Ivy Bridge
  architecture is included, introducing performance counters, and highlighting
  some of the features and hardware optimizations that can cause performance
  cliffs.
+ An introduction to virtual memory, linking and loading on 64 bit Linux
+ architectures is provided as background material -- explaining important
+ factors of the program execution environment.
  
 \end_layout
 
@@ -889,9 +889,9 @@ PATH
 \end_layout
 
 \begin_layout Standard
-The authors study how different compiler optimization levels is affected
- by adding characters to environment variables or changing program link
- order.
+The authors study how program performance for different compiler optimization
+ levels is affected by adding characters to environment variables or changing
+ program link order.
  Their results show that standardized SPEC benchmarks are sensitive to both
  of these properties.
  Different conclusions about O2's efficiency versus O3 can be drawn depending
@@ -915,7 +915,7 @@ key "Mytkowicz:2009:WrongData"
  In addition to pointing out sensitivity in large benchmark programs from
  the SPEC suite, the authors also present a small, isolated C program with
  very high sensitivity to change in environment size.
- We discuss this particular program in the Introduction chapter, showing
+ We discuss this particular program in the introduction chapter, showing
  that similar bias effects appear on newer architectures as well.
 \end_layout
 
@@ -928,11 +928,10 @@ For both changing environment variables and link order, the authors point
 Changing environment variables has an effect on where the stack is placed
  in memory at runtime.
  A copy of the environment is loaded into virtual address space before the
- call stack starts, thus increasing the environment size offsets the stack
- start address.
- The authors suggests that altering the stack addresses of variables at
- runtime can have an impact on things like alignment in cache and accuracy
- of branch predictors.
+ call stack starts, thus increasing the environment size offsets the initial
+ stack address.
+ The authors suggests that altering the addresses of stack-allocated variables
+ at runtime can have an impact on things like alignment in cache.
 \end_layout
 
 \begin_layout Itemize
@@ -997,7 +996,7 @@ Exploiting Bias for Optimization
 
 \begin_layout Standard
 So far we have pointed out the problems bias causes for performance analysis.
- A different perspective on bias effects is to look at it as a potential
+ A different perspective on these effects is to look at it as a potential
  for optimization.
  
 \end_layout
@@ -1168,15 +1167,8 @@ chunks
 \end_inset
 
 , which are 16 B on the Intel Core 2.
- In previous work on measurement bias by Mytkowitcz et al, the 
-\begin_inset Quotes eld
-\end_inset
-
-loop stream detector
-\begin_inset Quotes erd
-\end_inset
-
- is suggested as a potential cause of bias.
+ In previous work on measurement bias by Mytkowitcz et al, the Loop Stream
+ Detector is suggested as a potential cause of bias.
  The authors identifies that this hardware optimization depends on 16 byte
  instruction alignment on the Core 2 architecture.
  MAO uses this knowledge to align code to fit in as few decode chunks as
@@ -1196,21 +1188,14 @@ key "Knights:2009:BlindOpt"
 
 \end_inset
 
-, MAO attempts to insert 
+, MAO also attempts to insert 
 \family typewriter
 nop
 \family default
  instructions at random.
  This has the effect of moving surrounding code around, possibly hitting
- 
-\begin_inset Quotes eld
-\end_inset
-
-performance cliffs
-\begin_inset Quotes erd
-\end_inset
-
- not modeled or caught by any of the other optimizations.
+ some optimal configuration not modeled or caught by any of the other optimizati
+ons.
  
 \end_layout
 
@@ -1244,7 +1229,7 @@ Ivy Bridge
 \begin_inset Quotes erd
 \end_inset
 
-.
+, currently the most recent Intel architecture.
  Of course, a comprehensive introduction to the inner working of any processor
  is way beyond the scope of this thesis.
  Instead, we will provide a brief overview of some architectural features,
@@ -1264,8 +1249,8 @@ key "Patterson:2011:ComputerOrganization"
 \begin_layout Standard
 To gain accurate measurements and diagnostics, we will use hardware performance
  counters.
- The Intel architecture has comprehensive monitoring capabilities, and we
- give a brief overview of how this can be utilized.
+ Intel architectures have extensive monitoring capabilities, and we give
+ a brief overview of how this can be utilized.
 \end_layout
 
 \begin_layout Subsection
@@ -1341,7 +1326,7 @@ reference "fig:pipeline"
 
  shows a high level view of the processor pipeline, consisting of a front
  end, out of order engine, and execution core component, in addition to
- memory subsystem.
+ the memory subsystem.
  We will give a brief overview of each component, while a comprehensive
  reference can be found in the vendor manuals 
 \begin_inset CommandInset citation
@@ -1424,7 +1409,7 @@ Intel uses IA-32 and Intel 64 for what is also commonly known as x86 and
 
 \end_inset
 
- instructions and a micro-operations (
+ instructions and micro-operations (
 \begin_inset Quotes eld
 \end_inset
 
@@ -1436,7 +1421,10 @@ micro-ops
  used internally in the processor.
  There are many reasons for this, some of it being the incredible complexity
  of the instruction set.
- Decoding assembly instructions is a costly operation in hardware, and a
+\end_layout
+
+\begin_layout Standard
+Decoding assembly instructions is a costly operation in hardware, and a
  lot of logic in the front end is dedicated to avoid this stage as much
  as possible.
  The Decoded ICache is a cache holding recently executed micro-operations,
@@ -1497,7 +1485,7 @@ cmp
 \family default
 ), and the other is a conditional jump.
  Pairs like these appear often in practice, improving the instructions per
- cycle when macro fusion is applied.
+ cycle metric when macro fusion is applied.
 \end_layout
 
 \begin_layout Paragraph
@@ -1507,8 +1495,8 @@ Loop Stream Detector
 \begin_layout Standard
 The Loop Stream Detector is, with some restrictions, able to detect software
  loops in the micro-op stream.
- It analyzes micro-ops delivered to the queue, and identifies chains of
- repeatedly executed operations.
+ It analyzes micro-ops residing in the Micro-op Queue, and identifies chains
+ of repeatedly executed operations.
  When a loop is detected, the LSD locks the micro-ops in the queue, disabling
  any further ICache lookup as well as the whole decode pipeline.
  Micro-ops are streamed directly from the queue, until a branch mispredict
@@ -1938,6 +1926,12 @@ endgroup
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:example-performance-counters"
+
+\end_inset
+
 Some performance counters available on Ivy Bridge
 \end_layout
 
@@ -1949,6 +1943,39 @@ Some performance counters available on Ivy Bridge
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+A few events are shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:example-performance-counters"
+
+\end_inset
+
+, including the widely used 
+\shape smallcaps
+cpu_clk_unh- alted.thread_p
+\shape default
+ for measuring number of cycles, as well as 
+\shape smallcaps
+inst_retired.any_p
+\shape default
+ for counting number of dynamic instructions executed.
+ There are hundreds of these available, able to count all sort of processor
+ statistics.
+ Only a fixed amount of events can be counted simultaneously though, restricted
+ by the number of 
+\emph on
+fixed
+\emph default
+ and 
+\emph on
+general-purpose
+\emph default
+ counter registers available.
+ On Ivy Bridge, there are three fixed counters and eight general-purpose,
+ for a maximum of 11 performance events monitored simultaneously.
 \end_layout
 
 \begin_layout Standard
@@ -2216,7 +2243,7 @@ ls
 .
  This corresponds to a bit-field where the last two bytes are 0x01 and 0xA2
  for unit mask and event code respectively.
- The initial 'r' character signifies that a 
+ An initial 'r' character signifies that a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -2225,7 +2252,6 @@ raw
 \end_inset
 
  counter value is specified.
- 
 \end_layout
 
 \begin_layout Standard
@@ -2286,7 +2312,7 @@ Virtual Memory
 
 \begin_layout Standard
 Virtual memory is an abstraction over the physical memory (RAM), allowing
- every program operate within its own virtual address space.
+ every program operate within its own isolated address space.
  Virtual addresses are organized into 
 \emph on
 pages
@@ -2364,9 +2390,17 @@ Organization of virtual memory of a running process on a typical 64 bit
 \end_layout
 
 \begin_layout Standard
-A running process is divided into several sections within the virtual address
- space.
- The most important are stack, heap, bss, data and text, as illustrated
+On 64-bit machines, addresses range from 
+\begin_inset Formula $0$
+\end_inset
+
+ to 
+\begin_inset Formula $2^{64}$
+\end_inset
+
+.
+ A running process is divided into several sections within the virtual address
+ space, the most important being stack, heap, bss, data and text, as illustrated
  in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -2386,27 +2420,32 @@ stack Stack frames with function parameters and local variables.
 
 \begin_layout Description
 heap Dynamically allocated area.
- Located above the text and data segments, and growing upwards as programs
- request more memory.
- 
+ Located above the uninitialized data segment (bss), and growing upwards
+ as more space is required.
+ Calls to 
+\family typewriter
+malloc
+\family default
+ and related functions can be used to request heap memory.
 \end_layout
 
 \begin_layout Description
 bss Uninitialized data, containing variables with no value specified.
- This area is implicitly initialized to zero.
+ This area is implicitly initialized to zero, thus only the size needs to
+ be stored in the executable file.
  
 \end_layout
 
 \begin_layout Description
 data Initialized data, variables that have some assigned value at compile
  time.
- 
+ This section is read from the executable file and copied to virtual memory.
 \end_layout
 
 \begin_layout Description
-text Executable binary code.
- Typically located at the lower end of the virtual address space.
- 
+text Executable binary code, located at the lower end of the virtual address
+ space.
+ This section is also stored in the executable.
 \end_layout
 
 \begin_layout Standard
@@ -2426,7 +2465,7 @@ key "Lomont:2012:x64Assembly"
 \end_layout
 
 \begin_layout Subsubsection*
-ELF
+Executable and Linkable Format (ELF)
 \end_layout
 
 \begin_layout Standard
@@ -2529,9 +2568,12 @@ ELF files is structured in a set of sections, such as
 \emph on
 allocable
 \emph default
-, meaning they are copied into virtual memory before the program is executed.
+, meaning their contents are copied into virtual memory before the program
+ is executed.
  An example of an allocable section is the text area, which contains all
  the executable machine code.
+ The data section is also allocable, typically storing things like constants
+ and initialized static variables.
  Virtual addresses of code or data stored in allocable section are determined
  statically, and can be found by reading the contents of the ELF file.
  The following example shows disassembly of the first few instruction in
@@ -2592,10 +2634,6 @@ status open
 
 \end_layout
 
-\begin_layout Subsubsection*
-Loading
-\end_layout
-
 \begin_layout Standard
 Before a program can be executed, it needs to be loaded into virtual memory
  in some way.
@@ -2615,8 +2653,8 @@ Before a program can be executed, it needs to be loaded into virtual memory
 \begin_layout Standard
 The loader maps each allocable section of the object file into virtual address
  space, such as the text and data areas.
- Stack and heap areas are initialized, resulting in a process image like
- the one shown in Figure 
+ Stack, heap and bss areas are initialized, resulting in a process image
+ like the one shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:virtual-address-space"
@@ -2624,10 +2662,8 @@ reference "fig:virtual-address-space"
 \end_inset
 
 .
- Dynamically loaded libraries are mapped into virtual memory as well.
- They typically end up with high addresses, located relatively close to
- the stack.
- 
+ Dynamically linked and shared libraries are mapped into virtual memory
+ as well, appearing somewhere between the stack and heap segments.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -2635,10 +2671,10 @@ Address Space Layout Randomization (ASLR)
 \end_layout
 
 \begin_layout Standard
-The process of loading segments to virtual memory is not necessarily determinist
-ic.
- If virtual addresses can be known a priori, programs will be more vulnerable
- to buffer overflow attacks 
+The process of mapping sections to virtual memory is in most cases not determini
+stic.
+ If addresses can be known a priori, programs will be more vulnerable to
+ buffer overflow attacks 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Shackham:2004:ASLR"
@@ -2648,33 +2684,40 @@ key "Shackham:2004:ASLR"
 .
  If an attacker manages to inject malicious code, he can use the known virtual
  addresses to access data or call specific functions.
- One technique known as 'return to libc' attacks uses this knowledge to
- call functions in the C standard library, which will be loaded in most
- scenarios.
- 
+ One technique known as 
+\begin_inset Quotes eld
+\end_inset
+
+return to libc
+\begin_inset Quotes erd
+\end_inset
+
+ attacks uses this knowledge to call functions in the C standard library,
+ which will be loaded in most scenarios.
+ If dynamic libraries are always mapped to the same range of virtual addresses,
+ locations of functions in libc can be easily determined.
 \end_layout
 
 \begin_layout Standard
-Address space randomization is a technique employed by the operating system
- to make it more difficult to compromise programs.
- By default, the placement of stack, heap (initial position of brk) and
- location of dynamically linked libraries will vary between each run of
- a program.
+Address Space Layout Randomization is a technique employed by the operating
+ system to make it more difficult to compromise programs.
+ By default, the placement of stack, heap and location of dynamically linked
+ libraries will vary between each run of a program.
  For a controlled execution environment, we will need to manually disable
  address randomization in many cases.
- This can be done by overwriting the randomize_va_space file.
+ This can be done by overwriting the randomize_va_space file in Linux systems.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\ttfamily},language=bash"
+lstparams "basicstyle={\small\ttfamily},language=bash"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-$ bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+$ sudo bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
 \end_layout
 
 \end_inset
@@ -2703,7 +2746,7 @@ target "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
 \end_inset
 
 .
- To disable heap randomization, a value of 1 can be written instead.
+ To disable heap randomization only, a value of 1 can be written instead.
  We will use zero to disable all randomization, making virtual memory layout
  completely deterministic between each run.
  
@@ -2736,6 +2779,9 @@ Memory Context of C Programs
 \begin_layout Standard
 To make things more concrete, we will illustrate how a typical C program
  maps to virtual address space.
+ C will be the programming language of choice throughout the remainder of
+ the thesis, as it is both widely known and provides only a thin layer of
+ abstraction over virtual memory.
  The program in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -2747,9 +2793,87 @@ reference "alg:c-context"
  dynamically allocated data on heap, and stack allocated variables.
 \end_layout
 
+\begin_layout Itemize
+Variable 
+\family typewriter
+c
+\family default
+ and 
+\family typewriter
+d
+\family default
+ are stack-allocated 
+\emph on
+automatic
+\emph default
+ variables 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
+
+\end_inset
+
+.
+ Their run-time addresses depend on where the stack segment is initialized
+ in virtual memory, and can in general not be known ahead of time.
+\end_layout
+
+\begin_layout Itemize
+The address returned by malloc and stored in variable 
+\family typewriter
+d
+\family default
+, points to a location on the heap.
+ The exact address depends on the implementation of malloc, as well as the
+ initial position of the heap segment, and is also impossible to predict
+ in general.
+ 
+\end_layout
+
+\begin_layout Itemize
+Global variables 
+\family typewriter
+a
+\family default
+ and 
+\family typewriter
+b
+\family default
+ should be placed in bss and data segments respectively.
+ Variable 
+\family typewriter
+a
+\family default
+ is not explicitly initialized, thus it is not necessary to store any value
+ in the executable file.
+ The C standard specifies that static variables are guaranteed to be initialized
+ to zero 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
+
+\end_inset
+
+, which will happen by default if allocated in the bss segment.
+ The value 42 is allocated for variable 
+\family typewriter
+b
+\family default
+ in the data section of the executable.
+ Virtual addresses of static variables are determined at compile time, and
+ can be found in the ELF object file's symbol table 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
+ 
+\end_layout
+
 \begin_layout Standard
 \begin_inset Float algorithm
-placement h
 wide false
 sideways false
 status open
@@ -2759,6 +2883,20 @@ status open
 lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C,showstringspaces=false"
 inline false
 status open
+
+\begin_layout Plain Layout
+
+#include <stdlib.h>
+\end_layout
+
+\begin_layout Plain Layout
+
+#include <stdio.h>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
 
 \begin_layout Plain Layout
 
@@ -2791,13 +2929,7 @@ int main() {
 
 \begin_layout Plain Layout
 
-    printf("stack: %p
-\backslash
-nheap: %p
-\backslash
-nbss: %p
-\backslash
-ndata: %p
+    printf("stack: %p heap: %p bss: %p data: %p 
 \backslash
 n", &c, d, &a, &b);
 \end_layout
@@ -2838,50 +2970,6 @@ Simple C program with data allocated in four different segments of virtual
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Itemize
-Variable c and d are 
-\emph on
-automatic
-\emph default
- variables
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Kernighan:1988:CProgrammingLanguage"
-
-\end_inset
-
-, which are stack allocated.
- Their run-time address depends on where the stack segment is initialized
- in virtual memory, and can in general not be known ahead of time.
-\end_layout
-
-\begin_layout Itemize
-The address returned by malloc and stored in variable d, points to a location
- on the heap.
- The exact address depends on the implementation of malloc, as well as the
- initial position of the heap segment, and is also impossible to predict
- in general.
- 
-\end_layout
-
-\begin_layout Itemize
-Global variables a and b should be placed in bss and data segments respectively.
- Their virtual addresses are determined at compile time, and can be found
- in the ELF object file's symbol table 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SystemVABI"
-
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
 Executing the same program multiple times with ASLR enabled will yield different
  output for stack and heap addresses.
  Each variation constitutes a different execution context, with potentially
@@ -2895,7 +2983,16 @@ The actual memory map from running processes can be obtained by reading
 /proc/<id>/maps
 \family default
  for some process id.
- A sample output from a run of the previous example is shown below.
+ A sample output from a running another program is shown below.
+ Recognize [stack] and [heap] on opposite ends of the address range, and
+ the executable program 
+\family typewriter
+a.out
+\family default
+ being mapped to 0x400000 through 0x602000.
+ The C standard library is present (libc-2.15.so), as well as the dynamic
+ linker/loader (ld-2.15.so).
+ Note that addresses end in 0x000 because the page size is 4 KiB, or 0x1000.
  
 \end_layout
 
