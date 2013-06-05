@@ -6,7 +6,14 @@
 \begin_preamble
 \usepackage{float}
 \floatname{algorithm}{Listing}
+\let\origdoublepage\cleardoublepage
+\newcommand{\clearemptydoublepage}{%
+  \clearpage
+  {\pagestyle{empty}\origdoublepage}%
+}
+\let\cleardoublepage\clearemptydoublepage
 \end_preamble
+\options openright
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -3112,10 +3119,10 @@ Modern microprocessors are extremely complex in design and functionality.
  to camouflage slow memory, multiple prefetchers, speculative out-of-order
  execution and complicated branch prediction, just to name a few.
  Optimizing for the common case, these hardware features sometimes behaves
- suboptimally, resulting in bias observed by performance analysts.
+ suboptimally.
  In this chapter, we will unveil characteristics about two specific architectura
 l features in Ivy Bridge, and show how they can bias performance towards
- certain memory layouts.
+ certain memory contexts.
  
 \end_layout
 
@@ -3124,7 +3131,8 @@ Methodology and Experimental Setup
 \end_layout
 
 \begin_layout Standard
-Measurement bias is by definition a product of variations in the environment.
+Measurement bias is by definition a product of variations in the execution
+ environment.
  To produce reliable results, we need to properly control every variable
  that can affect measurements.
  We make the following configuration to our experimental setup:
@@ -3355,16 +3363,27 @@ key "Hunter:2007:Matplotlib"
 .
 \end_layout
 
+\begin_layout Standard
+Our test machine features an i7-3770 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ processor and 16 GB RAM.
+ The operating system is Ubuntu version 12.04, which at the time of writing
+ is the most recent release with long term support.
+ We use GCC version 4.6.3 as our compiler toolchain.
+\end_layout
+
 \begin_layout Section
 Address Alias Effects (4K Aliasing)
 \end_layout
 
 \begin_layout Standard
-Placement of code and data in virtual memory affect the performance of programs
- in various ways.
- In this section, we will look at a phenomenon related to the addresses
- of read and write operations.
- Effects known as 
+An effect known as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -3372,15 +3391,15 @@ Placement of code and data in virtual memory affect the performance of programs
 \begin_inset Quotes erd
 \end_inset
 
- occurs when the addresses of a store followed by a load differ by a multiple
- of 4 KiB.
+ can occur when the addresses of a store instruction followed by a load
+ instruction differ by a multiple of 4 KiB.
  Consider the following example, first writing a value to the memory address
  stored in %rax, before reading from the address stored in %rbx
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
+lstparams "basicstyle={\ttfamily},language={[x86masm]Assembler}"
 inline false
 status open
 
@@ -3415,7 +3434,14 @@ The memory system issues load and store operations speculatively and out
  In the above example, the processor could very well issue the load before
  the store, as they refer to different addresses.
  However, on recent Intel architectures only the last 12 address bits are
- used to determine if operations refer to the same address.
+ used to determine if operations refer to the same address 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
  The last twelve bits of 0x601010 is 0x010, or 0000'0001'0000 in binary
  -- the same as for 0x604
 \series bold
@@ -3479,30 +3505,6 @@ As shown in previous work, changing the Unix environment variables can sometimes
  mapped into virtual memory, essentially offsetting all the following call
  frames and stack allocated variables.
  
-\end_layout
-
-\begin_layout Subsubsection*
-Analysis of Micro Kernel
-\end_layout
-
-\begin_layout Standard
-We begin by showing how address aliasing can explain measurement bias for
- the micro kernel presented in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-, reproduced here in Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:loop-micro-kernel"
-
-\end_inset
-
-.
- This example is interesting for several reasons:
 \end_layout
 
 \begin_layout Standard
@@ -3600,6 +3602,30 @@ C code with bias towards certain stack positions
 
 \end_layout
 
+\begin_layout Subsubsection*
+Analysis of Micro Kernel
+\end_layout
+
+\begin_layout Standard
+We begin by showing how address aliasing can explain measurement bias for
+ the micro kernel presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, reproduced here in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:loop-micro-kernel"
+
+\end_inset
+
+.
+ This example is interesting for several reasons:
+\end_layout
+
 \begin_layout Itemize
 The bias effects are significant and easily reproducible
 \end_layout
@@ -3620,7 +3646,16 @@ We use perf and an automated script to collect performance counter statistics
  The program is compiled using GCC with all default options.
  Note that any optimization would likely disregard most of the function
  as redundant code, and reduce it to return zero immediately.
- 
+ Collecting the cycle count performance counter, we observe a distinct spike
+ over a period of 16 bytes under increasing environment size.
+ As illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:loop-cycles-only"
+
+\end_inset
+
+, the difference is over 20 % between the worst and best case.
 \end_layout
 
 \begin_layout Standard
@@ -3665,26 +3700,23 @@ Performance variations from offsetting stack position by changing environment
 \end_layout
 
 \begin_layout Standard
-Collecting the cycle count performance counter, we observe a distinct spike
- over a period of 16 bytes under increasing environment size.
- As illustrated in Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:loop-cycles-only"
-
-\end_inset
-
-, the difference is over 20 % between the worst and best case.
- 
-\end_layout
-
-\begin_layout Standard
 Even for such a simple program, it is far from obvious that stack position
  should have any impact on performance.
  As a starting point in trying to analyze the potential cause for these
  effects, we will look at data provided by various performance counters.
  With nearly 200 non-architectural performance counters available for Ivy
- Bridge, hopefully some of them can give some insight into what is happening.
+ Bridge 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+, hopefully some of them can give some insight into what is happening.
+ We run the program several times under each environment configuration,
+ collecting all available counters.
+ We then use a simple linear correlation to filter out the metrics that
+ are most relevant.
  The set of counters that most closely follows the cycle count is shown
  in Table 
 \begin_inset CommandInset ref
@@ -3694,9 +3726,6 @@ reference "tab:loop-all-counters"
 \end_inset
 
 .
- We have used a simple linear correlation to filter out the metrics that
- most closely follows the cycle count.
- 
 \end_layout
 
 \begin_layout Standard
@@ -4601,7 +4630,7 @@ name "tab:loop-all-counters"
 
 \end_inset
 
-Performance counters with more than 30 % positive or negative correlation
+Performance counters with more than 30 % positive or negative linear correlation
  to cycle count
 \end_layout
 
@@ -4617,8 +4646,7 @@ Performance counters with more than 30 % positive or negative correlation
 
 \begin_layout Standard
 Among all the performance counters supported on our architecture, only a
- few shows significant correlation to cycle count.
- 
+ few shows significant correlation to cycle count:
 \end_layout
 
 \begin_layout Itemize
@@ -4654,6 +4682,8 @@ ld_blocks_partial.address_alias
 
 \begin_layout Itemize
 Positive correlation with resource stalls supports the aliasing hypothesis.
+ Loads blocked by preceding stores due to false dependence is likely generating
+ stalls.
  
 \shape smallcaps
 resource_stalls.any
@@ -4859,8 +4889,8 @@ Variables g and inc are local automatic variables, which are allocated on
  stack.
  The addresses of these variables will be affected by changing initial stack
  position.
- It is difficult to observe the correct addresses of g and inc without introduci
-ng observer effects.
+ It is difficult to observe their correct addresses without introducing
+ observer effects.
  Simply adding a call to printf for instance, completely changes the program
  behavior with respect to bias.
  Instead, we use a small amount of assembly code to calculate the addresses
@@ -5158,7 +5188,8 @@ name "alg:loop-micro-kernel-fixed"
 \end_inset
 
 Modified code with explicit check for aliasing between inc and j.
- The alternative loop contains no aliasing.
+ The alternative loop contains no aliasing, and this program does not suffer
+ from bad performance due to address aliasing for any environment size.
 \end_layout
 
 \end_inset
