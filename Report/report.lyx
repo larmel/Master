@@ -174,11 +174,11 @@ Ivy Bridge
 \end_layout
 
 \begin_layout Abstract
-Case studies show that even highly optimized Fourier transform and linear
+Our case studies show that even highly optimized Fourier transform and linear
  algebra libraries are prone to bias.
  We find that stack alignment significantly affects the performance of FFTW,
- and that more than 30 % performance gain can be made by avoiding address
- aliasing in ATLAS matrix-vector multiplication.
+ and that in some cases more than 30 % performance gain can be made by avoiding
+ address aliasing in ATLAS matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
@@ -390,8 +390,8 @@ Performance of computer programs is not just a function of the collection
  of machine instructions executed.
  Various external properties, such as the operating system, or even room
  temperature, can have have an impact on how fast programs execute: Modern
- microchips can be sensitive to temperature, possibly performing better
- in cold environments.
+ microchips can be sensitive to temperature, possibly operating on higher
+ clock rates in cold environments.
  Characteristics of the operating system can decide things like the placement
  of code and data in memory, which in turn interacts with various hardware
  mechanisms.
@@ -437,9 +437,17 @@ s and statistical methods.
 In this thesis, we will try to unveil the actual causes of bias that can
  be experienced by altering memory layout.
  Both the size of environment variables and link ordering ultimately has
- an effect on virtual memory of running processes.
- Because these effects are intrinsically connected to various hardware features,
- we will focus on the Intel Core i7 
+ an effect on memory layout of running processes.
+ We will 
+\emph on
+not
+\emph default
+ look at things like cache efficiency, which often can be the reason for
+ bad performance under certain memory contexts.
+ Instead, we look at effects from less known optimizations in the out-of-order
+ execution engine and instructions fetch pipeline.
+ Because bias effects are intrinsically connected to various hardware features,
+ we will focus on the Intel® Core™ i7 
 \begin_inset Quotes eld
 \end_inset
 
@@ -453,6 +461,7 @@ Ivy Bridge
  With a better understanding of intricate properties of the CPU, we will
  be able to not only predict, but also explicitly optimize for beneficial
  memory layouts.
+ 
 \end_layout
 
 \begin_layout Section
@@ -664,8 +673,8 @@ correct
 
  number of cycles here? One could say that in most cases, it should be around
  700,000, although on average it is somewhat higher.
- If you are unlucky, sitting on a machine with just the right environment
- size, you might declare that the cycle count is about 850,000.
+ On a machine with just the right environment size, one might declare that
+ the cycle count is about 850,000.
  This illustrates how external properties can bias performance towards certain
  environments.
  Previous work focuses mostly on how to mitigate effects of bias, and avoid
@@ -699,9 +708,10 @@ Chapter
 
 2 presents some of the previous work done on measurement bias, showing its
  severity as well as proposed solutions to mitigate or compensate for it.
- A brief introduction to the Ivy Bridge microarchitecture and use of hardware
- performance monitoring is given as background material, as well as a discussion
- of the execution context on 64 bit Linux systems.
+ A brief overview to the Ivy Bridge microarchitecture and use of hardware
+ performance monitoring is given as background material.
+ We also introduce important concepts in virtual memory layout on 64 bit
+ Linux systems, explaining the memory execution context.
 \end_layout
 
 \begin_layout Description
@@ -846,6 +856,13 @@ istics.
  for example in the form of incrementing counter variables for every function
  call.
  Mytkowitcz et al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:OE&MB"
+
+\end_inset
+
  show that both strict use of hardware counters, as well as adding software
  instrumentation, is vulnerable to observer effects.
  Despite using techniques with minimal intrusion and overhead to the original
@@ -905,12 +922,30 @@ The authors study how program performance for different compiler optimization
  on the environment.
 \end_layout
 
+\begin_layout Standard
+There are many other properties one could consider as possible sources of
+ bias.
+ With link ordering causing performance variations, one must also consider
+ the different 
+\emph on
+versions
+\emph default
+ of compilers or linkers used.
+ Different compiler versions might generate different code -- resulting
+ in variations in memory layout of code and data.
+ In general, the exact implementation of any software system that interacts
+ with program execution must be considered, including compiler toolchain
+ and operating system used.
+ 
+\end_layout
+
 \begin_layout Subsection
 Causes of Measurement Bias
 \end_layout
 
 \begin_layout Standard
-In a following paper by the same authors 
+In a following paper by Mytkowicz et al.
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Mytkowicz:2009:WrongData"
@@ -928,7 +963,8 @@ key "Mytkowicz:2009:WrongData"
 
 \begin_layout Standard
 For both changing environment variables and link order, the authors point
- to changes to the virtual memory layout being the real cause of bias.
+ to changes to the virtual memory layout being the real cause of performance
+ variations.
 \end_layout
 
 \begin_layout Itemize
@@ -955,8 +991,8 @@ Loop Stream Detector
 \begin_inset Quotes erd
 \end_inset
 
- might cause bias on the Core 2, a hardware optimization that is supposed
- to speed up instruction fetching of hot loops.
+ might cause bias on the Intel® Core™ 2, a hardware optimization that is
+ supposed to speed up instruction fetching of hot loops.
 \end_layout
 
 \begin_layout Standard
@@ -971,7 +1007,14 @@ Dealing with Bias
 \end_layout
 
 \begin_layout Standard
-The conclusion reached in both papers is that measurement bias is unpredictable
+In literature surveys, Mytkowicz et al.
+ find that almost no papers account for measurement bias [??].
+ This is problematic, because conclusions reached from running biased experiment
+s can easily be misleading, or even outright wrong.
+ Their conclusion is that measurement bias is 
+\emph on
+unpredictable
+\emph default
  and difficult to avoid.
  Instead, measures have to be made to ensure the results obtained by performance
  analysis are valid.
@@ -987,14 +1030,6 @@ Diversify benchmarks, using statistical methods over a set of diverse benchmarks
 \begin_layout Itemize
 Randomize experimental setup, performing multiple measurements under different
  configurations of variables that are known to cause bias.
-\end_layout
-
-\begin_layout Standard
-In literature surveys, the authors find that almost no papers account for
- measurement bias.
- This is problematic, because conclusions reached from running biased experiment
-s can easily be misleading, or even outright wrong.
- 
 \end_layout
 
 \begin_layout Section
@@ -1074,8 +1109,11 @@ The authors considers instruction alignment of functions and global variables
 \end_layout
 
 \begin_layout Standard
-Blind optimization is really just a variant of a well known concept known
- as Feedback directed optimization 
+A related concept to blind optimization is 
+\emph on
+feedback directed optimization
+\emph default
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Smith:2000:FeedbackDirectedOptimization"
@@ -1128,7 +1166,11 @@ sloppy
  code generated by GCC (or other compilers), for instance redundant test
  instructions.
  The following example can be shortened by removing the last instruction,
- as condition flags are set implicitly by the sub instruction.
+ as condition flags are set implicitly by the 
+\family typewriter
+sub
+\family default
+ instruction.
  
 \end_layout
 
@@ -1207,8 +1249,11 @@ ons.
 \end_layout
 
 \begin_layout Standard
-This paper is particularly interesting because it shows that modeling, and
- successfully optimize for, complex hardware mechanisms is in fact feasible.
+This paper is particularly interesting, because it shows that modeling complex
+ hardware mechanisms is in fact feasible.
+ By encoding highly architecture-specific knowledge on things like optimal
+ instruction alignment, the authors are able to improve on compiler-optimized
+ code.
  
 \end_layout
 
@@ -1332,8 +1377,7 @@ reference "fig:pipeline"
 \end_inset
 
  shows a high level view of the processor pipeline, consisting of a front
- end, out of order engine, and execution core component, in addition to
- the memory subsystem.
+ end, out of order engine, execution core, and cache hierarchy.
  We will give a brief overview of each component, while a comprehensive
  reference can be found in the vendor manuals 
 \begin_inset CommandInset citation
@@ -1404,7 +1448,7 @@ The front end is responsible for fetching and decoding instructions, feeding
 \end_layout
 
 \begin_layout Standard
-There is an important distinction between IA-32 or Intel 64
+There is an important distinction between IA-32 (or Intel 64) instructions
 \begin_inset Foot
 status open
 
@@ -1416,7 +1460,11 @@ Intel uses IA-32 and Intel 64 for what is also commonly known as x86 and
 
 \end_inset
 
- instructions and micro-operations (
+ and 
+\emph on
+micro-operations
+\emph default
+ (
 \begin_inset Quotes eld
 \end_inset
 
@@ -1426,8 +1474,29 @@ micro-ops
 
 ): Assembly instructions emitted by a compiler are decoded into micro-operations
  used internally in the processor.
- There are many reasons for this, some of it being the incredible complexity
- of the instruction set.
+ The x86 ISA is a 
+\emph on
+complex
+\emph default
+ instruction set architecture (CISC), as opposed to a 
+\emph on
+reduced
+\emph default
+ instruction set architecture (RISC) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Patterson:2011:ComputerOrganization"
+
+\end_inset
+
+.
+ Complex instruction sets are designed to be convenient for manual assembly
+ programming, supporting many complicated operations in a single instruction.
+ For historical reasons and sake of backwards compatibility, the x86 instruction
+ set is constantly expanded with new functionality.
+ To manage the complexity of a CISC ISA, the processor reduces complicated
+ instructions to much simpler micro-operations internally.
+ The micro-operations are more similar to a RISC architecture.
 \end_layout
 
 \begin_layout Standard
@@ -1532,11 +1601,10 @@ Cache Hierarchy
 \end_layout
 
 \begin_layout Standard
-There are three levels of cache; Each processor core has an L1 data and
- instruction cache of 32 KiB each, and a unified L2 cache of 256 KiB holding
- both data and instructions.
- An L3 cache, also known as last level cache (LLC), is shared among all
- cores via a ring connection.
+Each processor core has an L1 data and instruction cache of 32 KiB each,
+ and a unified L2 cache of 256 KiB holding both data and instructions.
+ An L3 cache of 8 MiB, also known as last level cache (LLC), is shared among
+ all cores via a ring connection.
  
 \end_layout
 
@@ -3249,7 +3317,7 @@ Memory
 \begin_inset Text
 
 \begin_layout Plain Layout
-16 GB
+16 GB @ 1333 MHz
 \end_layout
 
 \end_inset
@@ -3278,7 +3346,7 @@ Operating System
 \begin_inset Text
 
 \begin_layout Plain Layout
-64bit Ubuntu 12.04 LTS (3.2.0-41)
+64-bit Ubuntu 12.04 LTS (3.2.0-41)
 \end_layout
 
 \end_inset
@@ -3307,7 +3375,7 @@ Toolchain
 \begin_inset Text
 
 \begin_layout Plain Layout
-GCC 4.6.3
+GCC 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5)
 \end_layout
 
 \end_inset
