@@ -3052,6 +3052,21 @@ Executing the same program multiple times with ASLR enabled will yield different
 \end_layout
 
 \begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+stack : 0x7fffffffe1ec heap : 0x602010 bss : 0x601040 data : 0x601028
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 The actual memory map from running processes can be obtained by reading
  the file 
 \family typewriter
