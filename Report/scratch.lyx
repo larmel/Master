@@ -77,6 +77,132 @@ First Chapter
 \end_layout
 
 \begin_layout Standard
+The actual memory map from running processes can be obtained by reading
+ the file 
+\family typewriter
+/proc/<id>/maps
+\family default
+ for some process id.
+ A sample output from a running another program is shown below.
+ Recognize [stack] and [heap] on opposite ends of the address range, and
+ the executable program 
+\family typewriter
+a.out
+\family default
+ being mapped to 0x400000 through 0x602000.
+ The C standard library is present (libc-2.15.so), as well as the dynamic
+ linker/loader (ld-2.15.so).
+ Note that addresses end in 0x000 because the page size is 4 KiB, or 0x1000.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+00400000-00401000 r-xp 00000000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+00600000-00601000 r--p 00000000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+00601000-00602000 rw-p 00001000 08:01 161842             /home/lars/Master/Code/
+Env/a.out
+\end_layout
+
+\begin_layout Plain Layout
+
+01027000-01048000 rw-p 00000000 00:00 0                  [heap]
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e493000-7f127e646000 r-xp 00000000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e646000-7f127e845000 ---p 001b3000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e845000-7f127e849000 r--p 001b2000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e849000-7f127e84b000 rw-p 001b6000 08:01 266366     /lib/x86_64-linux-gnu/l
+ibc-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e84b000-7f127e850000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127e850000-7f127e872000 r-xp 00000000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea59000-7f127ea5c000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea6f000-7f127ea72000 rw-p 00000000 00:00 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea72000-7f127ea73000 r--p 00022000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7f127ea73000-7f127ea75000 rw-p 00023000 08:01 266346     /lib/x86_64-linux-gnu/l
+d-2.15.so
+\end_layout
+
+\begin_layout Plain Layout
+
+7fff47114000-7fff47135000 rw-p 00000000 00:00 0          [stack]
+\end_layout
+
+\begin_layout Plain Layout
+
+7fff471ff000-7fff47200000 r-xp 00000000 00:00 0          [vdso]
+\end_layout
+
+\begin_layout Plain Layout
+
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0  [vsyscall]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="2">

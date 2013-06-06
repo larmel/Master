@@ -1687,10 +1687,10 @@ Hardware performance counters are special-purpose registers that can be
 count
 \emph default
  various hardware events.
- On Intel CPU's, dedicated Performance Monitoring Unit (PMU) hardware can
- be programmed to count things like cycle count, number of branch misses,
- or retired micro-operations.
- These metrics are commonly used for detailed performance tuning and profiling
+ Dedicated Performance Monitoring Unit (PMU) hardware can be programmed
+ to count things like cycle count, number of branch misses, or retired micro-ope
+rations.
+ Performance counter metrics are commonly used for detailed tuning and profiling
  of software.
  
 \end_layout
@@ -1698,7 +1698,7 @@ count
 \begin_layout Standard
 \noindent
 \begin_inset Float table
-placement h
+placement H
 wide false
 sideways false
 status open
@@ -1725,10 +1725,10 @@ begin{small}
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="4">
 <features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
-<column alignment="center" valignment="bottom" width="7text%">
-<column alignment="center" valignment="bottom" width="10text%">
-<column alignment="left" valignment="bottom" width="45text%">
-<column alignment="left" valignment="top" width="28text%">
+<column alignment="center" valignment="top" width="7text%">
+<column alignment="center" valignment="top" width="10text%">
+<column alignment="left" valignment="top" width="34text%">
+<column alignment="left" valignment="top" width="42text%">
 <row>
 <cell alignment="center" valignment="bottom" bottomline="true" usebox="none">
 \begin_inset Text
@@ -1769,7 +1769,7 @@ Mnemonic
 \begin_layout Plain Layout
 
 \series bold
-Perf mnemonic
+Description
 \end_layout
 
 \end_inset
@@ -1822,16 +1822,17 @@ Perf mnemonic
 \begin_inset Text
 
 \begin_layout Plain Layout
-CPU_CLK_UNHALTED.THREAD_P
+CPU_CLK_UNHALTED.
+ THREAD_P
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-cycles
+Counts the number of thread cycles while the thread is not in a halt state
 \end_layout
 
 \end_inset
@@ -1917,7 +1918,7 @@ INST_RETIRED.ANY_P
 \begin_inset Text
 
 \begin_layout Plain Layout
-instructions
+Number of instructions at retirement
 \end_layout
 
 \end_inset
@@ -2003,7 +2004,7 @@ RESOURCE_STALLS.ANY
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+Cycles Allocation is stalled due to Resource Related reason
 \end_layout
 
 \end_inset
@@ -2085,7 +2086,7 @@ unit mask
 mnemonics
 \emph default
 .
- A few events supported on Ivy Bridge are listed in Table 
+ A few examples are listed in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:example-performance-counters"
@@ -2101,8 +2102,14 @@ cpu_clk_unhalted.thread_p
 inst_retired.any_p
 \shape default
  for counting number of dynamic instructions executed.
- There are hundreds of these available, able to count all sort of processor
- statistics.
+ About 200 different events are available on Ivy Bridge 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -2154,7 +2161,7 @@ key "Intel:2013:Volume3B"
 \end_layout
 
 \begin_layout Standard
-Counters are configured up by writing to special 32 bit 
+Counters are configured up by writing to 32 bit 
 \emph on
 event select
 \emph default
@@ -2359,7 +2366,8 @@ perf stat -e cycles ls
 \end_layout
 
 \begin_layout Standard
-We will in some cases be using this format directly when presenting measurements.
+We will in some cases be using the output format directly when presenting
+ measurements.
  
 \end_layout
 
@@ -2411,23 +2419,15 @@ key "Intel:2013:Volume3B"
  Perf uses the event select bit-format fairly explicitly, meaning we can
  provide a hexadecimal number corresponding to the desired register value
  to specify which counter to use.
- Concatenating unit mask and event code forms the two least significant
- bytes of the event select register.
- The user mode bit can be toggled by appending a 'u' character, as in 
-\family typewriter
-event:u
-\family default
-.
- As an example, counting 
+ The perf code for 
 \shape smallcaps
 resource_stalls.any
 \shape default
- in user mode for 
+ is 
 \family typewriter
-ls
+r01A2
 \family default
- corresponds to a bit-field where the last two bytes are 0x01 and 0xA2 for
- unit mask and event code respectively.
+, with 0x01 and 0xA2 for unit mask and event code respectively.
  An initial 'r' character signifies that a 
 \begin_inset Quotes eld
 \end_inset
@@ -2437,6 +2437,12 @@ raw
 \end_inset
 
  counter value is specified.
+ The user mode bit can be toggled by appending a 'u' character, as in 
+\family typewriter
+event:u
+\family default
+.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -2594,10 +2600,9 @@ reference "fig:virtual-address-space"
 \end_layout
 
 \begin_layout Description
-stack Stack frames with function parameters and local variables.
+stack Stack frames, containing function parameters and local variables.
  Located somewhere around the top (address 0x7fff'ffffffff) and expanding
- downwards with each stack frame.
- 
+ downwards.
 \end_layout
 
 \begin_layout Description
@@ -2887,7 +2892,6 @@ Address Space Layout Randomization is a technique employed by the operating
  libraries will vary between each run of a program.
  For a controlled execution environment, we will need to manually disable
  address randomization in many cases.
- This can be done by overwriting the randomize_va_space file in Linux systems.
  
 \end_layout
 
@@ -2959,9 +2963,7 @@ Memory Context of C Programs
 \end_layout
 
 \begin_layout Standard
-To make things more concrete, we will illustrate how a typical C program
- maps to virtual address space.
- C will be the programming language of choice throughout the remainder of
+C will be the programming language of choice throughout the remainder of
  the thesis, as it is both widely known and provides only a thin layer of
  abstraction over virtual memory.
  The program in Listing 
@@ -2975,87 +2977,9 @@ reference "alg:c-context"
  dynamically allocated data on heap, and stack allocated variables.
 \end_layout
 
-\begin_layout Itemize
-Variable 
-\family typewriter
-c
-\family default
- and 
-\family typewriter
-d
-\family default
- are stack-allocated 
-\emph on
-automatic
-\emph default
- variables 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Kernighan:1988:CProgrammingLanguage"
-
-\end_inset
-
-.
- Their run-time addresses depend on where the stack segment is initialized
- in virtual memory, and can in general not be known ahead of time.
-\end_layout
-
-\begin_layout Itemize
-The address returned by malloc and stored in variable 
-\family typewriter
-d
-\family default
-, points to a location on the heap.
- The exact address depends on the implementation of malloc, as well as the
- initial position of the heap segment, and is also impossible to predict
- in general.
- 
-\end_layout
-
-\begin_layout Itemize
-Global variables 
-\family typewriter
-a
-\family default
- and 
-\family typewriter
-b
-\family default
- should be placed in bss and data segments respectively.
- Variable 
-\family typewriter
-a
-\family default
- is not explicitly initialized, thus it is not necessary to store any value
- in the executable file.
- The C standard specifies that static variables are guaranteed to be initialized
- to zero 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Kernighan:1988:CProgrammingLanguage"
-
-\end_inset
-
-, which will happen by default if allocated in the bss segment.
- The value 42 is allocated for variable 
-\family typewriter
-b
-\family default
- in the data section of the executable.
- Virtual addresses of static variables are determined at compile time, and
- can be found in the ELF object file's symbol table 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SystemVABI"
-
-\end_inset
-
-.
- 
-\end_layout
-
 \begin_layout Standard
 \begin_inset Float algorithm
+placement h
 wide false
 sideways false
 status open
@@ -3152,6 +3076,89 @@ Simple C program with data allocated in four different segments of virtual
 
 \end_inset
 
+
+\end_layout
+
+\begin_layout Itemize
+Variable 
+\family typewriter
+c
+\family default
+ and 
+\family typewriter
+d
+\family default
+ are stack-allocated 
+\emph on
+automatic
+\emph default
+ variables 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
+
+\end_inset
+
+.
+ Their run-time addresses depend on where the stack segment is initialized
+ in virtual memory, and can in general not be known ahead of time.
+\end_layout
+
+\begin_layout Itemize
+The address returned by malloc and stored in variable 
+\family typewriter
+d
+\family default
+, points to a location on the heap.
+ The exact address depends on the implementation of malloc, as well as the
+ initial position of the heap segment, and is also impossible to predict
+ in general.
+ 
+\end_layout
+
+\begin_layout Itemize
+Global variables 
+\family typewriter
+a
+\family default
+ and 
+\family typewriter
+b
+\family default
+ should be placed in bss and data segments respectively.
+ Variable 
+\family typewriter
+a
+\family default
+ is not explicitly initialized, thus it is not necessary to store any value
+ in the executable file.
+ The C standard specifies that static variables are guaranteed to be initialized
+ to zero 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kernighan:1988:CProgrammingLanguage"
+
+\end_inset
+
+, which will happen by default if allocated in the bss segment.
+ The value 42 is allocated for variable 
+\family typewriter
+b
+\family default
+ in the data section of the executable.
+ Virtual addresses of static variables are determined at compile time, and
+ can be found in the ELF object file's symbol table 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SystemVABI"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
 Executing the same program multiple times with ASLR enabled will yield different
  output for stack and heap addresses.
  Each variation constitutes a different execution context, with potentially
@@ -3160,138 +3167,13 @@ Executing the same program multiple times with ASLR enabled will yield different
 
 \begin_layout Standard
 \begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
 inline false
 status open
 
 \begin_layout Plain Layout
 
-stack : 0x7fffffffe1ec heap : 0x602010 bss : 0x601040 data : 0x601028
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-The actual memory map from running processes can be obtained by reading
- the file 
-\family typewriter
-/proc/<id>/maps
-\family default
- for some process id.
- A sample output from a running another program is shown below.
- Recognize [stack] and [heap] on opposite ends of the address range, and
- the executable program 
-\family typewriter
-a.out
-\family default
- being mapped to 0x400000 through 0x602000.
- The C standard library is present (libc-2.15.so), as well as the dynamic
- linker/loader (ld-2.15.so).
- Note that addresses end in 0x000 because the page size is 4 KiB, or 0x1000.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\scriptsize\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-00400000-00401000 r-xp 00000000 08:01 161842             /home/lars/Master/Code/
-Env/a.out
-\end_layout
-
-\begin_layout Plain Layout
-
-00600000-00601000 r--p 00000000 08:01 161842             /home/lars/Master/Code/
-Env/a.out
-\end_layout
-
-\begin_layout Plain Layout
-
-00601000-00602000 rw-p 00001000 08:01 161842             /home/lars/Master/Code/
-Env/a.out
-\end_layout
-
-\begin_layout Plain Layout
-
-01027000-01048000 rw-p 00000000 00:00 0                  [heap]
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e493000-7f127e646000 r-xp 00000000 08:01 266366     /lib/x86_64-linux-gnu/l
-ibc-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e646000-7f127e845000 ---p 001b3000 08:01 266366     /lib/x86_64-linux-gnu/l
-ibc-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e845000-7f127e849000 r--p 001b2000 08:01 266366     /lib/x86_64-linux-gnu/l
-ibc-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e849000-7f127e84b000 rw-p 001b6000 08:01 266366     /lib/x86_64-linux-gnu/l
-ibc-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e84b000-7f127e850000 rw-p 00000000 00:00 0 
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127e850000-7f127e872000 r-xp 00000000 08:01 266346     /lib/x86_64-linux-gnu/l
-d-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127ea59000-7f127ea5c000 rw-p 00000000 00:00 0 
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127ea6f000-7f127ea72000 rw-p 00000000 00:00 0 
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127ea72000-7f127ea73000 r--p 00022000 08:01 266346     /lib/x86_64-linux-gnu/l
-d-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7f127ea73000-7f127ea75000 rw-p 00023000 08:01 266346     /lib/x86_64-linux-gnu/l
-d-2.15.so
-\end_layout
-
-\begin_layout Plain Layout
-
-7fff47114000-7fff47135000 rw-p 00000000 00:00 0          [stack]
-\end_layout
-
-\begin_layout Plain Layout
-
-7fff471ff000-7fff47200000 r-xp 00000000 00:00 0          [vdso]
-\end_layout
-
-\begin_layout Plain Layout
-
-ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0  [vsyscall]
+stack: 0x7fffffffe1ec heap: 0x602010 bss: 0x601040 data: 0x601028
 \end_layout
 
 \end_inset
