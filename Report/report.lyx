@@ -5735,6 +5735,190 @@ reference "alg:convolution"
  
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+output + 0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+output + 16
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycle count, cycles:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12,024,235
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5,570,808
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Address alias, r0107:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9,195,816
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1,175
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Resource stalls, r01a2:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7,742,251
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1,290,946
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instructions, instructions:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11,166,765
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11,166,802
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Performance counter statistics for convolution kernel for two different
+ heap-address alignments
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsubsection*
 Default Alignment
 \end_layout
@@ -5803,41 +5987,6 @@ ld_blocks_partial.address_alias
 resource_stalls.all
 \shape default
  (r01a2:u).
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-        12,032,225 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         9,197,081 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         7,737,754 r01a2:u
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.004800780 seconds time elapsed
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -5995,41 +6144,6 @@ float
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-         5,591,035 cycles:u
-\end_layout
-
-\begin_layout Plain Layout
-
-             1,254 r0107:u
-\end_layout
-
-\begin_layout Plain Layout
-
-         1,291,413 r01a2:u
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.002849316 seconds time elapsed
-\end_layout
-
-\end_inset
-
 By simply altering the default addresses given by malloc, we are able to
  reduce the cycle count by more than 50 %.
 \end_layout
@@ -6073,6 +6187,190 @@ reference "fig:convolution-O3-graph"
 
 \begin_layout Subsection
 Architectural Optimization
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+output + 0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+output + 48
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycle count, cycles:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,451,031
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,028,162
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Address alias, r0107:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+259,605
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+236
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Resource stalls, r01a2:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+948,047
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+525,796
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Instructions, instructions:u
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,302,429
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3,302,444
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Performance counter statistics for convolution kernel for two different
+ heap-address alignments
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -7170,6 +7468,10 @@ User/Source Coding
  
 \end_layout
 
+\begin_layout Subsection
+Summary
+\end_layout
+
 \begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
@@ -8256,12 +8558,22 @@ status open
 
 \begin_layout Plain Layout
 
-     7,636,871,921 cycles:u                       
+     7,636,642,008 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-            10,936 r01a8:u             
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+            10,921 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,427,939 instructions:u 
 \end_layout
 
 \begin_layout Plain Layout
@@ -8270,7 +8582,7 @@ status open
 
 \begin_layout Plain Layout
 
-       2.254012765 seconds time elapsed
+       2.269077165 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -8316,12 +8628,22 @@ status open
 
 \begin_layout Plain Layout
 
-     3,665,748,974 cycles:u       
+     3,665,689,143 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-     4,581,313,440 r01a8:u   
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     4,581,309,568 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,428,712 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -8330,7 +8652,7 @@ status open
 
 \begin_layout Plain Layout
 
-       1.078952880 seconds time elapsed
+       1.116846425 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -8868,23 +9190,31 @@ status open
 
 \begin_layout Plain Layout
 
-7,636,791,251 cycles:u                                                 
-   
+     7,636,374,873 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-       10,946 r01a8:u 
+                 0 r0120:u
 \end_layout
 
 \begin_layout Plain Layout
 
-                              
+            10,998 r01a8:u
 \end_layout
 
 \begin_layout Plain Layout
 
-  2.251854012 seconds time elapsed
+    11,606,047,809 instructions:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       2.251557970 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -8911,12 +9241,22 @@ status open
 
 \begin_layout Plain Layout
 
-3,665,879,867 cycles:u  
+     3,665,668,196 cycles:u
 \end_layout
 
 \begin_layout Plain Layout
 
-8,246,353,284 r01a8:u 
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,350,119 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+    11,606,046,865 instructions:u
 \end_layout
 
 \begin_layout Plain Layout
@@ -8925,7 +9265,7 @@ status open
 
 \begin_layout Plain Layout
 
-  1.080532586 seconds time elapsed
+       1.082215324 seconds time elapsed
 \end_layout
 
 \end_inset
@@ -9275,6 +9615,10 @@ The string containing the path to the interpreter is actually allocated
  to virtual memory, before the text segment.
  This means that the string length (in characters) can offset code addresses.
  
+\end_layout
+
+\begin_layout Subsection
+Summary
 \end_layout
 
 \begin_layout Chapter

@@ -77,6 +77,76 @@ First Chapter
 \end_layout
 
 \begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+        12,032,225 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+         9,197,081 r0107:u
+\end_layout
+
+\begin_layout Plain Layout
+
+         7,737,754 r01a2:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.004800780 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+         5,591,035 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+             1,254 r0107:u
+\end_layout
+
+\begin_layout Plain Layout
+
+         1,291,413 r01a2:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.002849316 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 The actual memory map from running processes can be obtained by reading
  the file 
 \family typewriter

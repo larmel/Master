@@ -8,7 +8,7 @@
 int main()
 {
     register int i = 0, a = 1, b = 1;
-    //printf("What is going wrong?");
+    printf("What is going wrong?");
     while (i++ < 0x12345678)
     {
         if (a != b) B27;

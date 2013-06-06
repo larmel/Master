@@ -4,7 +4,7 @@ CCFLAGS=-std=c99 -march=native -O3
 
 all: perf-compilers
 
-.PHONY: perf-compilers graph graph-all
+.PHONY: perf-compilers graph graph-all bin/offsets-O3-gcc.eps
 
 
 
@@ -20,7 +20,7 @@ bin/offsets-O3-gcc.csv: conv-O3-gcc
 #
 # Output: perf statistics for default and optimal offset, O3 only
 perf-offsets-O3: conv-O3-gcc
-	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+
+	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+ 0
 	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+ 12
 	perf stat -e cycles:u,r0107:u,r01a2:u,instructions:u -r 10 ./$+ 16
 
@@ -31,6 +31,7 @@ perf-offsets-O3: conv-O3-gcc
 bin/offsets-O3-gcc.eps: bin/offsets-O3-gcc.csv
 	../lplot $+ -e cycles:u,r0107:u,r01d1:u --export $@ \
 		--legend 'upper right' \
+		--xlabel 'Padding elements added to output array' \
 		--labels 'Cycles, cycles:u' 'Address alias, r0107:u' 'L1 hit, r01d1:u'
 
 

@@ -11,7 +11,7 @@ chunks: chunks.s
 #
 # A single main function covering 13 chunks, fixed by inserting printf
 observer: chunks
-	perf stat -e cycles:u,r0120:u,r01a8:u ./chunks
+	perf stat -e cycles:u,r0120:u,r01a8:u,instructions:u ./chunks
 
 
 # Inspect alignment forced by O3
@@ -27,8 +27,8 @@ main-foo-loop: main.c loop.c foo.c
 #
 # Show bias from link order
 linkorder: main-loop-foo main-foo-loop
-	perf stat -e cycles:u,r0120:u,r01a8:u ./main-loop-foo
-	perf stat -e cycles:u,r0120:u,r01a8:u ./main-foo-loop
+	perf stat -e cycles:u,r0120:u,r01a8:u,instructions:u ./main-loop-foo
+	perf stat -e cycles:u,r0120:u,r01a8:u,instructions:u ./main-foo-loop
 
 
 #
