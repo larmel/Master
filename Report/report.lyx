@@ -1007,16 +1007,23 @@ Dealing with Bias
 \end_layout
 
 \begin_layout Standard
-In literature surveys, Mytkowicz et al.
- find that almost no papers account for measurement bias [??].
- This is problematic, because conclusions reached from running biased experiment
-s can easily be misleading, or even outright wrong.
- Their conclusion is that measurement bias is 
+Previous work conclude that measurement bias is 
 \emph on
 unpredictable
 \emph default
- and difficult to avoid.
- Instead, measures have to be made to ensure the results obtained by performance
+, and difficult to avoid in experimental setups.
+ In literature surveys, Mytkowicz et al.
+ find that almost no papers account for measurement bias 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:OE&MB,Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ This is problematic, because conclusions reached from running biased experiment
+s can easily be misleading, or even outright wrong.
+ Measures have to be made to ensure the results obtained by performance
  analysis are valid.
  The authors provide some guidelines for how to conduct sound experiments:
 \end_layout
@@ -1024,12 +1031,14 @@ unpredictable
 \begin_layout Itemize
 Diversify benchmarks, using statistical methods over a set of diverse benchmarks
  will help cancel out bias.
- 
+ Their study of the SPEC suite shows that currently widely used benchmark
+ suites are not diverse enough to cancel out bias.
 \end_layout
 
 \begin_layout Itemize
 Randomize experimental setup, performing multiple measurements under different
  configurations of variables that are known to cause bias.
+ 
 \end_layout
 
 \begin_layout Section
@@ -1478,11 +1487,14 @@ micro-ops
 \emph on
 complex
 \emph default
- instruction set architecture (CISC), as opposed to a 
+ instruction set computer (CISC) architecture, as opposed to a 
 \emph on
 reduced
 \emph default
- instruction set architecture (RISC) 
+ instruction set architecture (RISC).
+ Complex instruction set architectures support more sophisticated operations,
+ such as combinations of memory accesses and arithmetic operations in a
+ single instruction 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Patterson:2011:ComputerOrganization"
@@ -1490,13 +1502,12 @@ key "Patterson:2011:ComputerOrganization"
 \end_inset
 
 .
- Complex instruction sets are designed to be convenient for manual assembly
- programming, supporting many complicated operations in a single instruction.
  For historical reasons and sake of backwards compatibility, the x86 instruction
- set is constantly expanded with new functionality.
+ set has been constantly expanded with new functionality.
  To manage the complexity of a CISC ISA, the processor reduces complicated
  instructions to much simpler micro-operations internally.
- The micro-operations are more similar to a RISC architecture.
+ The micro-operations allow the processor to be organized more like a RISC
+ architecture internally.
 \end_layout
 
 \begin_layout Standard
@@ -1589,8 +1600,16 @@ Out-of-Order Engine and Execution Core
 One of the key features of modern processors is instruction level parallelism.
  A great amount of logic is dedicated to be able to issue multiple instructions
  per cycle, increasing the throughput.
- The out-of-order engine analyzes dependencies between micro-operations,
- issuing them to the execution core accordingly.
+ Micro-ops are delivered sequentially and in-order from the front end.
+ The out-of-order engine then views the stream of micro-ops as a 
+\emph on
+dataflow
+\emph default
+ problem.
+ A window of available micro-ops are analyzed for potential data dependencies,
+ and issued for execution accordingly.
+ Multiple operations can be issued simultaneously, as long as there are
+ no dependency violations.
  There are six execution ports, giving a maximum of six micro-operations
  issued by the scheduler each cycle.
  
@@ -1624,10 +1643,19 @@ Memory Disambiguation
 \end_layout
 
 \begin_layout Standard
-A load coming after a store with unresolved address can potentially have
- a dependency, and must wait until the store is complete.
- With memory disambiguation, the hardware makes a prediction on whether
- a conflict will occur, scheduling loads speculatively 
+In cases where a store operation is followed by load, there is a dependency
+ if both instructions refer to the same memory address.
+ The processor can not safely issue the load operation before the store
+ (out of order) until the addresses are calculated, and determined to not
+ overlap.
+ A conservative approach is to block all load instructions until previous
+ store addresses are resolved.
+ With 
+\emph on
+memory disambiguation
+\emph default
+, the hardware makes a prediction about whether a conflict will occur, schedulin
+g loads speculatively 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficientPerformance"
@@ -1636,9 +1664,10 @@ key "Intel:2006:InsideICM:SmartMemoryAccess,Intel:2006:InsideICM:EnergyEfficient
 
 .
  Loads that are predicted not to have any dependencies are allowed to read
- data from L1 cache, before previous stores are resolved.
+ data from L1 cache, before previous store addresses are resolved.
  The predictions are later verified before retirement, re-executing instructions
  that were affected by actual conflicts.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1652,12 +1681,17 @@ Performance Counters
 \end_layout
 
 \begin_layout Standard
-Intel architectures has supported extensive hardware performance monitoring
- for several processor generations.
- Dedicated Performance Monitoring Unit (PMU) hardware can be programmed
- to count various hardware statistics.
- Some examples include cycle count, cache misses, branch mispredicts, and
- number of retired instructions.
+Hardware performance counters are special-purpose registers that can be
+ configured to 
+\emph on
+count
+\emph default
+ various hardware events.
+ On Intel CPU's, dedicated Performance Monitoring Unit (PMU) hardware can
+ be programmed to count things like cycle count, number of branch misses,
+ or retired micro-operations.
+ These metrics are commonly used for detailed performance tuning and profiling
+ of software.
  
 \end_layout
 
@@ -2007,7 +2041,23 @@ name "tab:example-performance-counters"
 
 \end_inset
 
-Some performance counters available on Ivy Bridge
+Examples of performance counters available on Ivy Bridge.
+ The official reference can be found in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+, and a collection of the most relevant events for this thesis is included
+ in Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:list-of-performance-counters"
+
+\end_inset
+
+.
 \end_layout
 
 \end_inset
@@ -2021,41 +2071,182 @@ Some performance counters available on Ivy Bridge
 \end_layout
 
 \begin_layout Standard
-A few events are shown in Table 
+Performance events are identified by two numbers, called 
+\emph on
+event code
+\emph default
+ and 
+\emph on
+unit mask
+\emph default
+.
+ Events are also referred to by names, or 
+\emph on
+mnemonics
+\emph default
+.
+ A few events supported on Ivy Bridge are listed in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:example-performance-counters"
 
 \end_inset
 
-, including the widely used 
+, including 
 \shape smallcaps
-cpu_clk_unh- alted.thread_p
+cpu_clk_unhalted.thread_p
 \shape default
- for measuring number of cycles, as well as 
+ counting number of cycles, and 
 \shape smallcaps
 inst_retired.any_p
 \shape default
  for counting number of dynamic instructions executed.
  There are hundreds of these available, able to count all sort of processor
  statistics.
- Only a fixed amount of events can be counted simultaneously though, restricted
- by the number of 
-\emph on
-fixed
-\emph default
- and 
-\emph on
-general-purpose
-\emph default
- counter registers available.
- On Ivy Bridge, there are three fixed counters and eight general-purpose,
- for a maximum of 11 performance events monitored simultaneously.
 \end_layout
 
 \begin_layout Standard
-The official documentation of available performance counters and their usage
- can be found in Volume 3B of the Software Developer's Manual 
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/intel/msr.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:msr"
+
+\end_inset
+
+Performance event select register.
+ Adapted from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Counters are configured up by writing to special 32 bit 
+\emph on
+event select
+\emph default
+ registers.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:msr"
+
+\end_inset
+
+ illustrates the bit field for initializing counters on Ivy Bridge.
+\end_layout
+
+\begin_layout Itemize
+Unit mask and event code are written to the lower two least significant
+ bytes.
+ As an example, looking at Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:example-performance-counters"
+
+\end_inset
+
+ we find the values for 
+\shape smallcaps
+instr_retired.
+ any_p
+\shape default
+ to be 0xC0 and 0x00 respectively.
+\end_layout
+
+\begin_layout Itemize
+The remaining bits can be toggled to impose various constraints on what
+ is counted.
+ We will typically toggle OS mode and user mode such that statistics is
+ reported from code executing in user mode only.
+ Counters are updated each cycle, adding the number of event occuring to
+ a cumulative value.
+ An 
+\emph on
+invert
+\emph default
+ bit can be set to count cycles where an event does 
+\emph on
+not
+\emph default
+ occur.
+ 
+\end_layout
+
+\begin_layout Itemize
+On each cycle, the event count is compared to the value specified for counter
+ mask (CMASK).
+ The performance counter is not incremented if the value is below what is
+ specified for counter mask.
+ For instance, counting 
+\shape smallcaps
+instr_ret- ired.any_p
+\shape default
+ with a counter mask of 2, will count the number of cycles where at least
+ two instructions are retired.
+\end_layout
+
+\begin_layout Standard
+On Ivy Bridge, there are three 
+\emph on
+fixed
+\emph default
+ and eight 
+\emph on
+general-purpose
+\emph default
+ counter registers, for a maximum of 11 performance events monitored simultaneou
+sly.
+ The fixed counters are set to count 
+\shape smallcaps
+instr_retired.any
+\shape default
+, 
+\shape smallcaps
+cpu_clk_unhalted.core
+\shape default
+ and 
+\shape smallcaps
+cpu_clk_unhalted.ref
+\shape default
+.
+ With some restrictions, the remaining general-purpose registers can be
+ programmed to count arbitrary events.
+ The official documentation of available performance counters and their
+ usage can be found in Volume 3B of the Software Developer's Manual 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
@@ -2086,8 +2277,11 @@ There are multiple ways of accessing the processor's performance monitoring
  facilities from software.
  Support is needed from the operating system, as kernel mode privileges
  are needed to manage the low level PMU hardware.
- Linux systems provide a kernel interface called perf_events, which can
- be used along with the perf
+ Linux systems provide a kernel interface called 
+\emph on
+perf_events
+\emph default
+, which can be used along with the perf
 \begin_inset Foot
 status open
 
@@ -2110,14 +2304,9 @@ target "https://perf.wiki.kernel.org/index.php/Main_Page"
 \end_inset
 
  tool.
-\end_layout
-
-\begin_layout Standard
-Perf is a utility program for interfacing performance counters from user
+ Perf is a utility program for interfacing performance counters from user
  code on Linux.
- It is included in linux-tools-{version} from the package repository for
- Ubuntu, substituting for the correct kernel version.
- Perf is relatively easy to use, with support for many performance counters
+ It is relatively easy to use, with support for many performance counters
  by mnemonics such as 
 \begin_inset Quotes eld
 \end_inset
@@ -2170,9 +2359,7 @@ perf stat -e cycles ls
 \end_layout
 
 \begin_layout Standard
-The output looks something like the following.
- We will in some cases be using this format directly when presenting measurement
-s.
+We will in some cases be using this format directly when presenting measurements.
  
 \end_layout
 
@@ -2212,102 +2399,26 @@ status open
 
 \begin_layout Standard
 Not all counters are available as mnemonics.
- Arbitrary performance counters can be used by specifying their respective
- 
-\begin_inset Quotes eld
-\end_inset
-
-unit mask
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-event code
-\begin_inset Quotes erd
-\end_inset
-
-, available in the documentation.
- To get some intuition as to how this works exactly, it is worthwhile to
- point out how performance counters are configured under the hood in hardware.
- Counters are set up by writing to special 32 bit model specific registers
- (MSR), Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:msr"
-
-\end_inset
-
- illustrates the bit field for initializing counters on Ivy Bridge.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/intel/msr.eps
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:msr"
-
-\end_inset
-
-Performance event select register.
- Adapted from 
+ Arbitrary performance events can be used by specifying their respective
+ unit mask and event code, available in the documentation 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
 
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-In addition to unit mask and event code, the remaining bits can be set to
- impose various constraints on what is counted.
- We will typically toggle OS mode and user mode such that statistics is
- reported from code executing in user mode only.
- 
-\end_layout
-
-\begin_layout Standard
-Perf uses this bit-format fairly explicitly, meaning we can provide a hexadecima
-l number corresponding to the desired register value to specify which counter
- to use.
- Arbitrary counters can be specified by concatenating their unit mask and
- event code, forming the two least significant bytes of the event select
- register.
+.
+ Perf uses the event select bit-format fairly explicitly, meaning we can
+ provide a hexadecimal number corresponding to the desired register value
+ to specify which counter to use.
+ Concatenating unit mask and event code forms the two least significant
+ bytes of the event select register.
  The user mode bit can be toggled by appending a 'u' character, as in 
 \family typewriter
 event:u
 \family default
 .
- Let's say we want to count 
+ As an example, counting 
 \shape smallcaps
 resource_stalls.any
 \shape default
@@ -2315,9 +2426,8 @@ resource_stalls.any
 \family typewriter
 ls
 \family default
-.
- This corresponds to a bit-field where the last two bytes are 0x01 and 0xA2
- for unit mask and event code respectively.
+ corresponds to a bit-field where the last two bytes are 0x01 and 0xA2 for
+ unit mask and event code respectively.
  An initial 'r' character signifies that a 
 \begin_inset Quotes eld
 \end_inset
@@ -2351,9 +2461,6 @@ Simply concatenating unit mask and event code and appending a trailing
 :u
 \family default
  is what we want to do in most cases.
- Note that there are additional constraints and special cases for various
- counters.
- Refer to the manual for additional details.
 \end_layout
 
 \begin_layout Section
@@ -2382,7 +2489,7 @@ key "Tanenbaum:2008:ModernOperatingSystems"
 \end_layout
 
 \begin_layout Subsection
-Virtual Memory
+Virtual Memory Layout
 \end_layout
 
 \begin_layout Standard
@@ -2540,7 +2647,7 @@ key "Lomont:2012:x64Assembly"
 \end_layout
 
 \begin_layout Subsubsection*
-Executable and Linkable Format (ELF)
+Executable File Format
 \end_layout
 
 \begin_layout Standard
