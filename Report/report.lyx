@@ -3190,12 +3190,25 @@ Modern microprocessors are extremely complex in design and functionality.
  Some features of recent Intel processors includes several layers of cache
  to camouflage slow memory, multiple prefetchers, speculative out-of-order
  execution and complicated branch prediction, just to name a few.
- Optimizing for the common case, these hardware features sometimes behaves
- suboptimally.
+ Hardware features and optimizations interact with memory addresses of program
+ code and data in various ways.
  In this chapter, we will unveil characteristics about two specific architectura
 l features in Ivy Bridge, and show how they can bias performance towards
  certain memory contexts.
- 
+ First we will look at an 
+\emph on
+aliasing
+\emph default
+ effect between memory addresses of loads and stores, causing false dependencies
+ in the out-of-order pipeline.
+ This effect can be triggered for example by changing stack position, and
+ can explain bias from altering environment variables.
+ In previous work on measurement bias from link ordering, the 
+\emph on
+Loop Stream Detector
+\emph default
+ has been suggested as a possible explanation.
+ We therefore choose to study this particular opimization in detail.
 \end_layout
 
 \begin_layout Section
@@ -3419,6 +3432,21 @@ Experimental Setup
 \end_layout
 
 \begin_layout Standard
+Our test machine features an i7-3770 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ processor and 16 GB RAM.
+ The operating system is Ubuntu version 12.04, which at the time of writing
+ is the most recent release with long term support.
+ We use GCC version 4.6.3 as our compiler toolchain.
+\end_layout
+
+\begin_layout Standard
 We use 
 \family typewriter
 perf stat
@@ -3435,19 +3463,85 @@ key "Hunter:2007:Matplotlib"
 .
 \end_layout
 
+\begin_layout Subsection
+Cache Analysis
+\end_layout
+
 \begin_layout Standard
-Our test machine features an i7-3770 
-\begin_inset Quotes eld
+Cache conflicts can in many cases be a potential explanation for bias effects
+ observed by changing memory layout.
+ If for example some memory configuration causes contention on a particular
+ cache line, then repeated misses can reduce performance.
+ Bias caused by cache issues is not the focus of this thesis.
+ However, cache is generally a 
+\emph on
+likely
+\emph default
+ explanation of performance variations.
+ In our experiments, we will carefully monitor relevant cache metrics in
+ order to rule out cache as the underlying cause of bias.
+ Relevant events include the hit rates of load micro-ops for each level
+ of cache, which can be monitored by the following performance counters
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
 \end_inset
 
-Ivy Bridge
-\begin_inset Quotes erd
+:
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+mem_load_uops_retired.hit_lfb_ps
+\shape default
+ counts loads that hit the line fill buffer.
+ LFB slots are reserved by previous load, store or prefetch misses to the
+ L1 cache.
+ The LFB sits between the L1 and L2 cache, see Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:pipeline"
+
 \end_inset
 
- processor and 16 GB RAM.
- The operating system is Ubuntu version 12.04, which at the time of writing
- is the most recent release with long term support.
- We use GCC version 4.6.3 as our compiler toolchain.
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+mem_load_uops_retired.l1_hit_ps
+\shape default
+ and 
+\shape smallcaps
+mem_load_uops_retired .l2_hit_ps
+\shape default
+, which counts loads that hit the L1 and L2 cache, respectively.
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+mem_load_uops_retired.llc_hit_ps
+\shape default
+: and 
+\shape smallcaps
+mem_load_uops_ret- ired.llc_miss_ps
+\shape default
+, which counts load hit and misses to last level (L3) cache.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that it is also possible for load operations to hit cache lines in
+ other processor cores.
+ This is mostly relevant for multithreaded applications, which we will not
+ study.
+ 
 \end_layout
 
 \begin_layout Section
@@ -3491,8 +3585,15 @@ mov (%rbx), %r11
 \end_layout
 
 \begin_layout Standard
-If for example %rax is 0x601010 and %rbx is 0x604010, the memory accesses
- are said to be aliased.
+If for example %rax is 0x60
+\series bold
+1
+\series default
+010 and %rbx is 0x60
+\series bold
+4
+\series default
+010, the memory accesses are said to be aliased.
  The difference between the two addresses is 0x3000, which is a multiple
  of 4096, or 0x1000 in hexadecimal.
  
@@ -3661,7 +3762,7 @@ name "alg:loop-micro-kernel"
 
 \end_inset
 
-C code with bias towards certain stack positions
+C program with bias towards certain stack positions
 \end_layout
 
 \end_inset
@@ -3715,12 +3816,12 @@ No satisfactory explanation as to what causes bias was given in the original
 We use perf and an automated script to collect performance counter statistics
  over a series of runs, incrementally increasing environment size using
  a dummy variable.
- The program is compiled using GCC with all default options.
+ The program is compiled using GCC with no optimization.
  Note that any optimization would likely disregard most of the function
  as redundant code, and reduce it to return zero immediately.
  Collecting the cycle count performance counter, we observe a distinct spike
  over a period of 16 bytes under increasing environment size.
- As illustrated in Figure 
+ Illustrated in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:loop-cycles-only"
@@ -3772,23 +3873,11 @@ Performance variations from offsetting stack position by changing environment
 \end_layout
 
 \begin_layout Standard
-Even for such a simple program, it is far from obvious that stack position
- should have any impact on performance.
- As a starting point in trying to analyze the potential cause for these
- effects, we will look at data provided by various performance counters.
- With nearly 200 non-architectural performance counters available for Ivy
- Bridge 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
-
-\end_inset
-
-, hopefully some of them can give some insight into what is happening.
+As a starting point in trying to analyze the potential cause for these effects,
+ we look at data provided by other performance counters.
  We run the program several times under each environment configuration,
  collecting all available counters.
- We then use a simple linear correlation to filter out the metrics that
- are most relevant.
+ The most interesting metrics are filtered out by linear correlation.
  The set of counters that most closely follows the cycle count is shown
  in Table 
 \begin_inset CommandInset ref
@@ -3823,7 +3912,7 @@ begin{small}
 
 
 \begin_inset Tabular
-<lyxtabular version="3" rows="14" columns="3">
+<lyxtabular version="3" rows="13" columns="3">
 <features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="left" valignment="top" width="60text%">
 <column alignment="center" valignment="top" width="0">
@@ -4389,35 +4478,6 @@ r40a1:u
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="decimal" valignment="top" topline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
 \family roman
 \series medium
 \shape up
@@ -4768,7 +4828,14 @@ resource related reasons
 \begin_inset Quotes erd
 \end_inset
 
-, paraphrasing the manual.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
  
 \shape smallcaps
 cycle_activity.cycles_ldm_pending
@@ -4803,7 +4870,16 @@ cpl_cycles.ring123
 \uwave off
 \noun off
 \color none
-Plotting 
+Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:stack-alias-resource-plot"
+
+\end_inset
+
+ shows a plot of resource stalls, pending loads and alias, overlaid on cycle
+ count.
+ We see that 
 \family default
 \series default
 \shape smallcaps
@@ -4827,8 +4903,8 @@ ld_blocks_partial.address_alias
 \uwave off
 \noun off
 \color none
-, we see that it reports zero almost everywhere, and spiking in perfect
- correlation with cycle count.
+ reports zero almost everywhere, and spiking in perfect correlation with
+ cycle count.
  
 \family default
 \series default
@@ -4866,6 +4942,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:stack-alias-resource-plot"
+
+\end_inset
+
 Cycle count correlating with resource stalls, pending memory loads and address
  alias performance counter events.
 \end_layout
@@ -4883,18 +4965,27 @@ Cycle count correlating with resource stalls, pending memory loads and address
 \begin_layout Standard
 To find out which memory accesses collide, we need to know the memory addresses
  of each variable at run time.
- 
-\end_layout
+ Referring to Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:loop-micro-kernel"
 
-\begin_layout Paragraph
+\end_inset
 
+; statically allocated variables 
 \family typewriter
-static int i, j, k
-\end_layout
-
-\begin_layout Standard
-Statically allocated variables have their virtual addresses determined at
- compile time, and are not affected by offsetting stack address.
+i
+\family default
+, 
+\family typewriter
+j
+\family default
+ and 
+\family typewriter
+k
+\family default
+ have their virtual addresses determined at compile time, and are not affected
+ by offsetting stack address.
  Inspecting the symbol table section of the ELF object file
 \begin_inset Foot
 status open
@@ -4950,27 +5041,49 @@ Symbol table '.symtab' contains 66 entries:
 
 \end_layout
 
-\begin_layout Paragraph
-
-\family typewriter
-int g = 0, inc = 1
-\end_layout
-
 \begin_layout Standard
-Variables g and inc are local automatic variables, which are allocated on
- stack.
- The addresses of these variables will be affected by changing initial stack
- position.
+Variables 
+\family typewriter
+g
+\family default
+ and 
+\family typewriter
+inc
+\family default
+ are stack allocated local automatic variables, which will be affected by
+ changing initial stack position.
  It is difficult to observe their correct addresses without introducing
  observer effects.
  Simply adding a call to printf for instance, completely changes the program
  behavior with respect to bias.
  Instead, we use a small amount of assembly code to calculate the addresses
  and print the numbers directly using system calls.
- We find that the spike in cycle count occurs when the address of g and
- inc are 0x7fffffffe028 and 0x7fffffffe02c, respectively.
- Note that the last twelve bits (three hexadecimal digits) for g and inc
- are the same as for i and j.
+ We find that the spike in cycle count occurs when the address of 
+\family typewriter
+g
+\family default
+ and 
+\family typewriter
+inc
+\family default
+ are 0x7fffffffe028 and 0x7fffffffe02c, respectively.
+ Note that the last twelve bits (three hexadecimal digits) for 
+\family typewriter
+g
+\family default
+ and 
+\family typewriter
+inc
+\family default
+ are the same as for 
+\family typewriter
+i
+\family default
+ and 
+\family typewriter
+j
+\family default
+.
  There are two aliasing cases:
 \end_layout
 
@@ -4987,37 +5100,61 @@ Variables g and inc are local automatic variables, which are allocated on
 \end_layout
 
 \begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/loop/memory-layout.eps
+There is period of 16 byte of environment size where cycle count spikes
+ (see Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:stack-alias-resource-plot"
 
 \end_inset
 
-
+).
+ This can be explained by a default stack alignment of 16 byte in GCC, meaning
+ addresses of stack variables will only change in multiples of 16.
+ It is therefore impossible to have only 
+\emph on
+one
+\emph default
+ aliasing pair of variables.
+ The next address suffixes of 
+\family typewriter
+g
+\family default
+ and 
+\family typewriter
+inc
+\family default
+ will be 0x0
+\series bold
+3
+\series default
+8 and 0x0
+\series bold
+3
+\series default
+c, aliasing with neither 
+\family typewriter
+i
+\family default
+, 
+\family typewriter
+j
+\family default
+ or 
+\family typewriter
+k
+\family default
+.
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-With just the right environment size, stack allocated variables end up with
- the same address suffixes as static variables
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
+\begin_layout Standard
+The effect is 
+\emph on
+periodic
+\emph default
+; with increasing environment size, the spike in cycle count happens each
+ 4096 byte.
+ 
 \end_layout
 
 \begin_layout Subsubsection*
@@ -5054,6 +5191,13 @@ The load and store have the same offset relative to the beginning of different
 \begin_inset Quotes erd
 \end_inset
 
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
 
 \end_layout
 
@@ -5079,7 +5223,8 @@ if
 \emph default
  a collision is going to happen for a given environment, we can try to change
  the program to account for possible alias effects.
- As a proof of concept, consider the following strategy.
+ The following strategy is a proof of concept of how alias-free code can
+ be generated.
 \end_layout
 
 \begin_layout Enumerate
@@ -6758,8 +6903,12 @@ Bias from Dynamic Libraries
 \end_layout
 
 \begin_layout Standard
-The previous example does not show measurement bias per se, but rather an
- artifact of the particular implementation of malloc used.
+The previous example does not show measurement 
+\emph on
+bias
+\emph default
+ per se, but rather an artifact of the particular implementation of malloc
+ used.
  A perfectly legal implementation of malloc could insert offsets on every
  other large request, avoiding bad performance in cases when mmap is used
  internally.
@@ -6886,7 +7035,7 @@ $ LD_PRELOAD=~/Allocators/Hoard/libhoard.so ./test
 
 \begin_layout Standard
 We did some testing with each of the libraries, observing the addresses
- returned when allocating two equally large 
+ returned when sequentially allocating two equally large 
 \family typewriter
 float
 \family default
@@ -7346,9 +7495,8 @@ Hoard also tends to align on page boundaries for larger requests, with addresses
 \end_layout
 
 \begin_layout Standard
-Each library produces very different results, and we see that potential
- for address alias conflicts depends on the particular implementation of
- malloc used.
+Each library produces very different results, and potential for address
+ alias conflicts depends on the particular implementation of malloc used.
  There are several examples of cases where switching library can eliminate
  alias by changing address suffixes.
  For the convolution example, using ptmalloc or Hoard is very likely to
@@ -7497,7 +7645,7 @@ key "Ramesh:i7PerformanceMonitoring"
 .
  Instead of repeatedly fetching and decoding the same instructions, loops
  can be streamed directly from a queue of already decoded micro operations.
- Normal operations is resumed once the inevitable branch mispredict occurs.
+ Normal fetch/decode operation is resumed once a branch mispredict occurs.
  
 \end_layout
 
@@ -7626,8 +7774,8 @@ key "Ramesh:i7PerformanceMonitoring,Intel:OnlinePCReference"
 \end_inset
 
 .
- It is not clear whether the stated limitations are valid for the Ivy Bridge,
- as it is not explicitly stated in the manual.
+ It is not clear whether all the stated limitations are valid for the Ivy
+ Bridge, as it is not explicitly stated in the manual.
  We create a series of micro benchmarks to manually verify what the actual
  limitations are.
  
