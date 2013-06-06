@@ -5732,7 +5732,6 @@ reference "alg:convolution"
 
 , computing the convolution between an input array and a fixed kernel, writing
  the result to another array (endpoints skipped for simplicity).
- 
 \end_layout
 
 \begin_layout Standard
