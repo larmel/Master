@@ -3182,37 +3182,30 @@ stack: 0x7fffffffe1ec heap: 0x602010 bss: 0x601040 data: 0x601028
 \end_layout
 
 \begin_layout Chapter
-Sources of Measurement Bias
+Methodology and Experimental Setup
 \end_layout
 
 \begin_layout Standard
-Modern microprocessors are extremely complex in design and functionality.
- Some features of recent Intel processors includes several layers of cache
- to camouflage slow memory, multiple prefetchers, speculative out-of-order
- execution and complicated branch prediction, just to name a few.
- Hardware features and optimizations interact with memory addresses of program
- code and data in various ways.
- In this chapter, we will unveil characteristics about two specific architectura
-l features in Ivy Bridge, and show how they can bias performance towards
- certain memory contexts.
- First we will look at an 
-\emph on
-aliasing
-\emph default
- effect between memory addresses of loads and stores, causing false dependencies
- in the out-of-order pipeline.
- This effect can be triggered for example by changing stack position, and
- can explain bias from altering environment variables.
- In previous work on measurement bias from link ordering, the 
-\emph on
-Loop Stream Detector
-\emph default
- has been suggested as a possible explanation.
- We therefore choose to study this particular opimization in detail.
+This chapter briefly explains the methodology used throughout the rest of
+ this thesis.
+ When studying bias effects, carefully controlling all relevant properties
+ of the environment is crucial.
+ We first describe how the test machine is configured with respect to operating
+ system settings, and use of 
+\begin_inset Quotes eld
+\end_inset
+
+best practices
+\begin_inset Quotes erd
+\end_inset
+
+ in performance analysis.
+ The second part of this chapter describes how we aquire and analyze performance
+ counter statistics.
 \end_layout
 
 \begin_layout Section
-Methodology and Experimental Setup
+Test Setup
 \end_layout
 
 \begin_layout Standard
@@ -3418,6 +3411,12 @@ GCC 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5)
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:machine"
+
+\end_inset
+
 Experimental Setup
 \end_layout
 
@@ -3432,7 +3431,16 @@ Experimental Setup
 \end_layout
 
 \begin_layout Standard
-Our test machine features an i7-3770 
+Hardware and software configuration of our test machine is shown in Table
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:machine"
+
+\end_inset
+
+.
+ It features an Intel Core i7-3770 
 \begin_inset Quotes eld
 \end_inset
 
@@ -3444,6 +3452,11 @@ Ivy Bridge
  The operating system is Ubuntu version 12.04, which at the time of writing
  is the most recent release with long term support.
  We use GCC version 4.6.3 as our compiler toolchain.
+ 
+\end_layout
+
+\begin_layout Section
+Collecting Performance Counters
 \end_layout
 
 \begin_layout Standard
@@ -3453,14 +3466,83 @@ perf stat
 \family default
  to acquire hardware performance counter statistics, which should introduce
  minimal overhead and observer effect.
- Plots are generated using Python's matplotlib 
+ In many cases we need to collect a large number of counters for the same
+ program, while there is a limit to the number of performance counters collected
+ simultaneously (see Chapter 2).
+ We use a small test script to record performance statistics over several
+ runs, able to collect all of the about 200 performance counters available
+ on our architecture 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Hunter:2007:Matplotlib"
+key "Intel:2013:Volume3B"
 
 \end_inset
 
 .
+ A reference to performance counters discussed in the remaining chapters
+ can be found in Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:list-of-performance-counters"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsection
+Environment Size
+\end_layout
+
+\begin_layout Standard
+Previous work points to changes in environment variable size as a cause
+ of bias, and we will study this effect in detail.
+ Unless otherwise specified, we use an empty environment for all out benchmarks
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+A completely emtpy environment is not possible, because 
+\family typewriter
+perf stat
+\family default
+ itself adds some variables to the environment
+\end_layout
+
+\end_inset
+
+.
+ A simple script is used for collecting performance counters under varying
+ environment sizes.
+ To measure statistics with 
+\begin_inset Formula $n$
+\end_inset
+
+ bytes added to the environment, we set a dummy variable to 
+\begin_inset Formula $0^{n}$
+\end_inset
+
+ (repeated zero characters 
+\begin_inset Formula $n$
+\end_inset
+
+ times).
+\end_layout
+
+\begin_layout Subsection
+Correlation
+\end_layout
+
+\begin_layout Standard
+When collecting a large number of performance counter statistics for
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Walpole:2011:Statistics"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -3542,6 +3624,51 @@ Note that it is also possible for load operations to hit cache lines in
  This is mostly relevant for multithreaded applications, which we will not
  study.
  
+\end_layout
+
+\begin_layout Subsection
+Visualization
+\end_layout
+
+\begin_layout Standard
+Plots are generated using Python's matplotlib 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Hunter:2007:Matplotlib"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Chapter
+Sources of Measurement Bias
+\end_layout
+
+\begin_layout Standard
+Modern microprocessors are extremely complex in design and functionality.
+ Some features of recent Intel processors includes several layers of cache
+ to camouflage slow memory, multiple prefetchers, speculative out-of-order
+ execution and complicated branch prediction, just to name a few.
+ Hardware features and optimizations interact with memory addresses of program
+ code and data in various ways.
+ In this chapter, we will unveil characteristics about two specific architectura
+l features in Ivy Bridge, and show how they can bias performance towards
+ certain memory contexts.
+ First we will look at an 
+\emph on
+aliasing
+\emph default
+ effect between memory addresses of loads and stores, causing false dependencies
+ in the out-of-order pipeline.
+ This effect can be triggered for example by changing stack position, and
+ can explain bias from altering environment variables.
+ In previous work on measurement bias from link ordering, the 
+\emph on
+Loop Stream Detector
+\emph default
+ has been suggested as a possible explanation.
+ We therefore choose to study this particular opimization in detail.
 \end_layout
 
 \begin_layout Section
@@ -11735,10 +11862,11 @@ key "Whaley:2000:ATLAS"
 \end_inset
 
 .
+ 
 \end_layout
 
 \begin_layout Subsection
-Cost of Address Aliasing in 
+Address Aliasing in 
 \family typewriter
 cblas_dgemv
 \end_layout
@@ -11874,8 +12002,8 @@ cblas_dgemv(CblasColMajor, CblasNoTrans, M, N, alpha, A, M, x, 1, beta,
 \end_layout
 
 \begin_layout Standard
-We find that typical BLAS implementations are vulnerable to aliasing in
- matrix-vector multiplication with column-major ordering.
+We find that ATLAS is vulnerable to aliasing in matrix-vector multiplication
+ with column-major ordering.
  For a simple program with 
 \begin_inset Formula $N=M=8192$
 \end_inset
@@ -12010,7 +12138,19 @@ Alias (r0107:u)
 \uwave off
 \noun off
 \color none
-0x2aaaac292010
+0x2aaaac292
+\family default
+\series bold
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+010
 \end_layout
 
 \end_inset
@@ -12019,7 +12159,9 @@ Alias (r0107:u)
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x607010
+0x607
+\series bold
+010
 \end_layout
 
 \end_inset
@@ -12028,7 +12170,9 @@ Alias (r0107:u)
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x617020
+0x617
+\series bold
+020
 \end_layout
 
 \end_inset
@@ -12078,7 +12222,19 @@ Alias (r0107:u)
 \uwave off
 \noun off
 \color none
-0x2aaaac292010
+0x2aaaac292
+\family default
+\series bold
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+010
 \end_layout
 
 \end_inset
@@ -12087,7 +12243,9 @@ Alias (r0107:u)
 \begin_inset Text
 
 \begin_layout Plain Layout
-0x607010
+0x607
+\series bold
+010
 \end_layout
 
 \end_inset
@@ -12576,17 +12734,7 @@ ld_blocks_partial.address_alias
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series bold
 33,444,229
 \end_layout
 
@@ -12597,17 +12745,7 @@ ld_blocks_partial.address_alias
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series bold
 3,805,742
 \end_layout
 
@@ -12618,17 +12756,7 @@ ld_blocks_partial.address_alias
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series bold
 2,322
 \end_layout
 
@@ -13424,16 +13552,6 @@ Dealing With Bias
 \end_layout
 
 \begin_layout Standard
-Users of BLAS packages are probably more willing to invest in hand optimizing
- hot spots where bias might occur.
- It is not unlikely that one or more matrix-vector operations are part of
- a hot loop.
- Bias from address alias can heavily impact performance, and will probably
- be worth considering in some cases.
- 
-\end_layout
-
-\begin_layout Standard
 For the particular case we investigated, a good heuristic is to align heap
  segments 
 \begin_inset Quotes eld
@@ -13453,7 +13571,14 @@ far apart
 \end_inset
 
  are the most important to separate.
- A possible run time solution can be realized as follows:
+ 
+\end_layout
+
+\begin_layout Standard
+Using heap allocated memory, address aliasing is an artifact of the allocator
+ used.
+ A possible run time solution to adjust heap addresses can be realized as
+ follows:
 \end_layout
 
 \begin_layout Enumerate
@@ -13502,6 +13627,23 @@ worst cases
  in the implementation of routines that are vulnerable to aliasing.
  Addresses can be explicitly checked for potential conflicts in cblas_dgemv,
  and if possible branch to code that will not suffer from aliasing.
+ 
+\end_layout
+
+\begin_layout Subsection
+Conclusion
+\end_layout
+
+\begin_layout Standard
+We briefly looked at potential bias effects in BLAS routines, and found
+ that matrix-vector multiplication in ATLAS suffered from alias effects.
+ Close alignment within a 4K segment of addresses can have a significant
+ performance penalty.
+ Users of BLAS packages are probably more willing to invest in hand optimizing
+ hot spots where aliasing might occur.
+ It is also not unlikely that one or more matrix-vector operations are part
+ of a hot loop.
+ Bias from address alias will probably be worth considering in some cases.
  
 \end_layout
 
