@@ -719,7 +719,17 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 investigates several potential causes of bias, showing how certain hardware
+3 discusses the experimental setup and methodology used throughout the remainder
+ of the thesis.
+ 
+\end_layout
+
+\begin_layout Description
+Chapter
+\begin_inset space ~
+\end_inset
+
+4 investigates several potential causes of bias, showing how certain hardware
  features are sensitive to changes in virtual memory layout.
  Specifically, we show how 4K address aliasing and the Loop Stream Detector
  can explain effects observed by increasing environment size or changing
@@ -731,7 +741,7 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 applies knowledge of bias effects from the previous chapter, looking at
+5 applies knowledge of bias effects from the previous chapter, looking at
  how they apply to real world applications.
  We take an in-depth look at FFTW, showing how even this highly optimized
  Fourier transform library can be affected by memory layout.
@@ -744,7 +754,7 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-5 summarizes results from previous chapters, and provides directions for
+6 summarizes results from previous chapters, and provides directions for
  future work.
  
 \end_layout
@@ -7868,24 +7878,24 @@ key "Intel:2012:OptimizationManual"
  states the following requirements for a loop to be recognized by the LSD:
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 Up to eight chunk fetches of 32 instruction-bytes
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 Up to 28 micro-ops (~28 instructions)
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 All micro-ops are also resident in the Decoded ICache
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 Can contain no more than eight taken branches and none of them can be a
  CALL or RET
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 Cannot have mismatched stack operations.
  For example, more PUSH than POP instructions
 \end_layout
