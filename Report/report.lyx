@@ -3196,6 +3196,12 @@ Methodology and Experimental Setup
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:Methodology"
+
+\end_inset
+
 This chapter briefly explains the methodology used throughout the rest of
  this thesis.
  When studying bias effects, carefully controlling all relevant properties
@@ -3656,6 +3662,12 @@ Sources of Measurement Bias
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:SourcesOfBias"
+
+\end_inset
+
 Modern microprocessors are extremely complex in design and functionality.
  Some features of recent Intel processors includes several layers of cache
  to camouflage slow memory, multiple prefetchers, speculative out-of-order
@@ -3950,7 +3962,14 @@ No satisfactory explanation as to what causes bias was given in the original
 \end_layout
 
 \begin_layout Standard
-We use perf and an automated script to collect performance counter statistics
+As outlined in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Methodology"
+
+\end_inset
+
+, we use perf and an automated script to collect performance counter statistics
  over a series of runs, incrementally increasing environment size using
  a dummy variable.
  The program is compiled using GCC with no optimization.
@@ -4014,7 +4033,15 @@ As a starting point in trying to analyze the potential cause for these effects,
  we look at data provided by other performance counters.
  We run the program several times under each environment configuration,
  collecting all available counters.
- The most interesting metrics are filtered out by linear correlation.
+ The most interesting metrics are filtered out by linear correlation, as
+ described in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Methodology"
+
+\end_inset
+
+.
  The set of counters that most closely follows the cycle count is shown
  in Table 
 \begin_inset CommandInset ref
@@ -4024,6 +4051,8 @@ reference "tab:loop-all-counters"
 \end_inset
 
 .
+ Among all the performance counters supported on our architecture, only
+ a few shows significant correlation to cycle count:
 \end_layout
 
 \begin_layout Standard
@@ -4913,11 +4942,6 @@ Performance counters with more than 30 % positive or negative linear correlation
 
 \end_layout
 
-\begin_layout Standard
-Among all the performance counters supported on our architecture, only a
- few shows significant correlation to cycle count:
-\end_layout
-
 \begin_layout Itemize
 Address aliasing (
 \shape smallcaps
@@ -5558,7 +5582,6 @@ Modified code with explicit check for aliasing between inc and j.
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -5616,9 +5639,7 @@ reference "fig:loop-fixed"
 \end_layout
 
 \begin_layout Subsection
-Properties of 
-\family typewriter
-malloc
+Heap Address Aliasing
 \end_layout
 
 \begin_layout Standard
@@ -5629,7 +5650,62 @@ Address aliasing can occur from memory accesses to any section of memory.
  memory.
  For larger data structures and arrays, memory is likely to reside on the
  heap.
- Whether or not heap areas alias will then depend on properties of the memory
+ Many algorithms work in a 
+\begin_inset Quotes eld
+\end_inset
+
+sliding window
+\begin_inset Quotes erd
+\end_inset
+
+ fashion; reading some data from an input buffer, do some computation, and
+ write the result to an output buffer.
+ Some usages that fit this pattern include:
+\end_layout
+
+\begin_layout Itemize
+Copy or moving data
+\end_layout
+
+\begin_layout Itemize
+Vector operations
+\end_layout
+
+\begin_layout Itemize
+Image filtering
+\end_layout
+
+\begin_layout Standard
+Functions that operate on pairs of contiguous arrays can be vulnerable to
+ 4K aliasing 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
+ A typical worst case for this group of functions are when each buffer have
+ the same addresses modulo 4096.
+ For example, iterating over some data from a buffer starting on 0x601
+\series bold
+020
+\series default
+ and writing the result to another buffer starting at 0x865
+\series bold
+020
+\series default
+ is likely to generate aliasing.
+\end_layout
+
+\begin_layout Subsubsection*
+Properties of 
+\family typewriter
+malloc
+\end_layout
+
+\begin_layout Standard
+Whether or not heap areas alias will then depend on properties of the memory
  allocator used.
  On our system, the default memory allocator is found in GNU libc 
 \begin_inset Foot
@@ -5650,10 +5726,7 @@ target "http://www.gnu.org/software/libc/"
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-Acquiring dynamic memory at run time is usually done by calling 
+ Acquiring dynamic memory at run time is usually done by calling 
 \family typewriter
 malloc
 \family default
@@ -5802,7 +5875,23 @@ For small requests of
 \end_inset
 
  bytes, we get the following addresses for five consecutive allocations:
- 0x1541010, 0x1541030, 0x1541050, 0x1541070, 0x1541090.
+ 0x15410
+\series bold
+1
+\series default
+0, 0x15410
+\series bold
+3
+\series default
+0, 0x15410
+\series bold
+5
+\series default
+0, 0x15410
+\series bold
+7
+\series default
+0, 0x1541090.
  With address layout randomization enabled, the initial heap page can vary.
 \end_layout
 
@@ -5848,57 +5937,22 @@ always
  
 \end_layout
 
-\begin_layout Subsection
-Heap Address Conflicts
+\begin_layout Subsubsection*
+Convolution Example
 \end_layout
 
 \begin_layout Standard
-Many algorithms work in a 
-\begin_inset Quotes eld
-\end_inset
-
-sliding window
-\begin_inset Quotes erd
-\end_inset
-
- fashion; reading some data from an input buffer, do some computation, and
- write the result to an output buffer.
- Some usages that fit this pattern include:
-\end_layout
-
-\begin_layout Itemize
-Copy or moving data
-\end_layout
-
-\begin_layout Itemize
-Vector operations
-\end_layout
-
-\begin_layout Itemize
-Image filtering
-\end_layout
-
-\begin_layout Standard
-Functions that operate on pairs of contiguous arrays can be vulnerable to
- 4K aliasing 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
+Knowing that heap allocated memory is likely to alias by default, we can
+ find examples where this will lead to bad performance.
+ Consider the function shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:convolution"
 
 \end_inset
 
-.
- A typical worst case for this group of functions are when each buffer have
- the same addresses modulo 4096.
- For example, iterating over some data from a buffer starting on 0x601
-\series bold
-020
-\series default
- and writing the result to another buffer starting at 0x865
-\series bold
-020
-\series default
- is likely to generate aliasing.
+, computing the convolution between an input array and a fixed kernel, writing
+ the result to another array (endpoints skipped for simplicity).
 \end_layout
 
 \begin_layout Standard
@@ -5973,6 +6027,40 @@ void convolve(int size, float *input, float *output)
 }
 \end_layout
 
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *input  = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    float *output = malloc(N*sizeof(float));
+\end_layout
+
+\begin_layout Plain Layout
+
+    convolve(N, input, output);
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
 \end_inset
 
 
@@ -5990,6 +6078,7 @@ name "alg:convolution"
 
 Convolution kernel which is vulnerable to aliasing between input and output
  arrays.
+ 
 \end_layout
 
 \end_inset
@@ -6000,20 +6089,6 @@ Convolution kernel which is vulnerable to aliasing between input and output
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Knowing that heap allocated memory is likely to alias by default, we can
- try to come up with scenarios where this will lead to bad performance.
- Consider the function shown in Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:convolution"
-
-\end_inset
-
-, computing the convolution between an input array and a fixed kernel, writing
- the result to another array (endpoints skipped for simplicity).
 \end_layout
 
 \begin_layout Standard
@@ -6044,7 +6119,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-output + 0
+No padding
 \end_layout
 
 \end_inset
@@ -6053,7 +6128,7 @@ output + 0
 \begin_inset Text
 
 \begin_layout Plain Layout
-output + 16
+Padding 16
 \end_layout
 
 \end_inset
@@ -6186,6 +6261,12 @@ Instructions, instructions:u
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:convolution-o3-stats"
+
+\end_inset
+
 Performance counter statistics for convolution kernel for two different
  heap-address alignments
 \end_layout
@@ -6200,89 +6281,43 @@ Performance counter statistics for convolution kernel for two different
 
 \end_layout
 
-\begin_layout Subsubsection*
-Default Alignment
-\end_layout
-
 \begin_layout Standard
-We use malloc to allocate two reasonably sized arrays for input and output,
- using 
-\begin_inset Formula $N=$
+This function is sensitive to aliasing between heap areas.
+ Using malloc to allocate float arrays of size 
+\begin_inset Formula $N$
 \end_inset
 
- 0x100000.
- A float is 4 byte, thus each array is of size 4 MiB.
- Initialization is skipped to save some cycles.
- The program is compiled with GCC and optimization level O3.
-\end_layout
+, both input and ouput will alias in cases where mmap is used internally.
+ For sufficiently large values of 
+\begin_inset Formula $N$
+\end_inset
 
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},language=C"
-inline false
-status open
+, this will always be the case.
+ Compiling with optimization O3 and 
+\begin_inset Formula $N=0x100000$
+\end_inset
 
-\begin_layout Plain Layout
-
-int main() {
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *input  = malloc(N*sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
-    float *output = malloc(N*sizeof(float));
-\end_layout
-
-\begin_layout Plain Layout
-
-    convolve(N, input, output);
-\end_layout
-
-\begin_layout Plain Layout
-
-    return 0;
-\end_layout
-
-\begin_layout Plain Layout
-
-}
-\end_layout
+, a very large number of alias events and resource stalls are generated
+ compared to cycle count.
+ The performance counter statistics from running perf is shown in Table
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:convolution-o3-stats"
 
 \end_inset
 
+, under column 
+\begin_inset Quotes eld
+\end_inset
 
-\end_layout
+No padding
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Standard
-Performance statistics from running perf is shown below, measuring cycle
- count, 
-\shape smallcaps
-ld_blocks_partial.address_alias
-\shape default
- (r01a8:u) and 
-\shape smallcaps
-resource_stalls.all
-\shape default
- (r01a2:u).
-\end_layout
-
-\begin_layout Standard
-A very large number of alias events and resource stalls are generated compared
- to cycle count.
- On optimization O3 enabled, GCC generates vectorized code, making it harder
- to determine exactly where the aliasing happens.
- However, it is not hard to imagine what is the likely cause of aliasing
- in this program.
- Malloc is using 
-\family typewriter
-mmap
-\family default
- to allocate heap area, which makes both arrays page aligned.
- Because of that, a read from 
+.
+ Because malloc is using mmap and returns page-aligned data, a read from
+ 
 \family typewriter
 input[i]
 \family default
@@ -6295,13 +6330,23 @@ output[i]
 s between them.
 \end_layout
 
-\begin_layout Subsubsection*
-Avoiding Alias
+\begin_layout Paragraph
+Padding Data
 \end_layout
 
 \begin_layout Standard
 Aliasing can be accounted for in software by offsetting one of the arrays
  before calling convolve.
+ The main function is modified slightly, to make sure address suffixes of
+ 
+\family typewriter
+input
+\family default
+ and 
+\family typewriter
+output
+\family default
+ differ by a variable amount.
  We allocate some extra padding for output, and use pointer arithmetic to
  adjust the initial address.
  
@@ -6346,29 +6391,6 @@ int main() {
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-The address difference modulo 4096 between input and output arrays now becomes
- 
-\begin_inset Formula $4x$
-\end_inset
-
- bytes.
- Plotting this for increasing values of x shows that virtually all aliasing
- is removed after offsetting with 12 or more elements.
- Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:convolution-O3-graph"
-
-\end_inset
-
- shows the amount of aliasing is steadily decreasing on larger offsets.
- The best parameter is found to be at a 16 or more elements difference in
- alignment between input and output (at least 64 bytes).
- Running the same performance counters with offset 16, we see that aliasing
- is almost eliminated, and number of resource stalls is significantly reduced.
 \end_layout
 
 \begin_layout Standard
@@ -6425,11 +6447,35 @@ float
 
 \end_inset
 
-By simply altering the default addresses given by malloc, we are able to
- reduce the cycle count by more than 50 %.
+
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Standard
+The address difference modulo 4096 between input and output arrays now becomes
+ 
+\begin_inset Formula $4x$
+\end_inset
+
+ bytes.
+ Plotting this for increasing values of x shows that virtually all aliasing
+ is removed after offsetting with 12 or more elements.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:convolution-O3-graph"
+
+\end_inset
+
+ shows the amount of aliasing is steadily decreasing on larger offsets.
+ The best parameter is found to be at a 16 or more elements difference in
+ alignment between input and output (at least 64 bytes).
+ Running the same performance counters with offset 16, we see that aliasing
+ is almost eliminated, and number of resource stalls is significantly reduced.By
+ simply altering the default addresses given by malloc, we are able to reduce
+ the cycle count by more than 50 %.
+\end_layout
+
+\begin_layout Paragraph
 Cache Efficiency
 \end_layout
 
@@ -6466,8 +6512,120 @@ reference "fig:convolution-O3-graph"
  
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection*
 Architectural Optimization
+\end_layout
+
+\begin_layout Standard
+Address aliasing is an artifact of intricacies in the processor architecture.
+ Ideally, we would like the compiler to create efficient code without having
+ to manually offset heap pointers.
+ On optimization O3 however, the compiler will optimize for a 
+\begin_inset Quotes eld
+\end_inset
+
+generic
+\begin_inset Quotes erd
+\end_inset
+
+ machine.
+ We could hope that aliasing effects are considered when the compiler is
+ asked to target our Intel architecture specifically 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html"
+target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html#i386-and-x86_002d64-Options"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, which can be done by specifying -march=native.
+ This includes using instructions that are not necessarily portable, for
+ example AVX instructions.
+ 
+\end_layout
+
+\begin_layout Standard
+We can provide additional information to the compiler's optimizer by using
+ the 
+\family typewriter
+restrict
+\family default
+ qualifier, explicitly stating that no pointer aliases exists.
+ By marking input and output as restrict, we guarantee they are the only
+ pointers to their respective memory areas, and not accesses through any
+ other (aliased) pointers.
+ This benefits code generation and optimization, potentially improving performan
+ce.
+ Additionally, the input array should be specified as const, guaranteeing
+ that only read operations are done to that array.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void convolve(int size, const float * restrict input, float * restrict output)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Together with the function signature changes, we find that the following
+ compile parameters gives the best performance.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+gcc -O3 -std=c99 -march=native
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Compared to only using O3, the speedup is quite significant (as before,
+ we use N = 0x100000).
+ Specifying restrict seems to have the most impact on performance.
+ Nevertheless, we still see a fairly hight alias event count.
+ As shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:convolution-native-gcc"
+
+\end_inset
+
+, there are more than 250,000 alias events with the default heap alignment.
+ Compared to the much lower cycle count, this is still a significant amount.
+ Attempting to manually offset the output array again, we find the best
+ parameter to be 48 or more (a minimum difference of 192 bytes).
+ Separating the heap buffers eliminates almost all aliasing, while also
+ significantly improving cycle count.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -6640,313 +6798,6 @@ Instructions, instructions:u
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Performance counter statistics for convolution kernel for two different
- heap-address alignments
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Address aliasing is an artifact of intricacies in the processor architecture.
- Ideally, we would like the compiler to create efficient code without having
- to manually offset heap pointers.
- On optimization O3 however, the compiler will optimize for a 
-\begin_inset Quotes eld
-\end_inset
-
-generic
-\begin_inset Quotes erd
-\end_inset
-
- machine.
- We could hope that aliasing effects are considered when the compiler is
- asked to target our Intel architecture specifically 
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html"
-target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.html#i386-and-x86_002d64-Options"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-, which can be done by specifying -march=native.
- This includes using instructions that are not necessarily portable, for
- example AVX instructions.
- 
-\end_layout
-
-\begin_layout Standard
-We can provide additional information to the compiler's optimizer by using
- the 
-\family typewriter
-restrict
-\family default
- qualifier, explicitly stating that no pointer aliases exists.
- By marking input and output as restrict, we guarantee they are the only
- pointers to their respective memory areas, and not accesses through any
- other (aliased) pointers.
- This benefits code generation and optimization, potentially improving performan
-ce.
- Additionally, the input array should be specified as const, guaranteeing
- that only read operations are done to that array.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void convolve(int size, const float * restrict input, float * restrict output)
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Together with the function signature changes, we find that the following
- compile parameters gives the best performance.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-gcc -O3 -std=c99 -march=native
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Compared to only using O3, the speedup is quite significant (as before,
- we use N = 0x100000).
- Specifying restrict seems to have the most impact on performance.
- Nevertheless, we still see a fairly hight alias event count.
- As shown in Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:convolution-native-gcc"
-
-\end_inset
-
-, there are more than 250,000 alias events with the default heap alignment.
- Compared to the much lower cycle count, this is still a significant amount.
- Attempting to manually offset the output array again, we find the best
- parameter to be 48 or more (a minimum difference of 192 bytes).
- Separating the heap buffers eliminates almost all aliasing, while also
- significantly improving cycle count.
- 
-\end_layout
-
-\begin_layout Standard
-Even with every opportunity given to the compiler to account for aliasing,
- we are still able to squeeze out a speedup of 16 % by manually adjusting
- memory addresses.
- This speedup is also consistent through other input sizes.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="5" columns="3">
-<features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0pt">
-<column alignment="center" valignment="top" width="0pt">
-<column alignment="left" valignment="top" width="0">
-<row>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Default
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Offset 48
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3,565,704
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3,070,418
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Cycle count (cycles:u)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-258,469
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-206
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Address alias (r0107:u)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-1,065,207
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-580,203
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Resource stalls (r01a2:u)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3,299,634
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="2" alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Instructions (instructions:u)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "tab:convolution-native-gcc"
@@ -6973,7 +6824,14 @@ float
 
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Standard
+Even with every opportunity given to the compiler to account for aliasing,
+ we are still able to squeeze out a speedup of 16 % by manually adjusting
+ memory addresses.
+ This speedup is also consistent through other input sizes.
+\end_layout
+
+\begin_layout Paragraph
 Other Compilers
 \end_layout
 
