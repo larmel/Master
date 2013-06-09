@@ -3202,11 +3202,11 @@ name "chap:Methodology"
 
 \end_inset
 
-This chapter briefly explains the methodology used throughout the rest of
- this thesis.
+This chapter presents the test setup and experimental methodology used throughou
+t the rest of this thesis.
  When studying bias effects, carefully controlling all relevant properties
  of the environment is crucial.
- We first describe how the test machine is configured with respect to operating
+ We first describe how our test machine is configured with respect to operating
  system settings, and use of 
 \begin_inset Quotes eld
 \end_inset
@@ -3216,12 +3216,12 @@ best practices
 \end_inset
 
  in performance analysis.
- The second part of this chapter describes how we aquire and analyze performance
- counter statistics.
+ Methods used for aquiring and analyzing performance counter measurements
+ is also described.
 \end_layout
 
 \begin_layout Section
-Test Setup
+Setup Configuration
 \end_layout
 
 \begin_layout Standard
@@ -3472,7 +3472,7 @@ Ivy Bridge
 \end_layout
 
 \begin_layout Section
-Collecting Performance Counters
+Performance Counters Analysis
 \end_layout
 
 \begin_layout Standard
@@ -3484,10 +3484,21 @@ perf stat
  minimal overhead and observer effect.
  In many cases we need to collect a large number of counters for the same
  program, while there is a limit to the number of performance counters collected
- simultaneously (see Chapter 2).
- We use a small test script to record performance statistics over several
- runs, able to collect all of the about 200 performance counters available
- on our architecture 
+ simultaneously (see Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Background"
+
+\end_inset
+
+).
+ We use a small test script to encapsulate repeated invocations of 
+\family typewriter
+perf stat
+\family default
+.
+ Measurements are aggregated over several runs, enabling us to collect all
+ of the about 200 performance counters available on our architecture 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
@@ -3507,7 +3518,7 @@ reference "chap:list-of-performance-counters"
  
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Paragraph
 Environment Size
 \end_layout
 
@@ -3546,37 +3557,78 @@ perf stat
  times).
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Paragraph
 Correlation
 \end_layout
 
 \begin_layout Standard
-When collecting a large number of performance counter statistics for
+Many experiments consists of collecting a large number of performance counter
+ statistics over a series of different execution contexts, for example increment
+ing environment variable size.
+ To filter out events that are likely to explain any bias effects, we will
+ use a 
+\emph on
+sample correlation coefficient
+\emph default
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Walpole:2011:Statistics"
 
 \end_inset
 
+.
+ The correlation coefficient is a numerical value between 
+\begin_inset Formula $-1$
+\end_inset
 
+ and 
+\begin_inset Formula $1$
+\end_inset
+
+, which can be used to determine the linear relationship between two data
+ series 
+\begin_inset Formula $X$
+\end_inset
+
+ and 
+\begin_inset Formula $Y$
+\end_inset
+
+.
+ Values close to 
+\begin_inset Formula $+1$
+\end_inset
+
+ or 
+\begin_inset Formula $-1$
+\end_inset
+
+ indicates strong positive or negative correlation, respectively, while
+ values close to 0 indicate no correlation.
+ With multiple series of performance counter measurements, a linear correlation
+ coefficient serves as a crude indication of possible relationships between
+ counter values.
+ A particular useful metric in many cases is correlation between cycle count
+ and other event counts.
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Paragraph
 Cache Analysis
 \end_layout
 
 \begin_layout Standard
 Cache conflicts can in many cases be a potential explanation for bias effects
  observed by changing memory layout.
- If for example some memory configuration causes contention on a particular
- cache line, then repeated misses can reduce performance.
+ If some memory configuration causes contention on a particular cache line,
+ then repeated misses can reduce performance.
  Bias caused by cache issues is not the focus of this thesis.
  However, cache is generally a 
 \emph on
 likely
 \emph default
  explanation of performance variations.
- In our experiments, we will carefully monitor relevant cache metrics in
+ In our experiments, we will carefully monitor various cache metrics in
  order to rule out cache as the underlying cause of bias.
  Relevant events include the hit rates of load micro-ops for each level
  of cache, which can be monitored by the following performance counters
@@ -3593,56 +3645,55 @@ key "Intel:2012:OptimizationManual"
 \begin_layout Itemize
 
 \shape smallcaps
-mem_load_uops_retired.hit_lfb_ps
-\shape default
- counts loads that hit the line fill buffer.
- LFB slots are reserved by previous load, store or prefetch misses to the
- L1 cache.
- The LFB sits between the L1 and L2 cache, see Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:pipeline"
-
-\end_inset
-
-.
- 
+MEM_LOAD_UOPS_RETIRED.HIT_LFB_PS
 \end_layout
 
 \begin_layout Itemize
 
 \shape smallcaps
-mem_load_uops_retired.l1_hit_ps
-\shape default
- and 
-\shape smallcaps
-mem_load_uops_retired .l2_hit_ps
-\shape default
-, which counts loads that hit the L1 and L2 cache, respectively.
+MEM_LOAD_UOPS_RETIRED.L1_HIT_PS
 \end_layout
 
 \begin_layout Itemize
 
 \shape smallcaps
-mem_load_uops_retired.llc_hit_ps
-\shape default
-: and 
+MEM_LOAD_UOPS_RETIRED.L2_HIT_PS
+\end_layout
+
+\begin_layout Itemize
+
 \shape smallcaps
-mem_load_uops_ret- ired.llc_miss_ps
-\shape default
-, which counts load hit and misses to last level (L3) cache.
- 
+MEM_LOAD_UOPS_RETIRED.LLC_HIT_PS
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+MEM_LOAD_UOPS_RETIRED.LLC_MISS_PS
 \end_layout
 
 \begin_layout Standard
-Note that it is also possible for load operations to hit cache lines in
+Together, these events account for all cache accesses for load operations
+ within a single core.
+ Every cache access is either a 
+\emph on
+hit
+\emph default
+ in Line fill buffer, L1, L2 or L3, or an L3 
+\emph on
+miss
+\emph default
+.
+  Changes to hit rates for different levels of cache is relevant when evaluating
+ cache performance.
+ Note that it is also possible for load operations to hit cache lines in
  other processor cores.
- This is mostly relevant for multithreaded applications, which we will not
- study.
+ This is scenario is mostly relevant for multithreaded applications, which
+ we will not study.
  
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Paragraph
 Visualization
 \end_layout
 
