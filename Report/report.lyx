@@ -5644,12 +5644,21 @@ Heap Address Aliasing
 
 \begin_layout Standard
 Address aliasing can occur from memory accesses to any section of memory.
- We already saw an example of collision between stack variables and static
- data.
+ The previous section looked at an example of collision between stack variables
+ and static data.
  Another important scenario to consider is collisions in dynamically allocated
  memory.
- For larger data structures and arrays, memory is likely to reside on the
- heap.
+ In this section, we will look at how aliasing in heap allocated memory
+ can impact performance.
+ In particular, functions that operate on pairs of contiguous arrays can
+ be vulnerable to 4K aliasing 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
  Many algorithms work in a 
 \begin_inset Quotes eld
 \end_inset
@@ -5676,16 +5685,7 @@ Image filtering
 \end_layout
 
 \begin_layout Standard
-Functions that operate on pairs of contiguous arrays can be vulnerable to
- 4K aliasing 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-.
- A typical worst case for this group of functions are when each buffer have
+A typical worst case for this group of functions are when each buffer have
  the same addresses modulo 4096.
  For example, iterating over some data from a buffer starting on 0x601
 \series bold
@@ -5696,12 +5696,15 @@ key "Intel:2012:OptimizationManual"
 020
 \series default
  is likely to generate aliasing.
+ We will study one such program in detail, and show how variations in heap
+ addresses can give performance variations of over 50 % even for optimized
+ programs.
+ To provide a little more background, we will first look more closely at
+ how typical memory allocators work.
 \end_layout
 
 \begin_layout Subsubsection*
-Properties of 
-\family typewriter
-malloc
+Addresses of Heap Allocated Memory
 \end_layout
 
 \begin_layout Standard
@@ -5732,23 +5735,6 @@ malloc
 \family default
 , which takes a number of bytes to allocate and returns a pointer to that
  area.
- Under the hood, a typical malloc implementation on Linux systems uses two
- different system calls to acquire more memory from the operating system
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-More information can be found in the man-pages for malloc, sbrk and mmap,
- available by typing 
-\family typewriter
-man <topic>
-\family default
- in a terminal.
-\end_layout
-
-\end_inset
-
-.
  
 \end_layout
 
@@ -5773,26 +5759,58 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Heap memory spread out in virtual memory between mmap and sbrk requests
-\end_layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:brk-mmap"
 
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Description
-
+Heap memory spread out in virtual memory between 
+\family typewriter
+mmap
+\family default
+ and 
 \family typewriter
 sbrk
 \family default
- The heap is placed after static code and data segments in virtual memory,
- extending towards higher addresses up to a certain point.
+ requests
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Depending on the 
+\emph on
+size
+\emph default
+ of the request, malloc uses two different strategies for how to allocate
+ memory.
+ For smaller allocations, malloc uses the 
+\begin_inset Quotes eld
+\end_inset
+
+normal
+\begin_inset Quotes erd
+\end_inset
+
+ heap area.
+ As illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:virtual-address-space"
+
+\end_inset
+
+, the heap is placed after static code and data segments in virtual memory,
+ extending upwards.
  Every process has a 
 \begin_inset Quotes eld
 \end_inset
@@ -5801,20 +5819,25 @@ break
 \begin_inset Quotes erd
 \end_inset
 
- position, which marks the current heap address limit currently available
- to the process.
- The heap can be increased by the sbrk system call, which is what malloc
- normally does when more dynamic memory is required.
-\end_layout
-
-\begin_layout Description
-
+ position, which marks the heap address limit currently available to the
+ process.
+ The 
+\family typewriter
+sbrk
+\family default
+ system call is used to increase the available heap space for a process.
+ For larger requests, heap allocation is typically done with 
 \family typewriter
 mmap
 \family default
+.
  This system call creates a mapping between memory address space and the
  contents of a file.
- Malloc uses mmap with the 
+ Memory allocators use 
+\family typewriter
+mmap
+\family default
+ with the 
 \family typewriter
 MAP_ANONYMOUS
 \family default
@@ -5845,114 +5868,256 @@ target "http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Paramet
 
 .
  Memory returned by mmap is disjoint from the normal heap area, typically
- located on much higher addresses closer to the stack.
- mmap also has some interesting requirements, most importantly that mapped
- files are always page aligned.
- 
-\end_layout
+ located on higher addresses and closer to the stack.
+ Organization of different heap areas in virtual memory is illustrated in
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:brk-mmap"
 
-\begin_layout Standard
-To illustrate the difference between normal heap memory and use of mmap,
- we can print out addresses of multiple allocations using 
-\family typewriter
-printf(
-\begin_inset Quotes eld
 \end_inset
 
-%p
-\begin_inset Quotes erd
-\end_inset
-
-, malloc(n))
-\family default
 .
  
 \end_layout
 
-\begin_layout Itemize
-For small requests of 
-\begin_inset Formula $n=10$
-\end_inset
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
 
- bytes, we get the following addresses for five consecutive allocations:
- 0x15410
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="right" valignment="top" width="0">
+<column alignment="right" valignment="top" width="0">
+<column alignment="right" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Request size (B)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Heap addresses
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x15410
 \series bold
 1
 \series default
-0, 0x15410
+0 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x15410
 \series bold
 3
 \series default
-0, 0x15410
+0 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x15410
 \series bold
 5
 \series default
-0, 0x15410
-\series bold
-7
-\series default
-0, 0x1541090.
- With address layout randomization enabled, the initial heap page can vary.
+0 
 \end_layout
 
-\begin_layout Itemize
-For larger requests of 
-\begin_inset Formula $n=1000000$
 \end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
 
- bytes; 0x7ff1b13ce
+\begin_layout Plain Layout
+1,000,000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x7ff1b13ce
 \series bold
 010
 \series default
-, 0x7ff1b0e12
-\series bold
-010
-\series default
-, 0x7ff1b0d1d
-\series bold
-010
-\series default
-, 0x7ff1b0c28
-\series bold
-010
-\series default
-, 0x7ff1b0b33
-\series bold
-010
-\series default
-.
  
 \end_layout
 
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x7ff1b0e12
+\series bold
+010
+\series default
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x7ff1b0d1d
+\series bold
+010
+\series default
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:malloc-request-examples"
+
+\end_inset
+
+Addresses of three consecutive heap allocations, for small and large request
+ sizes.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
-Because the page size is 4096 bytes, memory returned from larger requests
+One of the properties of 
+\family typewriter
+mmap
+\family default
+ is that it guarantees page-alignment.
+ Because the page size is 4096 bytes, memory returned from larger requests
  will 
 \bar under
 always
 \bar default
- have alias on the last 12 bits.
- This is true in all cases where mmap is used internally, as it explicitly
- guarantees the return value to be page aligned.
+ have alias on the last 12 bits -- at least in all cases where 
+\family typewriter
+mmap
+\family default
+ is used internally.
  Note that this property of malloc is not affected by address randomization.
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:malloc-request-examples"
+
+\end_inset
+
+ illustrates the difference between heap addresses pointing to the normal
+ heap or to areas allocated by mmap.
  
 \end_layout
 
 \begin_layout Subsubsection*
-Convolution Example
+Example of Aliasing from Aligned Heap Areas
 \end_layout
 
 \begin_layout Standard
-Knowing that heap allocated memory is likely to alias by default, we can
- find examples where this will lead to bad performance.
- Consider the function shown in Listing 
+As an example of 
+\begin_inset Quotes eld
+\end_inset
+
+sliding window
+\begin_inset Quotes erd
+\end_inset
+
+ program working on pairs of memory buffers, consider the function shown
+ in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:convolution"
 
 \end_inset
 
-, computing the convolution between an input array and a fixed kernel, writing
- the result to another array (endpoints skipped for simplicity).
+.
+ It computes the convolution between an input array and a fixed kernel,
+ writing the result to another array (endpoints skipped for simplicity).
 \end_layout
 
 \begin_layout Standard
@@ -6177,6 +6342,8 @@ Address alias, r0107:u
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 9,195,816
 \end_layout
 
@@ -6186,6 +6353,8 @@ Address alias, r0107:u
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 1,175
 \end_layout
 
@@ -6295,7 +6464,7 @@ This function is sensitive to aliasing between heap areas.
 
 , this will always be the case.
  Compiling with optimization O3 and 
-\begin_inset Formula $N=0x100000$
+\begin_inset Formula $N=\text{0x100000}$
 \end_inset
 
 , a very large number of alias events and resource stalls are generated
@@ -6439,7 +6608,7 @@ float
 \end_inset
 
  bytes) modulo 4096.
- L1 cache hits remain unaffected.
+ L1 cache hit ratio remain unaffected.
 \end_layout
 
 \end_inset
@@ -6469,8 +6638,8 @@ reference "fig:convolution-O3-graph"
 \end_inset
 
  shows the amount of aliasing is steadily decreasing on larger offsets.
- The best parameter is found to be at a 16 or more elements difference in
- alignment between input and output (at least 64 bytes).
+ The best parameter is found to be at a 16 or more elements difference (at
+ least 64 bytes).
  Collecting the same performance counters with offset 16, we see that aliasing
  is almost eliminated, and number of resource stalls is significantly reduced.
  The results are shown in Table 
@@ -6519,7 +6688,7 @@ reference "fig:convolution-O3-graph"
  
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
 Architectural Optimization
 \end_layout
 
@@ -6537,7 +6706,12 @@ generic
 
  machine.
  One could hope that aliasing effects are considered when the compiler is
- asked to target our Intel architecture specifically 
+ asked to target our Intel architecture specifically, which can be done
+ by specifying 
+\family typewriter
+-march=native
+\family default
+
 \begin_inset Foot
 status open
 
@@ -6554,7 +6728,7 @@ target "http://gcc.gnu.org/onlinedocs/gcc-4.6.3/gcc/i386-and-x86_002d64-Options.
 
 \end_inset
 
-, which can be done by specifying -march=native.
+.
  This includes using instructions that are not necessarily portable, for
  example AVX instructions.
  
@@ -6721,6 +6895,8 @@ Address alias, r0107:u
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 259,605
 \end_layout
 
@@ -6730,6 +6906,8 @@ Address alias, r0107:u
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 236
 \end_layout
 
@@ -6811,8 +6989,8 @@ name "tab:convolution-native-gcc"
 
 \end_inset
 
-Performance counter statistics for optimal compiler optimization flags on
- GCC.
+Performance counter statistics for convolution example compiled with GCC,
+ using modified function signature and optimal compiler optimization flags.
  Showing statistics for default (page aligned) heap addresses, and programmatica
 lly offset of output buffer by 48 
 \family typewriter
@@ -6881,16 +7059,11 @@ target "http://software.intel.com/en-us/intel-compilers/"
  version 13.
  The behaviour of Clang is similar to GCC with respect to offsets to minimize
  alias.
- However, we only need to add 16 padding alements to get rid of aliasing.
- The change in cycle count is not as clear.
- Less efficient code is generated, with almost ten times as many dynamic
- instructions executed.
- This probably masks the added cost of aliasing.
- 
-\end_layout
-
-\begin_layout Standard
-Code produced from Intel's icc is not free from aliasing on default page
+ Only 16 padding elements is needed to get rid of aliasing, but the change
+ in cycle count is not as clear.
+ With almost ten times as many dynamic instructions executed, a much higher
+ cycle count probably masks the added cost of aliasing.
+ Code produced from Intel's icc is not free from aliasing on default page
  aligned heap memory either.
  A similar alias event count as GCC, about 260,000 for N = 0x100000, is
  generated with no padding.
@@ -6900,7 +7073,7 @@ Code produced from Intel's icc is not free from aliasing on default page
 \end_layout
 
 \begin_layout Standard
-For this particular function, we found that GCC generated the most efficient
+For this particular example, we found that GCC generated the most efficient
  code, executing in fewer cycles than both clang and icc.
  The effect of aliasing was also most significant in GCC, providing the
  most speedup when padding output buffer.
@@ -6914,7 +7087,11 @@ Bias from Dynamic Libraries
 \end_layout
 
 \begin_layout Standard
-The previous example does not show measurement 
+Heap address conflicts discussed in the previous section does not show 
+\emph on
+measurement
+\emph default
+ 
 \emph on
 bias
 \emph default
@@ -6935,7 +7112,7 @@ M_MMAP_THRESHOLD
 \end_layout
 
 \begin_layout Subsubsection*
-Memory Allocators
+Alternative Memory Allocators
 \end_layout
 
 \begin_layout Standard
@@ -7045,8 +7222,8 @@ $ LD_PRELOAD=~/Allocators/Hoard/libhoard.so ./test
 \end_layout
 
 \begin_layout Standard
-We did some testing with each of the libraries, observing the addresses
- returned when sequentially allocating two equally large 
+For each of the allocator implementations, we observed the addresses returned
+ when sequentially allocating two equally large 
 \family typewriter
 float
 \family default
