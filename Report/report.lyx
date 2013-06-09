@@ -3682,7 +3682,7 @@ l features in Ivy Bridge, and show how they can bias performance towards
 aliasing
 \emph default
  effect between memory addresses of loads and stores, causing false dependencies
- in the out-of-order pipeline.
+ in the out-of-order execution pipeline.
  This effect can be triggered for example by changing stack position, and
  can explain bias from altering environment variables.
  In previous work on measurement bias from link ordering, the 
@@ -3690,7 +3690,8 @@ aliasing
 Loop Stream Detector
 \emph default
  has been suggested as a possible explanation.
- We therefore choose to study this particular opimization in detail.
+ We therefore choose to study this particular opimization in detail, and
+ show how measurement bias can occur from changing code layout.
 \end_layout
 
 \begin_layout Section
@@ -3745,11 +3746,7 @@ If for example %rax is 0x60
 010, the memory accesses are said to be aliased.
  The difference between the two addresses is 0x3000, which is a multiple
  of 4096, or 0x1000 in hexadecimal.
- 
-\end_layout
-
-\begin_layout Standard
-The memory system issues load and store operations speculatively and out
+ The memory system issues load and store operations speculatively and out
  of order to increase throughput and parallelism.
  Some analysis is done to determine which operations are safe to issue out
  of order.
@@ -3804,21 +3801,182 @@ Counts the number of loads that have partial address match with preceding
 \end_inset
 
 .
+ False dependencies due to address aliasing can have a negative effect on
+ performance due to loads being reissued.
+\end_layout
+
+\begin_layout Paragraph
+Intel Optimization Guidelines
 \end_layout
 
 \begin_layout Standard
-False dependencies due to address aliasing can have a negative effect on
- performance due to loads being reissued.
- Through a series of examples, we show that bias effects caused by address
- aliasing is both common and significant.
+Performance implications of 4K aliasing is discussed to some extent in the
+ optimization manual from Intel.
+ There are even some concrete suggestions for how to deal with it:
+\end_layout
+
+\begin_layout Quote
+
+\series bold
+\emph on
+User/Source Coding Rule 8.
+ (H impact, ML generality)
+\series default
+
+\begin_inset Newline newline
+\end_inset
+
+Consider using a special memory allocation library with address offset capabilit
+y to avoid aliasing
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This rule concerns heap allocated memory, which can be vulnerable to address
+ aliasing if the implementation of for example malloc often returns memory
+ with identical 12 bit address suffixes.
+ This rule is classified as high (H) impact and medium/low generality, suggestin
+g that it occurs relatively often, and with significant performance implications.
+ In Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:heap-address-aliasing"
+
+\end_inset
+
+ we will study the effects of aliasing of heap allocated memory.
+ Alternative allocator implementations is explored in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:dynamic-library-bias"
+
+\end_inset
+
+, identifying dynamic libraries as a potential source of measurement bias.
+ 
+\end_layout
+
+\begin_layout Standard
+The second rule concering address aliasing introduces the concept of 
+\emph on
+padding
+\emph default
+ variable declarations.
+ 
+\end_layout
+
+\begin_layout Quote
+
+\series bold
+\emph on
+User/Source Coding Rule 9.
+ (M impact, M generality)
+\series default
+\emph default
+
+\begin_inset Newline newline
+\end_inset
+
+
+\emph on
+When padding variable declarations to avoid aliasing, the greatest benefit
+ comes from avoiding aliasing on second-level cache lines, suggesting an
+ offset of 128 bytes or more
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Aliasing can in some cases be accounted for in software by explicitly handling
+ memory location of variable declarations.
+ We will use this technique to avoid aliasing for both stack- and heap allocated
+ memory.
+ Notice that Intel considers these as a 
+\begin_inset Quotes eld
+\end_inset
+
+User/Source Coding
+\begin_inset Quotes erd
+\end_inset
+
+ rules.
+ This suggests that optimizing for address aliasing is something that should
+ be considered not only by compilers, but also by programmers.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Outline
+\end_layout
+
+\begin_layout Standard
+We will study the effects of 4K address aliasing through a set of examples
+ and small case studies.
+ The purpose is to show how aliasing can explain measurement bias.
+ In Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:bias-from-stack-alignment"
+
+\end_inset
+
+ we connect address aliasing with changes to environment size -- showing
+ how variations in stack addresses can trigger address collisions.
+ Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:heap-address-aliasing"
+
+\end_inset
+
+ discusses common aliasing issues with heap allocated memory.
+ We choose to focus on a limited set of concrete code examples, illustrating
+ how aliasing can affect real programs.
+ Additionally, we show how to use 
+\emph on
+padding
+\emph default
+ or similar techniques to programmatically avoid bias in each case.
+ Finally, in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:dynamic-library-bias"
+
+\end_inset
+
+ we introduce dynamic libraries as another source of bias.
+ In addition to environment variables, we find that different configurations
+ or versions of memory allocators can cause measurement bias by triggering
+ address aliasing.
  
 \end_layout
 
 \begin_layout Subsection
-Bias from Stack Alignment
+Bias from Environment Size
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:bias-from-stack-alignment"
+
+\end_inset
+
 As shown in previous work, changing the Unix environment variables can sometimes
  significantly affect program performance.
  It is typically not the content of environment variables that are important,
@@ -5643,6 +5801,12 @@ Heap Address Aliasing
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:heap-address-aliasing"
+
+\end_inset
+
 Address aliasing can occur from memory accesses to any section of memory.
  The previous section looked at an example of collision between stack variables
  and static data.
@@ -7087,6 +7251,12 @@ Bias from Dynamic Libraries
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:dynamic-library-bias"
+
+\end_inset
+
 Heap address conflicts discussed in the previous section does not show 
 \emph on
 measurement
@@ -7703,42 +7873,11 @@ Most allocators seem focus mostly on efficiency in a multi-threaded environment,
 \end_layout
 
 \begin_layout Subsection
-Optimization Guidelines
+Summary
 \end_layout
 
 \begin_layout Standard
-It should be noted that the effects of 4K aliasing is discussed to some
- extent in the optimization manual from Intel.
- There are even some concrete suggestions for how to deal with it:
-\end_layout
-
-\begin_layout Quote
-
-\series bold
-User/Source Coding Rule 8.
- (H impact, ML generality)
-\series default
-
-\begin_inset Newline newline
-\end_inset
-
-Consider using a special memory allocation library with address offset capabilit
-y to avoid aliasing 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-It looks like Intel recognizes the performance impacts from always aligning
- heap memory to the same 12 bit address suffixes.
- This rule is classified as high (H) impact and medium/low generality, suggestin
-g that it occurs relatively often, and with significant performance implications.
- We have already verified that the performance can be severely diminished
+We have already verified that the performance can be severely diminished
  by aliasing, easily with more than 
 \begin_inset Formula $2x$
 \end_inset
@@ -7748,28 +7887,6 @@ g that it occurs relatively often, and with significant performance implications
  to suspect this is a common occurrence in real applications.
  Still, to our knowledge there are no allocators that specifically addresses
  this issue.
-\end_layout
-
-\begin_layout Quote
-
-\series bold
-User/Source Coding Rule 9.
- (M impact, M generality)
-\series default
-
-\begin_inset Newline newline
-\end_inset
-
-When padding variable declarations to avoid aliasing, the greatest benefit
- comes from avoiding aliasing on second-level cache lines, suggesting an
- offset of 128 bytes or more 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2012:OptimizationManual"
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -7786,25 +7903,6 @@ float
  collided in those cases, exceeding the limit of 32 elements can probably
  be explained by wider SSE or AVX memory accesses.
  
-\end_layout
-
-\begin_layout Standard
-Notice that Intel actually considers padding of variables as a 
-\begin_inset Quotes eld
-\end_inset
-
-User/Source Coding
-\begin_inset Quotes erd
-\end_inset
-
- rule.
- This suggests that address aliasing is something that should be considered
- not only by compilers, but also by programmers.
- 
-\end_layout
-
-\begin_layout Subsection
-Summary
 \end_layout
 
 \begin_layout Standard
