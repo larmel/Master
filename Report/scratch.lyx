@@ -77,6 +77,167 @@ First Chapter
 \end_layout
 
 \begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     7,636,642,008 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+            10,921 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,427,939 instructions:u 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       2.269077165 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     3,665,689,143 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     4,581,309,568 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,428,712 instructions:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       1.116846425 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     7,636,374,873 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+            10,998 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+    11,606,047,809 instructions:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       2.251557970 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+ 
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+     3,665,668,196 cycles:u
+\end_layout
+
+\begin_layout Plain Layout
+
+                 0 r0120:u
+\end_layout
+
+\begin_layout Plain Layout
+
+     8,246,350,119 r01a8:u
+\end_layout
+
+\begin_layout Plain Layout
+
+    11,606,046,865 instructions:u
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       1.082215324 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Float table
 wide false
 sideways false
