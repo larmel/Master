@@ -12,6 +12,11 @@
   {\pagestyle{empty}\origdoublepage}%
 }
 \let\cleardoublepage\clearemptydoublepage
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{10} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{10}  % for normal
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
 \end_preamble
 \options openright
 \use_default_options true
@@ -17754,6 +17759,582 @@ status open
 end{small}
 \backslash
 endgroup
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Automated 
+\family typewriter
+perf
+\family default
+ Runner
+\end_layout
+
+\begin_layout Standard
+The script used to collect performance counter statistics is shown below.
+ It can be invoked with a range of parameters.
+ blabla.
+\end_layout
+
+\begin_layout Standard
+http://tex.stackexchange.com/questions/83882/how-to-highlight-python-syntax-in-lat
+ex-listings-lstinputlistings-command
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily},breaklines=true,emphstyle={\ttb\color{deepred}},frame=tb,keywordstyle={\ttb\color{deepblue}},language=Python,showstringspaces=false,stringstyle={\color{deepgreen}}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#!/usr/bin/env python 
+\end_layout
+
+\begin_layout Plain Layout
+
+import subprocess, argparse, sys, copy
+\end_layout
+
+\begin_layout Plain Layout
+
+from scipy import stats
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# Use at most 4 counters simultaneously
+\end_layout
+
+\begin_layout Plain Layout
+
+n_counters = 4
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+def disable_layout_randomization():
+\end_layout
+
+\begin_layout Plain Layout
+
+    subprocess.call('sudo bash -c "echo 0 > /proc/sys/kernel/randomize_va_space"'
+, shell=True)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+def benchmark(events, args):
+\end_layout
+
+\begin_layout Plain Layout
+
+    for e in events:
+\end_layout
+
+\begin_layout Plain Layout
+
+        e['count'] = [0]*args.num
+\end_layout
+
+\begin_layout Plain Layout
+
+        e['variance'] = [0]*args.num
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    environment = {'FOO':'0'*args.environment_offset}
+\end_layout
+
+\begin_layout Plain Layout
+
+    argument = args.argument_offset;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    for run in range(args.num):
+\end_layout
+
+\begin_layout Plain Layout
+
+        tempfile = 'stat.tmp.' + str(run) + '.dat'
+\end_layout
+
+\begin_layout Plain Layout
+
+        subprocess.call('cp /dev/null '+tempfile, shell=True)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        for batch in [events[i:i+n_counters] for i in range(0, len(events),
+ n_counters)]:
+\end_layout
+
+\begin_layout Plain Layout
+
+            e = ','.join(map(lambda x: x['code'], batch))
+\end_layout
+
+\begin_layout Plain Layout
+
+            c = ' '.join(['perf stat -r', str(args.repeat), '-x","', '-e',
+ e, args.program, str(argument), '0>>', tempfile])
+\end_layout
+
+\begin_layout Plain Layout
+
+            p = subprocess.Popen(c, env=environment, shell=True)
+\end_layout
+
+\begin_layout Plain Layout
+
+            p.wait()
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        with open(tempfile, 'r') as f:
+\end_layout
+
+\begin_layout Plain Layout
+
+            for i in range(len(events)):
+\end_layout
+
+\begin_layout Plain Layout
+
+                line = f.readline().strip().split(',')
+\end_layout
+
+\begin_layout Plain Layout
+
+                if (line[0] == "<not counted>"):
+\end_layout
+
+\begin_layout Plain Layout
+
+                    continue
+\end_layout
+
+\begin_layout Plain Layout
+
+                events[i]['count'][run] = float(line[0])
+\end_layout
+
+\begin_layout Plain Layout
+
+                if args.repeat > 1:
+\end_layout
+
+\begin_layout Plain Layout
+
+                    events[i]['variance'] = float(line[2][:-1])
+\end_layout
+
+\begin_layout Plain Layout
+
+        subprocess.call('rm '+tempfile, shell=True)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        environment['FOO'] += '0'*args.environment_increment
+\end_layout
+
+\begin_layout Plain Layout
+
+        argument += args.argument_increment;
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+    return events
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+def correlation(events, reference_event):
+\end_layout
+
+\begin_layout Plain Layout
+
+    reference = events[0]
+\end_layout
+
+\begin_layout Plain Layout
+
+    for i in range(len(events)):
+\end_layout
+
+\begin_layout Plain Layout
+
+        if events[i]['code'] == reference_event or events[i]['perfmn'] ==
+ reference_event:
+\end_layout
+
+\begin_layout Plain Layout
+
+            reference = events[i]
+\end_layout
+
+\begin_layout Plain Layout
+
+            break
+\end_layout
+
+\begin_layout Plain Layout
+
+    for e in events:
+\end_layout
+
+\begin_layout Plain Layout
+
+        e['pearson'], _ = stats.pearsonr(reference['count'], e['count'])
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+def export_csv(events, filename):
+\end_layout
+
+\begin_layout Plain Layout
+
+    with open(filename, 'w') as f:
+\end_layout
+
+\begin_layout Plain Layout
+
+        for line in events:
+\end_layout
+
+\begin_layout Plain Layout
+
+            row = [line['mnemonic'], line['code']] + [line['pearson']] +
+ map(str, line['count'])
+\end_layout
+
+\begin_layout Plain Layout
+
+            f.write(','.join(map(str, row)))
+\end_layout
+
+\begin_layout Plain Layout
+
+            f.write('
+\backslash
+n')
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# Read file containing [perf-code, perf-mnemonic, description] as tab separated
+ values
+\end_layout
+
+\begin_layout Plain Layout
+
+def read_file_events(filename):
+\end_layout
+
+\begin_layout Plain Layout
+
+    events = []
+\end_layout
+
+\begin_layout Plain Layout
+
+    with open(filename) as f:
+\end_layout
+
+\begin_layout Plain Layout
+
+        for line in f:
+\end_layout
+
+\begin_layout Plain Layout
+
+            code, perfmn, name = map(lambda s : s.strip(), line.split('
+\backslash
+t'))
+\end_layout
+
+\begin_layout Plain Layout
+
+            code = ''.join(['r', code.lower(), ':u']) if perfmn == '' else
+ perfmn+':u'
+\end_layout
+
+\begin_layout Plain Layout
+
+            events.append({'code': code, 'perfmn': perfmn, 'mnemonic': name})
+\end_layout
+
+\begin_layout Plain Layout
+
+    return events
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# Match events specified with "-e" flag with metadata from file
+\end_layout
+
+\begin_layout Plain Layout
+
+def filter_events(file_events, include):
+\end_layout
+
+\begin_layout Plain Layout
+
+    if include == []:
+\end_layout
+
+\begin_layout Plain Layout
+
+        return file_events
+\end_layout
+
+\begin_layout Plain Layout
+
+    events = []
+\end_layout
+
+\begin_layout Plain Layout
+
+    for e in include:
+\end_layout
+
+\begin_layout Plain Layout
+
+        found = False
+\end_layout
+
+\begin_layout Plain Layout
+
+        for s in file_events:
+\end_layout
+
+\begin_layout Plain Layout
+
+            if s['code'] == e or s['mnemonic'] == e:
+\end_layout
+
+\begin_layout Plain Layout
+
+                found = True
+\end_layout
+
+\begin_layout Plain Layout
+
+                events.append(copy.copy(s))
+\end_layout
+
+\begin_layout Plain Layout
+
+        if not found:
+\end_layout
+
+\begin_layout Plain Layout
+
+            print "Adding unknown event", e
+\end_layout
+
+\begin_layout Plain Layout
+
+            events.append({'code': e, 'perfmn': '', 'mnemonic': ''})
+\end_layout
+
+\begin_layout Plain Layout
+
+    return events
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+if __name__ == '__main__':
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser = argparse.ArgumentParser(description='Automated perf runner')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('program', help='program to be run, ex ./a.out')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-e', '--events')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-f', '--event-file', default='counters')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-o', '--output', default='stat.csv')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-n', '--num', type=int, default=2)
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-r', '--repeat', type=int, default=1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('-c', '--correlate', default='cycles:u')
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('--environment-offset', type=int, default=0)
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('--environment-increment', type=int, default=1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('--argument-offset', type=int, default=0)
+\end_layout
+
+\begin_layout Plain Layout
+
+    parser.add_argument('--argument-increment', type=int, default=0)
+\end_layout
+
+\begin_layout Plain Layout
+
+    args = parser.parse_args()
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # Make memory layout deterministic    
+\end_layout
+
+\begin_layout Plain Layout
+
+    disable_layout_randomization()
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # List of event properties [[code, perfmnemonic, description]]
+\end_layout
+
+\begin_layout Plain Layout
+
+    events = filter_events(read_file_events(args.event_file), [] if args.events
+ == None else args.events.strip().lower().split(','))
+\end_layout
+
+\begin_layout Plain Layout
+
+    events = benchmark(events, args)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # Export result
+\end_layout
+
+\begin_layout Plain Layout
+
+    correlation(events, args.correlate)
+\end_layout
+
+\begin_layout Plain Layout
+
+    export_csv(events, args.output)
 \end_layout
 
 \end_inset

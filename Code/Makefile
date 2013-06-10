@@ -1,4 +1,12 @@
 
+.PHONY: lperf
+
+lperf:
+	./lperf-min Loop/loop -n 10 -r 2 \
+		--environment-offset 3200 --environment-increment 1
+
+	./lperf-min Loop/loop -e cycles:u,instructions:u -n 10
+
 
 mem:
 	cc mem.c -Wall -o mem

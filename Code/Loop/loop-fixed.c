@@ -29,7 +29,7 @@ int main() {
         j += inc;
         k += inc;
     }
-
+    
 skip:
     return 0;
 }
