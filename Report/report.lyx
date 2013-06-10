@@ -3453,7 +3453,7 @@ Ivy Bridge
 \end_layout
 
 \begin_layout Section
-Performance Counters Analysis
+Performance Analysis
 \end_layout
 
 \begin_layout Standard
@@ -3483,6 +3483,14 @@ perf stat
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2013:Volume3B"
+
+\end_inset
+
+.
+ The implementation can be found in Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:lperf"
 
 \end_inset
 
@@ -3686,7 +3694,60 @@ key "Hunter:2007:Matplotlib"
 
 \end_inset
 
+, using the csv exported data from our test script.
+\end_layout
+
+\begin_layout Section
+Approach
+\end_layout
+
+\begin_layout Standard
+The purpose of this work is to investigate possible 
+\emph on
+causes
+\emph default
+ of measurement bias, and if possible how this can be used for optimization.
+ We have chosen to approach this problem from two sides.
+ In Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+, we present results from 
+\emph on
+experimental
+\emph default
+ work on smaller synthetic code examples.
+ Simple examples are easier to analyze, allowing us to more accurately describe
+ specific hardware mechanisms that results in bias.
+ In previous work describing the effects of measurement bias, larger benchmark
+ suites such as SPEC is often used.
+ With large and complicated programs, it seems less likely that one will
+ be able to identify why bias occurs.
+ 
+\end_layout
+
+\begin_layout Standard
+Results and experiences from the experimental work is transferred to 
+\emph on
+case studies
+\emph default
+ in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Case Studies"
+
+\end_inset
+
 .
+ We choose to specifically look at already highly optimized numerical libraries,
+ where any additional speedup from considering bias effects is more likely
+ to be considered.
+ With a detailed understanding of architectural features causing bias, we
+ can look for specific effects in larger applications.
+ 
 \end_layout
 
 \begin_layout Chapter
@@ -10435,12 +10496,47 @@ Case Studies
 \end_layout
 
 \begin_layout Standard
-In this chapter we show how bias effects illustrated in the previous chapter
- is present in real software, and poses a significant challenge for performance
- benchmarks.
- In addition to pointing out problems, also show how measures can be taken
- to handle bias, and obtain a speedup on average over the space of possible
- contexts.
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:Case Studies"
+
+\end_inset
+
+In this chapter, we show instances of how bias effects illustrated in the
+ previous chapter affects real software.
+ The goal is to identify possible instances of bias, and also discuss how
+ to take bias into account for optimization purposes.
+ We choose to focus on already highly optimized numerical applications for
+ our case studies, because the real world impact of bias effects is most
+ relevant for performance critical applications.
+ If only a minor improvement can be mady by avoiding some memory alignment
+ issue, the cost of implementing an architecture specific optimization will
+ probably be worth it.
+\end_layout
+
+\begin_layout Standard
+Two applications are studied: In Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:FFTW"
+
+\end_inset
+
+ we will look at FFTW, which isa widely used library for computing Fourier
+ transforms.
+ We show that for smaller input sizes, there is potential for bias towards
+ certain stack positions.
+ In Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:BLAS"
+
+\end_inset
+
+ we look at ATLAS, an implementation of the BLAS API for linear algebra
+ routines.
+ We find that matrix-vector multiplication is sensitive to address aliasing,
+ and show how to improve performance on average by padding data.
  
 \end_layout
 
@@ -10449,6 +10545,12 @@ FFTW
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:FFTW"
+
+\end_inset
+
 As an integral part of applications such as signal and image processing,
  a huge amount of work has been done over the years to optimize and tweak
  the performance of the Fast Fourier Transform (FFT).
@@ -10506,7 +10608,7 @@ key "Vuduc:2000:CodegenFFTW"
  of context bias could be a realistic addition to FFTW.
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
 Installation and Configuration
 \end_layout
 
@@ -10514,7 +10616,7 @@ Installation and Configuration
 We used the latest version 3.3.3 of FFTW in all our tests, compiled from source
  and built as a shared library.
  For optimal performance on our machine, we explicitly enable support for
- sse2 and avx instruction set.
+ SSE2 and AVX instructions.
  In addition, we set the 
 \begin_inset Quotes eld
 \end_inset
@@ -10551,14 +10653,14 @@ status open
 
 \end_layout
 
-\begin_layout Subsubsection*
-Test Setup
+\begin_layout Paragraph
+Setup and Methodology
 \end_layout
 
 \begin_layout Standard
 FFTW is a very comprehensive library with lots of functionality.
- Our approach will be to engineer simple use cases where bias is easily
- measurable.
+ Our approach will be to concentrate on smaller transform sizes, and identify
+ specific examples where bias is easily measurable.
  We create a small C program with two parameters; the number of elements
  to transform, and the number of times to repeat the transform.
  This way, slight bias in smaller input sizes can be amplified.
@@ -10703,7 +10805,7 @@ plan
 .
  This step encapsulates the auto-tuning part of FFTW, as plans can be constructe
 d based on actual measurements and benchmarks done on the current machine.
- Knowledge of well performing plans is stored as 
+ Knowledge of well performing plans can be stored as 
 \emph on
 wisdom
 \emph default
@@ -10729,6 +10831,23 @@ out
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Standard
+For varying transform sizes and iterations, we will study sensitivity to
+ changes in environment size.
+ The assumption is that interactions with stack allocated variables from
+ calling fftw_execute can potentially cause bias.
+ For all our experiments, we use the same machine and methodology as outlined
+ in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Methodology"
+
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -12334,6 +12453,12 @@ BLAS
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:BLAS"
+
+\end_inset
+
 Basic Linear Algebra Subroutines (BLAS), is the de facto standard API for
  high performance linear algebra routines 
 \begin_inset Foot
