@@ -12,11 +12,12 @@
   {\pagestyle{empty}\origdoublepage}%
 }
 \let\cleardoublepage\clearemptydoublepage
-\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{10} % for bold
-\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{10}  % for normal
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{9} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{9}  % for normal
 \definecolor{deepblue}{rgb}{0,0,0.5}
 \definecolor{deepred}{rgb}{0.6,0,0}
-\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{deepgreen}{rgb}{0.25,0.5,0.35}
+\definecolor{javared}{rgb}{0.6,0,0} % for strings
 \end_preamble
 \options openright
 \use_default_options true
@@ -145,6 +146,13 @@ real
  applications such as FFT algorithms.
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage cleardoublepage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Abstract
 Performance analysis of software is subject to measurement bias.
  Seemingly innocuous properties of the environment, such as the contents
@@ -185,6 +193,13 @@ Our case studies show that even highly optimized Fourier transform and linear
  We find that stack alignment significantly affects the performance of FFTW,
  and that in some cases more than 30 % performance gain can be made by avoiding
  address aliasing in ATLAS matrix-vector multiplication.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage cleardoublepage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -301,7 +316,7 @@ status open
 \end_layout
 
 \begin_layout Standard
-\begin_inset Newpage clearpage
+\begin_inset Newpage cleardoublepage
 \end_inset
 
 
@@ -17728,27 +17743,95 @@ endgroup
 \end_layout
 
 \begin_layout Chapter
-Automated 
+Benchmark Script
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:lperf"
+
+\end_inset
+
+A Python script is used as a wrapper around 
+\family typewriter
+perf stat
+\family default
+ to collect performance counters under varying execution contexts.
+ A dummy variable 
+\begin_inset Quotes eld
+\end_inset
+
+FOO
+\begin_inset Quotes erd
+\end_inset
+
+ is used to incrementally add bytes to the environment.
+ The command line interface is similar to 
 \family typewriter
 perf
 \family default
- Runner
-\end_layout
+, with the same syntax for specifying which events to monitor.
+ The following command gathers cycles:u and r0107:u (address alias) over
+ 256 runs of 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-The script used to collect performance counter statistics is shown below.
- It can be invoked with a range of parameters.
- blabla.
-\end_layout
+loop
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Standard
-http://tex.stackexchange.com/questions/83882/how-to-highlight-python-syntax-in-lat
-ex-listings-lstinputlistings-command
+, while incrementing the environment by 16 bytes each time.
 \end_layout
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily},breaklines=true,emphstyle={\ttb\color{deepred}},frame=tb,keywordstyle={\ttb\color{deepblue}},language=Python,showstringspaces=false,stringstyle={\color{deepgreen}}"
+lstparams "basicstyle={\ttfamily},breaklines=true"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ ./lperf ./loop -e cycles:u,r0107:u -n 256 --environment-increment 16
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The script relies on a file containing event codes and mnemonics, by default
+ called 
+\begin_inset Quotes eld
+\end_inset
+
+counters
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Output is exported as comma separated values to 
+\begin_inset Quotes eld
+\end_inset
+
+stat.csv
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize\ttfamily},breaklines=true,commentstyle={\color{deepgreen}},emphstyle={\ttb\color{deepred}},frame=tb,keywordstyle={\ttb\color{deepblue}},language=Python,showstringspaces=false,stringstyle={\color{javared}}"
 inline false
 status open
 
@@ -17949,11 +18032,6 @@ def benchmark(events, args):
 
 \begin_layout Plain Layout
 
-    
-\end_layout
-
-\begin_layout Plain Layout
-
     return events
 \end_layout
 
@@ -18045,8 +18123,7 @@ n')
 
 \begin_layout Plain Layout
 
-# Read file containing [perf-code, perf-mnemonic, description] as tab separated
- values
+# Read file containing performance event information
 \end_layout
 
 \begin_layout Plain Layout
@@ -18182,12 +18259,12 @@ if __name__ == '__main__':
 
 \begin_layout Plain Layout
 
-    parser = argparse.ArgumentParser(description='Automated perf runner')
+    parser = argparse.ArgumentParser(description='perf runner')
 \end_layout
 
 \begin_layout Plain Layout
 
-    parser.add_argument('program', help='program to be run, ex ./a.out')
+    parser.add_argument('program', help='program, ex ./a.out')
 \end_layout
 
 \begin_layout Plain Layout
