@@ -14583,19 +14583,17 @@ Haswell
 \end_layout
 
 \begin_layout Section
-Conclusions
+Final Words
 \end_layout
 
 \begin_layout Standard
-Our work shows that considering intricate and architecture-specific properties
- of the processor can have significant optimization benefits.
+Our work shows that 4K aliasing and the Loop Stream Detector, both intricate
+ and highly architecture-specific properties of the processor, can have
+ significant performance impact in real software.
  Raising awareness of the importance of memory layout of code and data is
  relevant to both users and developers of performance critical software.
- We provide a better understanding of 4K aliasing and the Loop Stream Detector
- on Intel architectures, and are able to explain why and how some instances
- of measurement bias occur.
  A continual effort to expand and update this knowledge for current and
- future architecture is needed.
+ future architectures is needed.
  
 \end_layout
 
