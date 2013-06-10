@@ -89,45 +89,6 @@
 
 \begin_body
 
-\begin_layout Title
-Analyzing Contextual Bias in Modern CPU Architectures:
-\begin_inset Newline newline
-\end_inset
-
-How Memory Layout Impacts Performance
-\end_layout
-
-\begin_layout Author
-Lars Kirkholt Melhus
-\end_layout
-
-\begin_layout Date
-Supervisor: Anne C.
- Elster
-\begin_inset Newline newline
-\end_inset
-
-Co-supervisor: Rune E.
- Jensen
-\end_layout
-
-\begin_layout Quotation
-\begin_inset Quotes eld
-\end_inset
-
-None really knows what is happening inside the CPU...
- It follows heisenburg uncertainity principle...
- lol..
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
-\begin_layout Quotation
-k_sarnath -- Intel forums.
-\end_layout
-
 \begin_layout Quotation
 \begin_inset ERT
 status open
@@ -142,6 +103,46 @@ pagenumbering{roman}
 \end_inset
 
 
+\end_layout
+
+\begin_layout Section*
+Problem Description
+\end_layout
+
+\begin_layout Standard
+Variations in execution context has been shown to affect performance of
+ programs on recent CPUs.
+ Previous work has looked at offsetting the stack and changing link order
+ -- biasing performance measurements towards certain configurations.
+ Variables such as the placement of stack, heap and text segments in memory,
+ combined with memory access instructions, can impact program performance
+ quite significantly.
+ 
+\end_layout
+
+\begin_layout Standard
+The goal of this project is to model some of these effects for common use
+ cases, and methods for avoiding them, in order to avoid bias and achieving
+ peak performance.
+ These effects might be highly platform dependent, so to limit the scope
+ we will focus on a particular architecture, the Intel Core i7 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Case studies will include small isolated programs, and ideally also 
+\begin_inset Quotes eld
+\end_inset
+
+real
+\begin_inset Quotes erd
+\end_inset
+
+ applications such as FFT algorithms.
 \end_layout
 
 \begin_layout Abstract
@@ -297,46 +298,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Section*
-Problem Description
-\end_layout
-
-\begin_layout Standard
-Variations in execution context has been shown to affect performance of
- programs on recent CPUs.
- Previous work has looked at offsetting the stack and changing link order
- -- biasing performance measurements towards certain configurations.
- Variables such as the placement of stack, heap and text segments in memory,
- combined with memory access instructions, can impact program performance
- quite significantly.
- 
-\end_layout
-
-\begin_layout Standard
-The goal of this project is to model some of these effects for common use
- cases, and methods for avoiding them, in order to avoid bias and achieving
- peak performance.
- These effects might be highly platform dependent, so to limit the scope
- we will focus on a particular architecture, the Intel Core i7 
-\begin_inset Quotes eld
-\end_inset
-
-Ivy Bridge
-\begin_inset Quotes erd
-\end_inset
-
-.
- Case studies will include small isolated programs, and ideally also 
-\begin_inset Quotes eld
-\end_inset
-
-real
-\begin_inset Quotes erd
-\end_inset
-
- applications such as FFT algorithms.
 \end_layout
 
 \begin_layout Standard
