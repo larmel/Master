@@ -10834,10 +10834,16 @@ out
 \end_layout
 
 \begin_layout Standard
-For varying transform sizes and iterations, we will study sensitivity to
- changes in environment size.
+This setup is specifically designed to identify sensitivity to changes in
+ 
+\emph on
+environment size
+\emph default
+.
  The assumption is that interactions with stack allocated variables from
- calling fftw_execute can potentially cause bias.
+ calling fftw_execute can potentially introduce bias.
+ We search through different configurations manually, by specifying different
+ values for iteration count and transform size.
  For all our experiments, we use the same machine and methodology as outlined
  in Chapter 
 \begin_inset CommandInset ref
@@ -10847,17 +10853,22 @@ reference "chap:Methodology"
 \end_inset
 
 .
- 
+ Specifically looking for stack alignment bias, the most relevant performance
+ metrics are cycle count and address aliasing (r0107:u).
+ We use the automated test script to gather these metrics, with environment
+ size varying over a span of 8192 bytes.
+ This covers two 4K segments, which should generate patterns repeating twice
+ in case of bias from address aliasing.
 \end_layout
 
 \begin_layout Subsection
-Impact of Stack Position for Small Transforms
+Bias from Environment Size
 \end_layout
 
 \begin_layout Standard
 After attempting a couple of different configurations for transform size
  and iteration count, we find that computing transforms of size 16 have
- noticeable bias to stack position.
+ noticeable bias to environment size.
  
 \end_layout
 
@@ -10919,8 +10930,8 @@ reference "fig:fftw-stack-bias"
 
  shows the relation between address alias and cycle count for repeated benchmark
 s under increasing environment size.
- The same program is run 8192 times, adding one byte to the environment
- between each execution.
+ The same program is run 512 times, adding 16 bytes to the environment between
+ each execution.
  This covers two 4KiB segments of lower order virtual address bits for stack
  position.
  As suspected, we get a graph with the same pattern repeating twice.
@@ -10928,22 +10939,8 @@ s under increasing environment size.
 e.
 \end_layout
 
-\begin_layout Subsection
-Eliminating Bias by Modifying Kernels
-\end_layout
-
-\begin_layout Standard
-Knowing address aliasing being the cause of bias, we can try to modify FFTW
- to detect and possibly avoid situations with abnormally high cycle count
- from Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-stack-bias"
-
-\end_inset
-
-.
- 
+\begin_layout Subsubsection*
+Analysis of Bias Effects
 \end_layout
 
 \begin_layout Standard
@@ -11136,8 +11133,22 @@ Statically allocated constants in memory.
  
 \end_layout
 
+\begin_layout Subsubsection*
+Kernel Level Adjustment: A Naive Solution
+\end_layout
+
 \begin_layout Standard
-Under synthetic testing with address randomization (ASLR) disabled, all
+Knowing address aliasing being the cause of bias, we can try to modify FFTW
+ to detect and possibly avoid situations with abnormally high cycle count
+ from Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+.
+ Under synthetic testing with address randomization (ASLR) disabled, all
  parameters are fixed and deterministic.
  For our particular test, the heap allocated input and output buffers always
  reside in virtual addresses 
@@ -11229,10 +11240,6 @@ ng observer effects.
  
 \end_layout
 
-\begin_layout Subsubsection*
-Adjusting Stack Placement at Runtime
-\end_layout
-
 \begin_layout Standard
 The position of stack is unknown to the kernel at runtime.
  It can execute with a 
@@ -11265,49 +11272,10 @@ fftw_execute
 \family default
  is called, the only thing we can control is placement of stack allocated
  variables.
- 
-\end_layout
-
-\begin_layout Standard
-An interesting observation is that stack addresses in the generated assembly
+ An interesting observation is that stack addresses in the generated assembly
  code are often specified relative to the stack pointer, as opposed to base
  pointer.
-\end_layout
-
-\begin_layout Quote
-\begin_inset listings
-lstparams "basicstyle={\normalsize\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
-vmovapd %ymm14, -120(%rsp)
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Quote
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline true
-status open
-
-\begin_layout Plain Layout
-
-vaddpd -56(%rsp), %ymm7, %ymm12
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-This suggests that merely offsetting the rsp register within the 
+ This suggests that merely offsetting the rsp register within the 
 \family typewriter
 n1fv_16
 \family default
@@ -11432,7 +11400,7 @@ static void apply_extra_iter(const plan *ego_, R *ri, R *ii, R *ro, R *io)
 
 \begin_layout Plain Layout
 
-    (...)
+    /* original implementation */
 \end_layout
 
 \begin_layout Plain Layout
@@ -11502,7 +11470,11 @@ dft/direct.c
 \end_layout
 
 \begin_layout Standard
-The andq instruction from Listing 
+The 
+\family typewriter
+andq
+\family default
+ instruction from Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:apply-extra-iter"
@@ -11553,7 +11525,7 @@ name "fig:fftw-modified"
 
 \end_inset
 
-Performance after stack fix is added to apply_extra_iter
+Performance after stack alignment fix is added to apply_extra_iter.
 \end_layout
 
 \end_inset
@@ -11569,7 +11541,14 @@ Performance after stack fix is added to apply_extra_iter
 \begin_layout Standard
 Over two 4K periods, the modified version is much less sensitive to stack
  placement, removing almost all the bias from previously.
- There is a reduction in cycle count for the worst case by 11.8 %, however
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:fftw-kernel-fix-numbers"
+
+\end_inset
+
+ shows a reduction in cycle count by 11.8 % for the worst case, but unfortunately
  there is no significant speedup on average.
  
 \end_layout
@@ -11690,7 +11669,7 @@ Default version
 \begin_inset Text
 
 \begin_layout Plain Layout
-Modified apply_extra_iter
+Kernel modification
 \end_layout
 
 \end_inset
@@ -11743,6 +11722,12 @@ Modified apply_extra_iter
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:fftw-kernel-fix-numbers"
+
+\end_inset
+
 Cycle count statistics over 512 runs, sampling uniformly over two 4 KiB
  periods
 \end_layout
@@ -11766,16 +11751,18 @@ iter consumes any aliasing improvement.
  in the modified version, an increase of 1.3 %.
 \end_layout
 
-\begin_layout Subsubsection*
-Creating the Worst Case
+\begin_layout Paragraph
+Evaluating the Worst Case Scenario
 \end_layout
 
 \begin_layout Standard
-With the static alignment in place, it is not hard to imagine where the
- modified version will fail.
- If input and output buffers happen to reside on the opposite of the 4 KiB
- segment, we should see consistently bad performance for all environment
- sizes.
+With the static alignment in place, there will be a worst case scenario
+ where the modified version will fail.
+ With address randomization disabled, both stack and heap locations will
+ be fixed for all environment sizes.
+ If heap buffers happen to reside on the opposite end of a 4 KiB segment,
+ both stack and heap segments will be close considering the last 12 address
+ bits.
  By allocating another buffer of 7400B using regular malloc before calling
  fftw_malloc, the input and output buffers are pushed to 0x604
 \series bold
@@ -11786,7 +11773,15 @@ da0
 f00
 \series default
  respectively.
- 
+ The relative position between each memory segment in this scenario is shown
+ in Figure
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-worstcase-4k"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -11830,7 +11825,16 @@ Offsetting heap addresses to always overlap with fixed stack pointer
 \end_layout
 
 \begin_layout Standard
-The effects of this forced overlap is illustrated in Figure 
+With both heap and stack addresses suffixes located on the 
+\begin_inset Quotes eld
+\end_inset
+
+high
+\begin_inset Quotes erd
+\end_inset
+
+ end, there will always be aliasing.
+ The effect is shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:fftw-worstcase"
@@ -11838,8 +11842,8 @@ reference "fig:fftw-worstcase"
 \end_inset
 
 .
- As expected, we see that a constant number of alias events are added across
- all environment sizes.
+ As expected, a constant number of alias events are added across all environment
+ sizes.
  
 \end_layout
 
@@ -11907,11 +11911,11 @@ ro
 \end_inset
 
  close to the lower end of a 4 KiB range of address suffixes.
- A hypothetical complete solution would require a function at least these
- three parameters to calculate the optimal stack offset.
+ A complete solution would require a function at least these three parameters
+ to calculate the optimal stack offset.
 \begin_inset Formula 
 \[
-f\left(\text{ri},\text{ro},\text{\%rsp}\right)\rightarrow\text{offset}
+f\left(\text{input},\text{output},\text{stack position}\right)\rightarrow\text{offset}
 \]
 
 \end_inset
@@ -11933,14 +11937,17 @@ ri
 \family default
 , no longer overlapping any heap segments.
  However, given the somewhat discouraging results from our simple static
- fix, we did not attempt to implement a function like this for the 
-\family typewriter
-n1fv_16
-\family default
+ fix, we did not attempt to implement a function like this for the n1fv_16
  kernel.
- The added cost of additional dynamic instructions will quickly cancel out
- any speedup we might get.
- 
+ Using inline assembly, the cost of additional dynamic instructions will
+ quickly cancel out any speedup we might get.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -11948,10 +11955,15 @@ Bias in Other Kernels
 \end_layout
 
 \begin_layout Standard
-So far we have only looked at one particular kernel, although FFTW consists
+While we have only looked extensively at one particular kernel, FFTW consists
  of a quite large collection of automatically generated codelets.
- In fact, we find that alias effects are apparent in all kernels we tried,
- a selection of them shown in Figure 
+ Other kernels can be invoked by specifying different values for 
+\begin_inset Formula $N$
+\end_inset
+
+ in the test program.
+ We find that alias effects are apparent in all kernels we tried, a selection
+ of them shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:fftw-kernels"
@@ -11959,15 +11971,13 @@ reference "fig:fftw-kernels"
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-Each kernel shows a different pattern, with clear bias towards some stack
+ Each kernel shows a different pattern, with clear bias towards some stack
  positions that performs noticeably better than others.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
+placement h
 wide false
 sideways false
 status open
@@ -11998,8 +12008,8 @@ Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
 \begin_inset Formula $N=200{,}000$
 \end_inset
 
- iterations of the kernel, incrementing stack offset between each run, up
- to 4096 bytes.
+ iterations of the kernel, incrementing stack offset (horizontal axis) between
+ each run, up to 4096 bytes.
  Vertical axis is given in millions.
  
 \end_layout
@@ -12172,7 +12182,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="3" columns="5">
+<lyxtabular version="3" rows="4" columns="5">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
@@ -12268,6 +12278,53 @@ Default
 
 \begin_layout Plain Layout
 37,349,700
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Kernel modification
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30,760,320
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30,885,300
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30,947,460
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+32,909,300
 \end_layout
 
 \end_inset
