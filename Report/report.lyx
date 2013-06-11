@@ -11294,7 +11294,7 @@ reference "fig:fftw-stack-bias"
 \end_layout
 
 \begin_layout Subsection
-Eliminating Bias at Kernel Level
+Eliminating Bias at the Kernel Level
 \end_layout
 
 \begin_layout Standard
@@ -11383,10 +11383,6 @@ reference "fig:call-graph"
  it within the kernel itself.
  As the name suggests, this function actually calls the kernel twice.
  
-\end_layout
-
-\begin_layout Standard
-\noindent
 \begin_inset Float algorithm
 wide false
 sideways false
@@ -11486,11 +11482,7 @@ Modified
 apply_extra_iter
 \family default
 , aligning stack to a 4K boundary.
- The hidden function body makes two calls to the 
-\family typewriter
-n1fv_16
-\family default
- kernel.
+ The hidden function body makes two calls to the n1fv_16 kernel.
  Implementation is located in the file 
 \family typewriter
 dft/direct.c
@@ -11533,9 +11525,6 @@ reference "fig:fftw-modified"
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float figure
 wide false
 sideways false
@@ -11561,7 +11550,8 @@ name "fig:fftw-modified"
 
 \end_inset
 
-Performance after stack alignment fix is added to apply_extra_iter.
+Performance counter statistics after stack alignment fix is added to apply_extra
+_iter, almost all bias removed.
 \end_layout
 
 \end_inset
@@ -11571,12 +11561,8 @@ Performance after stack alignment fix is added to apply_extra_iter.
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Over two 4K periods, the modified version is much less sensitive to stack
- placement, removing almost all the bias from previously.
+We see that the modified version is much less sensitive to stack placement,
+ removing almost all the bias from previously.
  Table 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -11591,7 +11577,7 @@ reference "tab:fftw-kernel-fix-numbers"
 
 \begin_layout Standard
 \begin_inset Float table
-placement h
+placement b
 wide false
 sideways false
 status open
@@ -11601,13 +11587,13 @@ status open
 \begin_inset Tabular
 <lyxtabular version="3" rows="3" columns="5">
 <features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
-<cell alignment="center" valignment="top" usebox="none">
+<cell alignment="left" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11654,7 +11640,7 @@ Max
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11701,7 +11687,7 @@ Default version
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11765,7 +11751,9 @@ name "tab:fftw-kernel-fix-numbers"
 \end_inset
 
 Cycle count statistics over 512 runs, sampling uniformly over two 4 KiB
- periods
+ environment size periods.
+ Mean and maximum is improved with forced alignment, while the constant
+ overhead impacts average performance.
 \end_layout
 
 \end_inset
@@ -11794,11 +11782,13 @@ Evaluating the Worst Case Scenario
 \begin_layout Standard
 With address randomization disabled, both stack and heap locations will
  be fixed for all environment sizes.
+ This is exploited in the naive stack alignment fix we have outlined, which
+ only works when input and output buffers are close to 0x000.
  If however heap buffers happen to reside on the opposite end of a 4 KiB
- segment, both stack and heap segments will be close considering the last
- 12 address bits.
- By allocating another buffer of 7400B using regular malloc before calling
- fftw_malloc, the input and output buffers are pushed to 0x604
+ segment, both stack and heap addresses will be close considering the last
+ 12 bits.
+ By allocating another buffer of 7400 B using malloc before calling fftw_malloc,
+ the input and output arrays are pushed to 0x604
 \series bold
 da0
 \series default
@@ -11845,7 +11835,7 @@ name "fig:fftw-worstcase-4k"
 
 \end_inset
 
-Offsetting heap addresses to always overlap with fixed stack pointer
+Offsetting heap addresses to always overlap with fixed stack pointer.
 \end_layout
 
 \end_inset
@@ -11867,8 +11857,12 @@ high
 \begin_inset Quotes erd
 \end_inset
 
- end, there will always be aliasing.
- The effect is shown in Figure 
+ end, there will 
+\emph on
+always
+\emph default
+ be aliasing.
+ The effect of this change is shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:fftw-worstcase"
@@ -11876,8 +11870,8 @@ reference "fig:fftw-worstcase"
 \end_inset
 
 .
- As expected, a constant number of alias events are added across all environment
- sizes.
+ A constant number of alias events are added across all environment sizes,
+ resulting from the worst case memory alignment.
  
 \end_layout
 
@@ -11946,7 +11940,7 @@ ro
 
  close to the lower end of a 4 KiB range of address suffixes.
  A complete solution would require a function at least these three parameters
- to calculate the optimal stack offset.
+ to calculate the optimal stack offset:
 \begin_inset Formula 
 \[
 f\left(\text{input},\text{output},\text{stack position}\right)\rightarrow\text{offset}
@@ -11975,7 +11969,7 @@ reference "fig:fftw-worstcase-4k"
 \end_layout
 
 \begin_layout Subsection
-Eliminating Bias at User Level
+Eliminating Bias at the User Level
 \end_layout
 
 \begin_layout Standard
@@ -11985,8 +11979,8 @@ name "sub:fftw-user-level"
 
 \end_inset
 
-The main problem we faced when trying to do anything about aliasing within
- FFTW itself, was that too many dynamic instructions are added in the process.
+When trying to do anything about aliasing within FFTW itself, we found that
+ too many dynamic instructions are added in the process.
  The problem is of course that the stack correction is implemented inside
  the hot loop, where fftw_execute is called repeatedly.
  However, we can also align stack 
@@ -11994,7 +11988,7 @@ The main problem we faced when trying to do anything about aliasing within
 before
 \emph default
  the loop, adding only a negligible overhead.
- The relevant parts of our modified main function is shown in Listing 
+ The relevant parts of a modified main function is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:fftw-stackfix-main"
@@ -12140,13 +12134,13 @@ status open
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="5">
 <features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
-<cell alignment="center" valignment="top" usebox="none">
+<cell alignment="left" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12193,7 +12187,7 @@ Max
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12240,7 +12234,7 @@ Default
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12287,7 +12281,7 @@ Kernel modification
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12300,6 +12294,8 @@ User modification
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 30,350,120
 \end_layout
 
@@ -12309,6 +12305,8 @@ User modification
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 30,427,600
 \end_layout
 
@@ -12318,6 +12316,8 @@ User modification
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 30,425,240
 \end_layout
 
@@ -12327,6 +12327,8 @@ User modification
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
 30,585,470
 \end_layout
 
@@ -12352,7 +12354,8 @@ name "tab:fftw-stackfix-main"
 
 Cycle count statistics over 512 runs, sampling uniformly over two 4KiB stack
  position periods.
- Notice a significant improvement on average with stack alignment in main.
+ With stack alignment in main, the program performs equally well for all
+ environment sizes.
 \end_layout
 
 \end_inset
@@ -12377,13 +12380,9 @@ Bias in Other Kernels
 \end_layout
 
 \begin_layout Standard
-While we have only looked extensively at one particular kernel, FFTW consists
- of a quite large collection of automatically generated codelets.
- Other kernels can be invoked by specifying different values for 
-\begin_inset Formula $N$
-\end_inset
-
- in the test program.
+FFTW consists of a quite large collection of automatically generated codelets.
+ While we have only looked extensively at one particular kernel, similar
+ bias effects can be experienced for other plans and input sizes.
  We find that alias effects are apparent in all kernels we tried, a selection
  of them shown in Figure 
 \begin_inset CommandInset ref
@@ -12393,8 +12392,8 @@ reference "fig:fftw-kernels"
 \end_inset
 
 .
- Each kernel shows a different pattern, with clear bias towards some stack
- positions that performs noticeably better than others.
+ Each kernel shows a different pattern, with clear bias towards some environment
+ sizes (stack alignments) that performs noticeably better than others.
 \end_layout
 
 \begin_layout Standard
@@ -12430,8 +12429,8 @@ Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
 \begin_inset Formula $N=200{,}000$
 \end_inset
 
- iterations of the kernel, incrementing stack offset (horizontal axis) between
- each run, up to 4096 bytes.
+ iterations of the kernel, incrementing environment size (horizontal axis)
+ between each run, up to 4096 bytes.
  Vertical axis is given in millions.
  
 \end_layout
@@ -12457,23 +12456,25 @@ In this section we have shown how bias from environment size can affect
  collisions between stack and heap areas.
  There is clearly a potential for speedup by accounting for aliasing in
  some way, and we show how manually aligning stack can be a possible solution.
- 
-\end_layout
-
-\begin_layout Standard
-Requiring users of the library to fiddle with the stack before calling fftw_exec
-ute is not a satisfactory solution.
+ With the modification to kernel invocation, we were able to remove almost
+ all of the bias effects.
+ Unfortunately, our solution suffers from overhead of additional dynamic
+ instructions.
+ Having library users consider bias is shown to be feasible, and we prove
+ that there is at least a possibility of 2 % improvement on average for
+ the n1fv_16 kernel.
+ However, requiring users of the library to fiddle with the stack before
+ calling fftw_execute is not a satisfactory solution.
  A more reasonable approach would be to incorporate these ideas in the steps
  performed 
 \emph on
 prior
 \emph default
  to executing a plan.
- These are some of the possible approaches to consider for further work
- on bias in FFTW:
+ 
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
 Planning for Alias
 \end_layout
 
@@ -12529,14 +12530,14 @@ Unfortunately, the planner can not know the stack depth of which a user
  
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
 Allocating Alias-free
 \end_layout
 
 \begin_layout Standard
 FFTW comes with fftw_malloc, which is a wrapper around regular malloc with
  stronger alignment guarantees.
- The purpose of using this is to optimize for use with SIMD instructions.
+ The purpose of using this is to optimize for SIMD instructions.
  In cases where address conflicts between heap data can occur, extending
  fftw_malloc to avoid returning aliased heap segments would be a realistic
  solution.
@@ -12545,17 +12546,43 @@ FFTW comes with fftw_malloc, which is a wrapper around regular malloc with
  Looking into possible improvements here might be worthwhile.
 \end_layout
 
+\begin_layout Paragraph
+Compiler Code Generation
+\end_layout
+
+\begin_layout Standard
+Our attempts at aligning stack at the kernel level failed because of overhead
+ from adding inline assembly.
+ The compiler already does some stack alignment operations, which we more
+ or less discard by overwriting the stack pointer.
+ An alternative solution could be to give the responsibility to the compiler.
+ All the information necessary is available at compile time; the compiler
+ knows every instruction and memory access, and can in principle predict
+ where aliasing might occur.
+ The compiler could then implement some sort of stack alignment based on
+ considering both heap buffers and current stack pointer -- like the 
+\begin_inset Quotes eld
+\end_inset
+
+generic solution
+\begin_inset Quotes erd
+\end_inset
+
+ hinted to previously.
+ 
+\end_layout
+
 \begin_layout Subsubsection*
 Conclusions
 \end_layout
 
 \begin_layout Standard
 Despite being higly optimized and automatically tuned, kernels in FFTW still
- suffer from bias effects.
- The auto tuning mechanism is designed to deal with architectue specific
- intricacies like this, but accounting for stack is particularly difficult.
- Care must be taken to account for things like stack alignment and heap
- locations when calculating a plan.
+ suffers from bias effects.
+ The auto tuning mechanism is designed to deal with architecture specific
+ optimizations, but it fails to account for aliasing stack accesses.
+ Further work on address aliasing issues in FFTW could lead to real performance
+ improvements.
 \end_layout
 
 \begin_layout Subsubsection*
