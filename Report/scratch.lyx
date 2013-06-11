@@ -77,6 +77,20 @@ First Chapter
 \end_layout
 
 \begin_layout Standard
+The exact stack pointer at kernel invocation is difficult to observe without
+ introducing observer effects.
+\end_layout
+
+\begin_layout Standard
+An interesting observation is that stack addresses in the generated assembly
+ code are often specified relative to the stack pointer, as opposed to base
+ pointer.
+ This suggests that merely offsetting the %rsp register within the n1fv_16
+ kernel itself should impact the placement of local temporary variables.
+ 
+\end_layout
+
+\begin_layout Standard
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
 inline false
@@ -197,7 +211,6 @@ status open
 \end_layout
 
 \begin_layout Itemize
- 
 \begin_inset listings
 lstparams "basicstyle={\small\ttfamily}"
 inline false

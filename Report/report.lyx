@@ -10540,6 +10540,13 @@ reference "sec:BLAS"
  
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 FFTW
 \end_layout
@@ -10606,72 +10613,6 @@ key "Vuduc:2000:CodegenFFTW"
 .
  Provided that a speedup on average can be achieved, explicitly handling
  of context bias could be a realistic addition to FFTW.
-\end_layout
-
-\begin_layout Paragraph
-Installation and Configuration
-\end_layout
-
-\begin_layout Standard
-We used the latest version 3.3.3 of FFTW in all our tests, compiled from source
- and built as a shared library.
- For optimal performance on our machine, we explicitly enable support for
- SSE2 and AVX instructions.
- In addition, we set the 
-\begin_inset Quotes eld
-\end_inset
-
-arch
-\begin_inset Quotes erd
-\end_inset
-
- compiler flag to 
-\begin_inset Quotes eld
-\end_inset
-
-native
-\begin_inset Quotes erd
-\end_inset
-
-, allowing the GCC to specifically tune generated code to our architecture.
- The configure script is invoked with the following parameters:
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Setup and Methodology
-\end_layout
-
-\begin_layout Standard
-FFTW is a very comprehensive library with lots of functionality.
- Our approach will be to concentrate on smaller transform sizes, and identify
- specific examples where bias is easily measurable.
- We create a small C program with two parameters; the number of elements
- to transform, and the number of times to repeat the transform.
- This way, slight bias in smaller input sizes can be amplified.
- The API calls from Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:fft-alias-program"
-
-\end_inset
-
- are explained below.
 \end_layout
 
 \begin_layout Standard
@@ -10783,6 +10724,76 @@ C program snippet for computing the Fourier transform of N double precision
 
 \end_layout
 
+\begin_layout Paragraph
+Installation and Configuration
+\end_layout
+
+\begin_layout Standard
+We used the latest version 3.3.3 of FFTW in all our tests, compiled from source
+ and built as a shared library.
+ The configure script is invoked with the following parameters:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily},breaklines=true"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./configure CC="gcc -march=native" --enable-shared --enable-sse2 --enable-avx
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For optimal performance on our machine, we explicitly enable support for
+ SSE2 and AVX instructions.
+ In addition, we set the 
+\begin_inset Quotes eld
+\end_inset
+
+arch
+\begin_inset Quotes erd
+\end_inset
+
+ compiler flag to 
+\begin_inset Quotes eld
+\end_inset
+
+native
+\begin_inset Quotes erd
+\end_inset
+
+, allowing the GCC to specifically tune generated code to our architecture.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Setup and Methodology
+\end_layout
+
+\begin_layout Standard
+FFTW is a very comprehensive library with lots of functionality.
+ Our approach will be to concentrate on smaller transform sizes, and identify
+ specific examples where bias is easily measurable.
+ We create a small C program, shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:fft-alias-program"
+
+\end_inset
+
+, with two parameters; the number of elements to transform, and the number
+ of times to repeat the transform.
+ The iteration count is used to amplify any bias for smaller input sizes.
+ The API calls made in the example are explained below.
+\end_layout
+
 \begin_layout Description
 fftw_malloc A wrapper around the standard malloc, returning heap-allocated
  data.
@@ -10855,10 +10866,12 @@ reference "chap:Methodology"
 .
  Specifically looking for stack alignment bias, the most relevant performance
  metrics are cycle count and address aliasing (r0107:u).
- We use the automated test script to gather these metrics, with environment
- size varying over a span of 8192 bytes.
- This covers two 4K segments, which should generate patterns repeating twice
- in case of bias from address aliasing.
+ We use the automated test script to gather these metrics over increasing
+ environment size.
+ The program is run 512 times, adding 16 bytes to the environment between
+ each iteration.
+ This covers 8192 bytes of environment size, or two 4K segments, which should
+ generate patterns repeating twice in case of bias from address aliasing.
 \end_layout
 
 \begin_layout Subsection
@@ -10866,9 +10879,25 @@ Bias from Environment Size
 \end_layout
 
 \begin_layout Standard
-After attempting a couple of different configurations for transform size
- and iteration count, we find that computing transforms of size 16 have
- noticeable bias to environment size.
+After attempting several different configurations for transform size and
+ iteration count, we find that computing transforms of size 16 have noticeable
+ bias.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+ shows the relation between address alias and cycle count for repeated benchmark
+s under increasing environment size.
+ The effect is amplified by iterating 
+\begin_inset Formula $X=$
+\end_inset
+
+ 200,000 times, resulting in significant performance variations.
+ We choose study this particular case in depth, with the purpose of finding
+ out why aliasing occur and how it can be avoided.
  
 \end_layout
 
@@ -10920,43 +10949,29 @@ Performance counter measurements for computing complex DFT of size
 
 \end_layout
 
-\begin_layout Standard
-Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-stack-bias"
-
-\end_inset
-
- shows the relation between address alias and cycle count for repeated benchmark
-s under increasing environment size.
- The same program is run 512 times, adding 16 bytes to the environment between
- each execution.
- This covers two 4KiB segments of lower order virtual address bits for stack
- position.
- As suspected, we get a graph with the same pattern repeating twice.
- As shown by the cycle count, position of stack significantly impacts performanc
-e.
-\end_layout
-
 \begin_layout Subsubsection*
-Analysis of Bias Effects
+Analysis of Aliasing Effects
 \end_layout
 
 \begin_layout Standard
-An overview of what kernels are used to execute a plan can be found by calling
- fftw_print_plan.
- In our case, the plan reads 
+The first step in determining the cause of aliasing is to look at exactly
+ what code is executed.
+ An overview of which kernels are used to execute a plan can be found by
+ calling 
+\family typewriter
+fftw_print_plan
+\family default
+.
+ In our case, the plan consists of a single kernel called 
 \begin_inset Quotes eld
 \end_inset
 
-(dft-direct-16 "n1fv_16_avx")
+n1fv_16
 \begin_inset Quotes erd
 \end_inset
 
-, specifying that the transform is computed directly by the n1fv_16 kernel,
- compiled with AVX instructions enabled.
- We use Valgrind 
+, compiled with AVX instructions enabled.
+ Valgrind 
 \begin_inset Foot
 status open
 
@@ -10973,9 +10988,15 @@ target "http://valgrind.org/"
 
 \end_inset
 
- to analyze the call graph from fftw_execute, showing a chain of calls eventuall
-y leading to the kernel invocation.
- 
+ is used to analyze the call graph from fftw_execute, shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:call-graph"
+
+\end_inset
+
+.
+ There is a chain of calls, eventually leading to the actual kernel invocation.
 \end_layout
 
 \begin_layout Standard
@@ -10999,6 +11020,12 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:call-graph"
+
+\end_inset
+
 Call graph showing the actions taken after calling fftw_execute for the
  16 element transform.
 \end_layout
@@ -11030,7 +11057,24 @@ ns on Ivy Bridge.
 \end_inset
 
 .
- 
+ The function signature gives an idea of how the kernel works.
+ There are 9 parameters, where the most interesting are input buffer (
+\begin_inset Quotes eld
+\end_inset
+
+ri
+\begin_inset Quotes erd
+\end_inset
+
+) and output buffer (
+\begin_inset Quotes eld
+\end_inset
+
+ro
+\begin_inset Quotes erd
+\end_inset
+
+).
 \end_layout
 
 \begin_layout Standard
@@ -11051,14 +11095,9 @@ void n1fv_16(const R *ri, const R *ii, R *ro, R *io, stride is, stride os,
 \end_layout
 
 \begin_layout Standard
-Conflicting memory accesses within 
-\family typewriter
-n1fv_16
-\family default
- are causing bias effects.
+Conflicting memory accesses within this function are causing bias effects.
  Looking at the generated assembly, we find three areas of memory whose
- address suffixes can potentially overlap.
- 
+ address suffixes can potentially overlap: 
 \end_layout
 
 \begin_layout Itemize
@@ -11066,11 +11105,7 @@ Heap allocated input and output buffers, parameters
 \begin_inset Quotes eld
 \end_inset
 
-
-\family typewriter
 ri
-\family default
-
 \begin_inset Quotes erd
 \end_inset
 
@@ -11078,96 +11113,41 @@ ri
 \begin_inset Quotes eld
 \end_inset
 
-
-\family typewriter
 ro
-\family default
-
 \begin_inset Quotes erd
 \end_inset
 
  respectively.
- These are pointers previously returned by calls to 
-\family typewriter
-fftw_malloc
-\family default
-, addresses in general unpredictable by the kernel, except for some alignment
- constraints.
+ These are pointers previously returned by calls to fftw_malloc, addresses
+ in general unpredictable by the kernel, except for some alignment constraints.
 \end_layout
 
 \begin_layout Itemize
 Stack allocated function parameters and local automatic variables.
- Although the six first arguments reside in registers 
-\family typewriter
-%rdi
-\family default
-, 
-\family typewriter
-%rsi
-\family default
-, 
-\family typewriter
-%rdx
-\family default
-, 
-\family typewriter
-%rcx
-\family default
-, 
-\family typewriter
-%r8
-\family default
- and 
-\family typewriter
-%r9
-\family default
-, the remaining three are pushed on stack.
+ Compiled with optimization, the six first arguments will be passed in registers.
+ The remaining three are pushed on stack.
  
 \end_layout
 
 \begin_layout Itemize
 Statically allocated constants in memory.
  Three floating point constants are statically built into the object file,
- their positions in virtual address space will be determined at runtime
- by the dynamic linker.
+ and their locations in memory are determined at runtime by the dynamic
+ linker.
  
 \end_layout
 
-\begin_layout Subsubsection*
-Kernel Level Adjustment: A Naive Solution
-\end_layout
-
 \begin_layout Standard
-Knowing address aliasing being the cause of bias, we can try to modify FFTW
- to detect and possibly avoid situations with abnormally high cycle count
- from Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-stack-bias"
-
-\end_inset
-
-.
- Under synthetic testing with address randomization (ASLR) disabled, all
- parameters are fixed and deterministic.
+The static constants are loaded initially, using only a few load instructions.
+ Because most memory access instructions are either to temporary stack variables
+ or to heap, it is a fair assumption that address alias happens when stack
+ accesses collide with heap addresses.
+ Under synthetic testing with address randomization disabled, all parameters
+ are fixed and deterministic.
  For our particular test, the heap allocated input and output buffers always
- reside in virtual addresses 
-\family typewriter
-0x602040
-\family default
- and 
-\family typewriter
-0x601c0
-\family default
- respectively -- on the low end of a 4K segment of suffixes between 
-\family typewriter
-0x000
-\family default
- and 
-\family typewriter
-0xfff
-\family default
-.
+ reside in virtual addresses 0x602040 and 0x601c0 respectively -- on the
+ low end of a 4K segment of suffixes between 0x000 and 0xfff.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -11191,16 +11171,18 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:stack-wild"
+
+\end_inset
+
 Position of stack can be aligned anywhere within the space of virtual addresses
  
 \begin_inset Formula $\bmod$
 \end_inset
 
- 
-\family typewriter
-0x1000
-\family default
-.
+ 0x1000.
  With ASLR disabled, the last 12 bits of 
 \family typewriter
 ri
@@ -11209,15 +11191,7 @@ ri
 \family typewriter
 ro
 \family default
- are 
-\family typewriter
-0x040
-\family default
- and 
-\family typewriter
-0x1c0
-\family default
- respectively.
+ are 0x040 and 0x1c0 respectively.
 \end_layout
 
 \end_inset
@@ -11231,18 +11205,23 @@ ro
 \end_layout
 
 \begin_layout Standard
-The stack pointer at kernel invocation is difficult to observe without introduci
-ng observer effects.
- However, it is a fair assumption that address alias happens when stack
- accesses collide with heap addresses, because most memory access instructions
- are either to temporary stack variables or to heap.
- The static constants are loaded initially, using only a few load instructions.
- 
-\end_layout
+As illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:stack-wild"
 
-\begin_layout Standard
-The position of stack is unknown to the kernel at runtime.
- It can execute with a 
+\end_inset
+
+, the potential for overlap between stack and heap accesses will depend
+ on where the stack is aligned, and the position of stack will vary with
+ environment size.
+ Alias effects likely occur when addresses of stack variables overlap with
+ heap accesses.
+ The program becomes 
+\emph on
+biased
+\emph default
+ to certain environment sizes, as it can execute with a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -11266,21 +11245,36 @@ reference "fig:fftw-stack-bias"
 \end_inset
 
 .
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Adjusting Stack to Avoid Aliasing
+\end_layout
+
+\begin_layout Standard
+Assuming aliasing occurs from conflicts between stack and heap, bias can
+ be eliminated by altering addresses of memory accesses to either of these
+ areas.
  Once 
 \family typewriter
 fftw_execute
 \family default
- is called, the only thing we can control is placement of stack allocated
+ is called, the only thing we can control is the placement of stack allocated
  variables.
- An interesting observation is that stack addresses in the generated assembly
- code are often specified relative to the stack pointer, as opposed to base
- pointer.
- This suggests that merely offsetting the rsp register within the 
-\family typewriter
-n1fv_16
-\family default
- kernel itself should impact the placement of local temporary variables.
- 
+ Our solution idea is to programmatically adjust the stack in such a way
+ that accesses do not collide (alias) with heap memory.
+ With heap allocated input and output buffers having address suffixes close
+ to 0x000, a reasonable placement of stack is in the other side of the spectrum,
+ close to 0xfff and expanding towards lower addresses.
+ The concept is illustrated in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:naive-fix"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -11304,22 +11298,15 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:naive-fix"
+
+\end_inset
+
 Collisions can be avoided by reseting the stack pointer to an address that
- does not conflict with the heap allocated pointers.
- With heap allocated ri and ro occupying 
-\begin_inset Quotes eld
-\end_inset
-
-low
-\begin_inset Quotes erd
-\end_inset
-
- addresses, a reasonable placement of stack is in the other side of the
- spectrum, close to 
-\family typewriter
-0xfff
-\family default
- and expanding towards lower addresses.
+ does not conflict with the heap allocated areas.
+ 
 \end_layout
 
 \end_inset
@@ -11333,9 +11320,34 @@ low
 \end_layout
 
 \begin_layout Standard
-Looking at the call graph again, we have several options for where to programmat
-ically align stack on a suitable address.
- In the end, we found that aligning in 
+Looking at the call graph from Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:call-graph"
+
+\end_inset
+
+ again, we have several options for where to programmatically align stack
+ on a suitable address.
+ In order to be transparent to the user, the adjustments must happen in
+ either 
+\family typewriter
+fftw_execute
+\family default
+, 
+\family typewriter
+fftw_dft_solve
+\family default
+, 
+\family typewriter
+apply_extra_iter
+\family default
+ or 
+\family typewriter
+n1fv_16
+\family default
+.
+ In the end, we found that modifying 
 \family typewriter
 apply_extra_iter
 \family default
@@ -11348,7 +11360,6 @@ apply_extra_iter
 \begin_layout Standard
 \noindent
 \begin_inset Float algorithm
-placement H
 wide false
 sideways false
 status open
@@ -11470,24 +11481,22 @@ dft/direct.c
 \end_layout
 
 \begin_layout Standard
-The 
-\family typewriter
-andq
-\family default
- instruction from Listing 
+The modified function is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:apply-extra-iter"
 
 \end_inset
 
- will zero out the last 12 bits of the 
+.
+ The 
 \family typewriter
-%rsp
+andq
 \family default
- register, effectively subtracting some number between 0 and 4096.
- Recall that the stack grows downwards, thus subtracting any (reasonably
- small) amount will not overwrite other data.
+ instruction from will zero out the last 12 bits of the stack pointer (%rsp
+ register), effectively subtracting some number between 0 and 4096.
+ The stack grows downwards, thus subtracting any (reasonably small) amount
+ will not overwrite other data.
  We run the same benchmark again, results shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -11747,8 +11756,8 @@ Even though we are able to remove most of the alias effects, performance
  did not improve as much as we had hoped.
  The constant overhead added by inserting the extra instructions in apply_extra_
 iter consumes any aliasing improvement.
- About 1 million additional dynamic instructions are added to our example
- in the modified version, an increase of 1.3 %.
+ About 1 million dynamic instructions are added to our example in the modified
+ version, an increase of 1.3 %.
 \end_layout
 
 \begin_layout Paragraph
@@ -11756,13 +11765,11 @@ Evaluating the Worst Case Scenario
 \end_layout
 
 \begin_layout Standard
-With the static alignment in place, there will be a worst case scenario
- where the modified version will fail.
- With address randomization disabled, both stack and heap locations will
+With address randomization disabled, both stack and heap locations will
  be fixed for all environment sizes.
- If heap buffers happen to reside on the opposite end of a 4 KiB segment,
- both stack and heap segments will be close considering the last 12 address
- bits.
+ If however heap buffers happen to reside on the opposite end of a 4 KiB
+ segment, both stack and heap segments will be close considering the last
+ 12 address bits.
  By allocating another buffer of 7400B using regular malloc before calling
  fftw_malloc, the input and output buffers are pushed to 0x604
 \series bold
@@ -11888,7 +11895,7 @@ Bad heap alignment combined with static stack alignment results in aliasing
 
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
 A Generic Solution
 \end_layout
 
@@ -11941,13 +11948,6 @@ ri
  kernel.
  Using inline assembly, the cost of additional dynamic instructions will
  quickly cancel out any speedup we might get.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsection
