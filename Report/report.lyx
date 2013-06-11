@@ -18,6 +18,7 @@
 \definecolor{deepred}{rgb}{0.6,0,0}
 \definecolor{deepgreen}{rgb}{0.25,0.5,0.35}
 \definecolor{javared}{rgb}{0.6,0,0} % for strings
+\definecolor{commentgray}{rgb}{0.4,0.4,0.4} % for comments
 \end_preamble
 \options openright
 \use_default_options true
@@ -10522,8 +10523,8 @@ reference "sec:FFTW"
 
 \end_inset
 
- we will look at FFTW, which isa widely used library for computing Fourier
- transforms.
+ we will look at FFTW, which is a widely used library for computing discrete
+ Fourier transforms.
  We show that for smaller input sizes, there is potential for bias towards
  certain stack positions.
  In Section 
@@ -10533,10 +10534,11 @@ reference "sec:BLAS"
 
 \end_inset
 
- we look at ATLAS, an implementation of the BLAS API for linear algebra
- routines.
+ we look at ATLAS, which is an implementation of the BLAS API for linear
+ algebra routines.
  We find that matrix-vector multiplication is sensitive to address aliasing,
- and show how to improve performance on average by padding data.
+ and show how to significantly improve worst case performance by padding
+ data.
  
 \end_layout
 
@@ -11966,6 +11968,13 @@ reference "fig:fftw-worstcase-4k"
  kernel.
  Using inline assembly, the cost of additional dynamic instructions will
  quickly cancel out any speedup we might get.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -14668,7 +14677,7 @@ reference "chap:SourcesOfBias"
  The impact of address aliasing in matrix-vector multiplication proved to
  be huge, even for an automatically tuned ATLAS installation.
  By manually adjusting alignment of matrix and vector buffers, speedups
- of over 30 % can be achieved for invocations of dgemv.
+ of more than 31 % can be achieved for invocations of dgemv.
  
 \end_layout
 
@@ -14911,8 +14920,8 @@ There is probably also opportunities for writing code that is less sensitive
  data in a different order depending on heap addresses.
  By explicitly checking the addresses of input parameters, different code
  paths can be chosen to avoid aliasing.
- With potential for over 30 % performance improvement in the worst case,
- the added cost and complexity is probably acceptable.
+ With potential for more than 31 % performance improvement in the worst
+ case, the added cost and complexity is probably acceptable.
  
 \end_layout
 
@@ -18223,7 +18232,7 @@ stat.csv
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\footnotesize\ttfamily},breaklines=true,commentstyle={\color{deepgreen}},emphstyle={\ttb\color{deepred}},frame=tb,keywordstyle={\ttb\color{deepblue}},language=Python,showstringspaces=false,stringstyle={\color{javared}}"
+lstparams "basicstyle={\footnotesize\ttfamily},breaklines=true,commentstyle={\color{commentgray}},emphstyle={\ttb\color{deepred}},frame=tb,keywordstyle={\ttb\color{deepblue}},language=Python,showstringspaces=false,stringstyle={\color{javared}}"
 inline false
 status open
 
@@ -18420,6 +18429,10 @@ def benchmark(events, args):
 \begin_layout Plain Layout
 
         argument += args.argument_increment;
+\end_layout
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \begin_layout Plain Layout
