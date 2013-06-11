@@ -10540,13 +10540,6 @@ reference "sec:BLAS"
  
 \end_layout
 
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
 \begin_layout Section
 FFTW
 \end_layout
@@ -10729,8 +10722,8 @@ Installation and Configuration
 \end_layout
 
 \begin_layout Standard
-We used the latest version 3.3.3 of FFTW in all our tests, compiled from source
- and built as a shared library.
+We used the currently most recent version 3.3.3 of FFTW in all our tests,
+ compiled from source and built as a shared library.
  The configure script is invoked with the following parameters:
 \end_layout
 
@@ -10814,8 +10807,22 @@ plan
 \end_inset
 
 .
- This step encapsulates the auto-tuning part of FFTW, as plans can be constructe
-d based on actual measurements and benchmarks done on the current machine.
+ The plan is a recipe for how to decompose the work into several kernels.
+ A 
+\emph on
+kernel
+\emph default
+ is a function that can compute the Fourier transform for one particular
+ input size.
+ Kernel implementations are automatically generated C programs, which are
+ also called 
+\emph on
+codelets
+\emph default
+.
+ The planning step encapsulates the auto-tuning part of FFTW, as plans can
+ be constructed based on actual measurements and benchmarks done on the
+ current machine.
  Knowledge of well performing plans can be stored as 
 \emph on
 wisdom
@@ -10842,19 +10849,28 @@ out
 \end_inset
 
 .
+ 
 \end_layout
 
 \begin_layout Standard
-This setup is specifically designed to identify sensitivity to changes in
+This setup is used to identify sensitivity to, or bias from, changes in
  
 \emph on
 environment size
 \emph default
 .
- The assumption is that interactions with stack allocated variables from
- calling fftw_execute can potentially introduce bias.
- We search through different configurations manually, by specifying different
- values for iteration count and transform size.
+ The assumption is that stack alignment when calling fftw_execute can potentiall
+y introduce bias.
+ This program resembles the example we studied in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+, where address aliasing caused bias for certain environment sizes.
+ Specifically looking for a similar effect here, the most relevant performance
+ metrics are cycle count and address aliasing (r0107:u).
  For all our experiments, we use the same machine and methodology as outlined
  in Chapter 
 \begin_inset CommandInset ref
@@ -10864,45 +10880,11 @@ reference "chap:Methodology"
 \end_inset
 
 .
- Specifically looking for stack alignment bias, the most relevant performance
- metrics are cycle count and address aliasing (r0107:u).
- We use the automated test script to gather these metrics over increasing
- environment size.
- The program is run 512 times, adding 16 bytes to the environment between
- each iteration.
- This covers 8192 bytes of environment size, or two 4K segments, which should
- generate patterns repeating twice in case of bias from address aliasing.
-\end_layout
-
-\begin_layout Subsection
-Bias from Environment Size
-\end_layout
-
-\begin_layout Standard
-After attempting several different configurations for transform size and
- iteration count, we find that computing transforms of size 16 have noticeable
- bias.
- Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-stack-bias"
-
-\end_inset
-
- shows the relation between address alias and cycle count for repeated benchmark
-s under increasing environment size.
- The effect is amplified by iterating 
-\begin_inset Formula $X=$
-\end_inset
-
- 200,000 times, resulting in significant performance variations.
- We choose study this particular case in depth, with the purpose of finding
- out why aliasing occur and how it can be avoided.
- 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
+placement h
 wide false
 sideways false
 status open
@@ -10936,7 +10918,8 @@ Performance counter measurements for computing complex DFT of size
 \end_inset
 
  times.
- Address aliasing under some stack offsets negatively impacts cycle count.
+ Address aliasing under some environment sizes negatively impacts cycle
+ count.
 \end_layout
 
 \end_inset
@@ -10949,20 +10932,73 @@ Performance counter measurements for computing complex DFT of size
 
 \end_layout
 
-\begin_layout Subsubsection*
+\begin_layout Paragraph
+Environment Bias in Small Transforms
+\end_layout
+
+\begin_layout Standard
+We search through configurations manually, by specifying different values
+ for iteration count and transform size.
+ We find that computing transforms of size 16 have noticeable bias.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-stack-bias"
+
+\end_inset
+
+ shows the relation between address alias and cycle count for repeated benchmark
+s under increasing environment size.
+ The effect is amplified by iterating 
+\begin_inset Formula $X=$
+\end_inset
+
+ 200,000 times, resulting in significant performance variations.
+ 
+\end_layout
+
+\begin_layout Standard
+We choose study this particular case in depth, with the purpose of finding
+ out why aliasing occur and how it can be avoided.
+ The call graph and generated assembly code is analyzed in detail in Section
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:fftw-analysis"
+
+\end_inset
+
+, to identify where aliasing occur.
+ In sections [] and [] we discuss two possible optimizations that can be
+ made to avoid aliasing.
+ The first describes possible improvements to the implementation of FFTW
+ itself, while the second option is to account for aliasing at the user
+ level.
+ Bias is not exclusively a problem for this particular input size, and we
+ show how similar patterns also occur in other scenarios.
+ 
+\end_layout
+
+\begin_layout Subsection
 Analysis of Aliasing Effects
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:fftw-analysis"
+
+\end_inset
+
 The first step in determining the cause of aliasing is to look at exactly
  what code is executed.
  An overview of which kernels are used to execute a plan can be found by
- calling 
-\family typewriter
-fftw_print_plan
-\family default
-.
- In our case, the plan consists of a single kernel called 
+ calling fftw_print_plan.
+ In the case of input size 
+\begin_inset Formula $N=16$
+\end_inset
+
+, the plan consists of a single kernel called 
 \begin_inset Quotes eld
 \end_inset
 
@@ -11177,12 +11213,8 @@ name "fig:stack-wild"
 
 \end_inset
 
-Position of stack can be aligned anywhere within the space of virtual addresses
- 
-\begin_inset Formula $\bmod$
-\end_inset
-
- 0x1000.
+Position of stack (%rsp register) can be aligned anywhere within the space
+ of virtual addresses modulo 0x1000.
  With ASLR disabled, the last 12 bits of 
 \family typewriter
 ri
@@ -11248,20 +11280,16 @@ reference "fig:fftw-stack-bias"
  
 \end_layout
 
-\begin_layout Subsubsection*
-Adjusting Stack to Avoid Aliasing
+\begin_layout Subsection
+Eliminating Bias at Kernel Level
 \end_layout
 
 \begin_layout Standard
 Assuming aliasing occurs from conflicts between stack and heap, bias can
  be eliminated by altering addresses of memory accesses to either of these
  areas.
- Once 
-\family typewriter
-fftw_execute
-\family default
- is called, the only thing we can control is the placement of stack allocated
- variables.
+ Once fftw_execute is called, the only thing we can control is the placement
+ of stack allocated variables.
  Our solution idea is to programmatically adjust the stack in such a way
  that accesses do not collide (alias) with heap memory.
  With heap allocated input and output buffers having address suffixes close
@@ -11330,28 +11358,9 @@ reference "fig:call-graph"
  again, we have several options for where to programmatically align stack
  on a suitable address.
  In order to be transparent to the user, the adjustments must happen in
- either 
-\family typewriter
-fftw_execute
-\family default
-, 
-\family typewriter
-fftw_dft_solve
-\family default
-, 
-\family typewriter
-apply_extra_iter
-\family default
- or 
-\family typewriter
-n1fv_16
-\family default
-.
- In the end, we found that modifying 
-\family typewriter
-apply_extra_iter
-\family default
- made the most sense, and also provided a slight gain compared to doing
+ either fftw_execute, fftw_dft_solve, apply_extra_iter or n1fv_16.
+ In the end, we found that modifying apply_extra_iter made the most sense,
+ and also provided a slight improvement to performance compared to doing
  it within the kernel itself.
  As the name suggests, this function actually calls the kernel twice.
  
@@ -11509,7 +11518,6 @@ reference "fig:fftw-modified"
 
 \begin_layout Standard
 \begin_inset Float figure
-placement h
 wide false
 sideways false
 status open
@@ -11760,7 +11768,7 @@ iter consumes any aliasing improvement.
  version, an increase of 1.3 %.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 Evaluating the Worst Case Scenario
 \end_layout
 
@@ -11856,7 +11864,6 @@ reference "fig:fftw-worstcase"
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status open
@@ -11881,8 +11888,9 @@ name "fig:fftw-worstcase"
 
 \end_inset
 
-Bad heap alignment combined with static stack alignment results in aliasing
- consistently across all environment sizes
+Worst case scenario when resetting stack pointer to 0x000.
+ Overlap with heap alignment results in aliasing consistently across all
+ environment sizes.
 \end_layout
 
 \end_inset
@@ -11895,7 +11903,7 @@ Bad heap alignment combined with static stack alignment results in aliasing
 
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection*
 A Generic Solution
 \end_layout
 
@@ -11938,11 +11946,8 @@ reference "fig:fftw-worstcase-4k"
 
 \end_inset
 
- would be to align stack to start at 
-\family typewriter
-ri
-\family default
-, no longer overlapping any heap segments.
+ would be to align stack to start at input pointer, no longer overlapping
+ any heap segments.
  However, given the somewhat discouraging results from our simple static
  fix, we did not attempt to implement a function like this for the n1fv_16
  kernel.
@@ -11951,88 +11956,14 @@ ri
 \end_layout
 
 \begin_layout Subsection
-Bias in Other Kernels
-\end_layout
-
-\begin_layout Standard
-While we have only looked extensively at one particular kernel, FFTW consists
- of a quite large collection of automatically generated codelets.
- Other kernels can be invoked by specifying different values for 
-\begin_inset Formula $N$
-\end_inset
-
- in the test program.
- We find that alias effects are apparent in all kernels we tried, a selection
- of them shown in Figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:fftw-kernels"
-
-\end_inset
-
-.
- Each kernel shows a different pattern, with clear bias towards some stack
- positions that performs noticeably better than others.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename Img/fft/kernels.eps
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:fftw-kernels"
-
-\end_inset
-
-Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
- element complex DFTs respectively.
- Plot shows 
-\begin_inset Formula $N=200{,}000$
-\end_inset
-
- iterations of the kernel, incrementing stack offset (horizontal axis) between
- each run, up to 4096 bytes.
- Vertical axis is given in millions.
- 
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Ways to Account for Address Alias
+Eliminating Bias at User Level
 \end_layout
 
 \begin_layout Standard
 The main problem we faced when trying to do anything about aliasing within
  FFTW itself, was that too many dynamic instructions are added in the process.
- The problem is of course that the hack is implemented inside the hot loop,
- where fftw_execute is called repeatedly.
+ The problem is of course that the stack correction is implemented inside
+ the hot loop, where fftw_execute is called repeatedly.
  However, we can also align stack 
 \emph on
 before
@@ -12169,7 +12100,7 @@ reference "tab:fftw-stackfix-main"
 \end_inset
 
 , the average cycle count is reduced from 31,051,690 to 30,425,240, a speedup
- of 1.02x.
+ of 2 %.
 \end_layout
 
 \begin_layout Standard
@@ -12335,7 +12266,7 @@ Kernel modification
 \begin_inset Text
 
 \begin_layout Plain Layout
-Modified main
+User modification
 \end_layout
 
 \end_inset
@@ -12410,17 +12341,111 @@ Cycle count statistics over 512 runs, sampling uniformly over two 4KiB stack
 \end_layout
 
 \begin_layout Standard
-There is clearly a potential for speedup of FFTW kernels by accounting for
- aliasing in some way.
- However, requiring users of the library to fiddle with the stack before
- calling fftw_execute is not a satisfactory solution.
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bias in Other Kernels
+\end_layout
+
+\begin_layout Standard
+While we have only looked extensively at one particular kernel, FFTW consists
+ of a quite large collection of automatically generated codelets.
+ Other kernels can be invoked by specifying different values for 
+\begin_inset Formula $N$
+\end_inset
+
+ in the test program.
+ We find that alias effects are apparent in all kernels we tried, a selection
+ of them shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:fftw-kernels"
+
+\end_inset
+
+.
+ Each kernel shows a different pattern, with clear bias towards some stack
+ positions that performs noticeably better than others.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Img/fft/kernels.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:fftw-kernels"
+
+\end_inset
+
+Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
+ element complex DFTs respectively.
+ Plot shows 
+\begin_inset Formula $N=200{,}000$
+\end_inset
+
+ iterations of the kernel, incrementing stack offset (horizontal axis) between
+ each run, up to 4096 bytes.
+ Vertical axis is given in millions.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Summary
+\end_layout
+
+\begin_layout Standard
+In this section we have shown how bias from environment size can affect
+ small kernels in FFTW.
+ The n1fv_16 kernel was studied in detail, showing how aliasing occur from
+ collisions between stack and heap areas.
+ There is clearly a potential for speedup by accounting for aliasing in
+ some way, and we show how manually aligning stack can be a possible solution.
+ 
+\end_layout
+
+\begin_layout Standard
+Requiring users of the library to fiddle with the stack before calling fftw_exec
+ute is not a satisfactory solution.
  A more reasonable approach would be to incorporate these ideas in the steps
  performed 
 \emph on
 prior
 \emph default
  to executing a plan.
- 
+ These are some of the possible approaches to consider for further work
+ on bias in FFTW:
 \end_layout
 
 \begin_layout Subsubsection*
@@ -12428,8 +12453,10 @@ Planning for Alias
 \end_layout
 
 \begin_layout Standard
-A more realistic solution is to give this responsibility to the planner.
- Note that the heap addresses are already required when computing a plan.
+A realistic solution for handling bias is to give this responsibility to
+ the planner.
+ Note that the heap addresses of input and output are already required when
+ computing a plan.
 \end_layout
 
 \begin_layout Standard
