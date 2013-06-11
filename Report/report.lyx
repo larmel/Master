@@ -14526,18 +14526,32 @@ Discussion
 We briefly looked at potential bias effects in linear algebra routines,
  and found that matrix-vector multiplication in ATLAS suffered from alias
  effects.
- Close alignment within a 4K segment of addresses can have a significant
+ Close alignment within a 4K segment of address suffixes can have a significant
  performance penalty, with more than 31 % difference between the worst and
  best case.
- This result is 
+ It becomes 
+\emph on
+necessary
+\emph default
+ to consider effects of address aliasing when optimizing programs that rely
+ on ATLAS' implementation of dgemv.
+ 
 \end_layout
 
 \begin_layout Standard
-Users of BLAS packages are probably more willing to invest in hand optimizing
- hot spots where aliasing might occur.
- It is also not unlikely that one or more matrix-vector operations are part
- of a loop, which can .
- Bias from address alias will probably be worth considering in some cases.
+The extent of aliasing issues within other function in ATLAS, or among other
+ BLAS implementations, is still an open question.
+ Because of time limitations, we were not able to investigate other potential
+ aliasing cases.
+ However, it seems very 
+\emph on
+likely
+\emph default
+ that similar problems are prevailent for linear algebra implementations
+ in general.
+ There is probably a huge potential for speedup in many BLAS implementations
+ by actively avoiding bad address alignment.
+ Our results should motivate further work to address these issues.
  
 \end_layout
 
