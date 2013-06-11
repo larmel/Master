@@ -12352,8 +12352,8 @@ name "tab:fftw-stackfix-main"
 
 \end_inset
 
-Cycle count statistics over 512 runs, sampling uniformly over two 4KiB stack
- position periods.
+Cycle count statistics over 512 runs, sampling uniformly over two 4KiB environme
+nt size periods.
  With stack alignment in main, the program performs equally well for all
  environment sizes.
 \end_layout
@@ -12593,7 +12593,7 @@ Despite being higly optimized and automatically tuned, kernels in FFTW still
 \end_layout
 
 \begin_layout Section
-BLAS
+ATLAS
 \end_layout
 
 \begin_layout Standard
@@ -12603,6 +12603,35 @@ name "sec:BLAS"
 
 \end_inset
 
+For our second case study, we will look at alias effects in ATLAS
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Automatically Tuned Linear Algebra Software (ATLAS), 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://math-atlas.sourceforge.net/"
+target "http://math-atlas.sourceforge.net/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ (Automatically Tuned Linear Algebra Software).
+ ATLAS is an implementation of the BLAS API for linear algebra routines,
+ and similarly to FFTW uses automatic tuning to optimize for the underlying
+ hardware.
+\end_layout
+
+\begin_layout Paragraph
+BLAS
+\end_layout
+
+\begin_layout Standard
 Basic Linear Algebra Subroutines (BLAS), is the de facto standard API for
  high performance linear algebra routines 
 \begin_inset Foot
@@ -12639,7 +12668,11 @@ Level
 \begin_inset space ~
 \end_inset
 
-2 Matrix-vector operations
+2 Matrix-vector operations, such as 
+\family typewriter
+gemv
+\family default
+ for general matrix-vector multiplication.
 \end_layout
 
 \begin_layout Description
@@ -12651,14 +12684,15 @@ Level
 \family typewriter
 gemm
 \family default
- matrix multiplication.
+ routine for general matrix-matrix multiplication.
  
 \end_layout
 
 \begin_layout Standard
-Many highly optimized implementations of BLAS exists.
- We will look at ATLAS, which similar to FFTW uses automatic tuning to optimize
- for the underlying hardware 
+Many highly optimized implementations of BLAS exists, ATLAS being a widely
+ used and open source alternative.
+ One of the key features of ATLAS is that it uses automatic tuning to optimize
+ for cache efficiency 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Whaley:2000:ATLAS"
@@ -12669,10 +12703,68 @@ key "Whaley:2000:ATLAS"
  
 \end_layout
 
+\begin_layout Paragraph
+Installation and Configuration
+\end_layout
+
+\begin_layout Standard
+We use the currently latest version 3.10.1 of ATLAS, built as a shared library
+ from source.
+ The automatic tuning happens automatically during the build process.
+ A series of test programs are run to determine cache edges and other properties
+ of the hardware, which in turn affects the resulting binary.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Methodology
+\end_layout
+
+\begin_layout Standard
+The experimental setup and methodology described in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Methodology"
+
+\end_inset
+
+ is applied.
+ Again, we will concentrate on cycle count and address alias (r0107:u) performan
+ce metrics.
+ Carefully monitoring cache is particularly important in this case study,
+ as BLAS performance heavily relies on cache efficiency.
+ Relevant performance statistics for cache hit ratios will be considered
+ to rule out cache as the cause of any bias effects.
+\end_layout
+
+\begin_layout Paragraph
+Potential for Bias
+\end_layout
+
+\begin_layout Standard
+Within a full BLAS implementation there are three levels of functionality,
+ each containing a plethora of different functionality.
+ Looking for potential bias effects, we have to choose somewhere to start.
+ The idea is to reproduce similar scenarios to what we saw in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:heap-address-aliasing"
+
+\end_inset
+
+, where aliasing was caused by linear accesses to pairs of aligned heap
+ allocated data.
+ Functions operating on vectors, from BLAS Level 1 or 2, are most likely
+ to have potential for similar characteristics.
+ Level 3 matrix operations will have more write operations and less linear
+ data access.
+ In the following sections we will study aliasing in the Level 2 function
+ gemv specifically, which computes matrix-vector multiplication.
+ 
+\end_layout
+
 \begin_layout Subsection
-Address Aliasing in 
-\family typewriter
-cblas_dgemv
+Address Aliasing in Matrix-Vector Multiplication
 \end_layout
 
 \begin_layout Standard
@@ -12784,438 +12876,13 @@ reference "alg:blas-gemv"
 CblasColMajor
 \family default
 , meaning we impose a column major ordering of the data.
- The prefix indicates data type, in this case d for double.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily},breaklines=true,language=C"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-cblas_dgemv(CblasColMajor, CblasNoTrans, M, N, alpha, A, M, x, 1, beta,
- y, 1);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We find that ATLAS is vulnerable to aliasing in matrix-vector multiplication
- with column-major ordering.
- For a simple program with 
-\begin_inset Formula $N=M=8192$
-\end_inset
-
-, performance varies quite significantly with different heap addresses of
- 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
-.
- As might be suspected, the worst case seems to be when all memory buffers
- align closely on the same 12 bit suffix.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="4" columns="6">
-<features booktabs="true" tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0pt">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-&A
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-&x
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-&y
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Cycles (cycles:u)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Alias (r0107:u)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-(a)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0x2aaaac292
-\family default
-\series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
-010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x607
-\series bold
-010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x617
-\series bold
-020
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-195,155,171
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-34,095,566
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-(b)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0x2aaaac292
-\family default
-\series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
-010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x607
-\series bold
-010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x6170b0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-186,788,588
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-5,724,675
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-(c)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-0x2aaaac292010
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x6073d0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0x6173e0
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-180,778,001
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-37,555
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:dgemv"
-
-\end_inset
-
-Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
- with matrix size 
-\begin_inset Formula $8192\times8192$
-\end_inset
-
-.
- Cycle count and aliasing varies with different heap addresses for 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Performance counter statistics shown in Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:dgemv"
-
-\end_inset
-
- are obtained from invoking cblas_dgemv once, in the main function of a
- small C program.
- Still, the measurement does not represent the true cost of aliasing for
- dgemv, as overhead from things like memory allocation is also counted.
+ The prefix indicates data type, in this case d for double precision.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -13301,7 +12968,7 @@ Computing double precision matrix-vector multiplication
 
  using 
 \family typewriter
-dgemv
+cblas_dgemv
 \end_layout
 
 \end_inset
@@ -13315,7 +12982,416 @@ dgemv
 \end_layout
 
 \begin_layout Standard
-To better be able to assess the effects of aliasing, the call to gemv needs
+We find that ATLAS is vulnerable to aliasing in matrix-vector multiplication
+ with column-major ordering.
+ Benchmarking the previous program with matrix dimensions 
+\begin_inset Formula $N=M=8192$
+\end_inset
+
+ and iteration count 
+\begin_inset Formula $K=1$
+\end_inset
+
+, we see that performance varies quite significantly with different heap
+ addresses of 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+.
+ The performance counter statistics for three different heap configurations
+ is shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:dgemv"
+
+\end_inset
+
+.
+ As might be suspected, the worst case seems to be when all memory buffers
+ align closely on the same 12 bit suffix.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="6">
+<features booktabs="true" tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="right" valignment="top" width="0">
+<column alignment="right" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+&A
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+&x
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+&y
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Cycles (cycles:u)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Alias (r0107:u)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(a)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x2aaaac292
+\family default
+\series bold
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x607
+\series bold
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x617
+\series bold
+020
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+195,155,171
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+34,095,566
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(b)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x2aaaac292
+\family default
+\series bold
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x607
+\series bold
+010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6170b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+186,788,588
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5,724,675
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(c)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0x2aaaac292010
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6073d0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x6173e0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+180,778,001
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="right" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+37,555
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:dgemv"
+
+\end_inset
+
+Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
+ with matrix size 
+\begin_inset Formula $8192\times8192$
+\end_inset
+
+.
+ Cycle count and aliasing varies with different heap addresses for 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These measurements does not represent the true cost of aliasing in dgemv,
+ as overhead from things like memory allocation is also counted.
+ To better be able to assess the effects of aliasing, the call to gemv needs
  to be isolated.
  We use the program from Listing 
 \begin_inset CommandInset ref
@@ -13342,11 +13418,7 @@ t_{\text{estimate}}=\frac{t_{K=101}-t_{K=1}}{100}
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Where 
+where 
 \begin_inset Formula $t$
 \end_inset
 
@@ -14318,15 +14390,8 @@ cblas_dgemv
 \end_layout
 
 \begin_layout Standard
-Performance counter statistics for each of the three address configurations
- from Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:dgemv"
-
-\end_inset
-
- are shown in Table 
+Estimated performance counter statistics for each of the three heap address
+ configurations are shown in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:gemv-estimate"
@@ -14335,8 +14400,8 @@ reference "tab:gemv-estimate"
 
 .
  In addition to cycle count and alias events, a number of relevant metrics
- such as cache hit rates are included.
- Notice that almost all load micro-ops are served by either the line feed
+ related to cache activity are also included.
+ Notice that almost all load micro-ops are served by either the line fill
  buffer or L1 cache in all cases.
  Only a small amount of loads comes from L2, and almost none from L3.
  The hit rate for L1 actually decreases somewhat (considering LFB as well)
@@ -14346,9 +14411,13 @@ reference "tab:gemv-estimate"
  The hardware prefetch counter indicates more hits in cases a and b.
  Again, we find that cache efficiency does not explain the performance cliffs
  we observe.
- Our results show that variations in memory addresses alone can give a speedup
- of more than 31 % for matrix-vector multiplication in ATLAS.
  
+\end_layout
+
+\begin_layout Standard
+Our results show that address aliasing between matrix and vector heap buffers
+ can significantly impact performance of dgemv in ATLAS.
+ Variations in heap addresses alone can give a speedup of more than 31 %.
 \end_layout
 
 \begin_layout Subsection
@@ -14381,6 +14450,21 @@ far apart
 \begin_layout Standard
 Using heap allocated memory, address aliasing is an artifact of the allocator
  used.
+ In cases where different versions or configurations of memory allocators
+ are used, the performance differences we have illustrated could be an instance
+ of measurement bias.
+ As described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:heap-address-aliasing"
+
+\end_inset
+
+, aliasing cases like these can be accounted for in software using 
+\emph on
+padding
+\emph default
+ techniques.
  A possible run time solution to adjust heap addresses can be realized as
  follows:
 \end_layout
@@ -14435,18 +14519,24 @@ worst cases
 \end_layout
 
 \begin_layout Subsection
-Conclusion
+Discussion
 \end_layout
 
 \begin_layout Standard
-We briefly looked at potential bias effects in BLAS routines, and found
- that matrix-vector multiplication in ATLAS suffered from alias effects.
+We briefly looked at potential bias effects in linear algebra routines,
+ and found that matrix-vector multiplication in ATLAS suffered from alias
+ effects.
  Close alignment within a 4K segment of addresses can have a significant
- performance penalty.
- Users of BLAS packages are probably more willing to invest in hand optimizing
+ performance penalty, with more than 31 % difference between the worst and
+ best case.
+ This result is 
+\end_layout
+
+\begin_layout Standard
+Users of BLAS packages are probably more willing to invest in hand optimizing
  hot spots where aliasing might occur.
  It is also not unlikely that one or more matrix-vector operations are part
- of a hot loop.
+ of a loop, which can .
  Bias from address alias will probably be worth considering in some cases.
  
 \end_layout
