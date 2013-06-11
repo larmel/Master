@@ -10969,8 +10969,21 @@ reference "sub:fftw-analysis"
 \end_inset
 
 , to identify where aliasing occur.
- In sections [] and [] we discuss two possible optimizations that can be
- made to avoid aliasing.
+ In sections 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:fftw-kernel-level"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:fftw-user-level"
+
+\end_inset
+
+ we discuss two possible optimizations that can be made to avoid aliasing.
  The first describes possible improvements to the implementation of FFTW
  itself, while the second option is to account for aliasing at the user
  level.
@@ -11285,6 +11298,12 @@ Eliminating Bias at Kernel Level
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:fftw-kernel-level"
+
+\end_inset
+
 Assuming aliasing occurs from conflicts between stack and heap, bias can
  be eliminated by altering addresses of memory accesses to either of these
  areas.
@@ -11960,6 +11979,12 @@ Eliminating Bias at User Level
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:fftw-user-level"
+
+\end_inset
+
 The main problem we faced when trying to do anything about aliasing within
  FFTW itself, was that too many dynamic instructions are added in the process.
  The problem is of course that the stack correction is implemented inside
@@ -12422,7 +12447,7 @@ Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
 \end_layout
 
 \begin_layout Subsection
-Summary
+Discussion
 \end_layout
 
 \begin_layout Standard
@@ -12484,7 +12509,7 @@ As we have shown, the optimal stack position for each kernel depends on
 \family typewriter
 FFTW_MEASURE
 \family default
-) could cancel out bias if the following were true;
+) could cancel out bias if the following were true:
 \end_layout
 
 \begin_layout Enumerate
@@ -12501,13 +12526,6 @@ The call chain are the same during benchmarking in the planner as when the
 \begin_layout Standard
 Unfortunately, the planner can not know the stack depth of which a user
  calls fftw_execute with a given plan.
- Simply benchmarking multiple alternative implementation to find which one
- does not suffer from bias will not work in general.
- On the contrary, empirical planning might actually falsely predict which
- kernels are good.
- A hypothetical scenario would be if planning is done in a memory environment
- that are not affected by aliasing, and later executed in a worst-case environme
-nt for aliasing.
  
 \end_layout
 
@@ -12525,7 +12543,22 @@ FFTW comes with fftw_malloc, which is a wrapper around regular malloc with
  For the n1fv_16 kernel, we found that alias in heap addresses did not matter.
  However, this is not necessarily true for all kernels.
  Looking into possible improvements here might be worthwhile.
- 
+\end_layout
+
+\begin_layout Subsubsection*
+Conclusions
+\end_layout
+
+\begin_layout Standard
+Despite being higly optimized and automatically tuned, kernels in FFTW still
+ suffer from bias effects.
+ The auto tuning mechanism is designed to deal with architectue specific
+ intricacies like this, but accounting for stack is particularly difficult.
+ Care must be taken to account for things like stack alignment and heap
+ locations when calculating a plan.
+\end_layout
+
+\begin_layout Subsubsection*
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -14433,8 +14466,15 @@ key "Mytkowicz:2009:WrongData"
  as previous work studied mostly Core 2 and earlier processors.
  Being able to reproduce similar effects from changing environment size
  motivated continued exploration.
- In Chapter 3, we present an in-depth study of what was causing bias for
- that particular program.
+ In Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+, we present an in-depth study of what was causing bias for that particular
+ program.
  Through careful measurements using hardware performance counters, we find
  that address aliasing between local and static variables can explain what
  is happening.
@@ -14486,7 +14526,14 @@ In our case studies, we chose to concentrate on highly optimized numerical
 Lastly, we wanted to investigate whether BLAS libraries also suffered from
  bias.
  We suspected that certain operations might be sensitive to aliasing between
- heap buffers, similar to the effects pointed out in Chapter 3.
+ heap buffers, similar to the effects pointed out in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+.
  The impact of address aliasing in matrix-vector multiplication proved to
  be huge, even for an automatically tuned ATLAS installation.
  By manually adjusting alignment of matrix and vector buffers, speedups
@@ -14655,8 +14702,15 @@ The most natural place to encode architectural-specific knowledge used for
 \begin_layout Standard
 Generating alias-free code could potentially also be done by the compiler.
  We show how aliasing can be avoided by adding alternative code paths in
- Chapter 3, which at least in principle shows that compilers could handle
- this in some cases.
+ Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+, which at least in principle shows that compilers could handle this in
+ some cases.
  Code that relies on heap-allocated buffers seems like a particularly difficult
  thing to optimize for.
  A starting point could be to detect functions that might suffer from aliasing
