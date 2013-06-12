@@ -170,7 +170,7 @@ Performance analysis of software is subject to measurement bias.
 In this thesis, we will study bias effects that can be experienced by changing
  the Unix environment variables or altering the program link order.
  Both of these factors lead to different virtual memory layouts for code
- and data, which in turn interacts with various hardware features.
+ and data, which in turn interacts with various hardware mechanisms.
  Through experimentation and careful measurement using hardware performance
  counters, we identify several potential sources of bias on the Intel Core
  i7 
@@ -193,7 +193,7 @@ Our case studies show that even highly optimized Fourier transform and linear
  algebra libraries are prone to bias.
  We find that stack alignment significantly affects the performance of FFTW,
  and that in some cases more than 30 % performance gain can be made by avoiding
- address aliasing in ATLAS matrix-vector multiplication.
+ address aliasing in ATLAS' matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
@@ -3556,9 +3556,9 @@ Many experiments consists of collecting a large number of performance counter
  statistics over a series of different execution contexts, for example increment
 ing environment variable size.
  To filter out events that are likely to explain any bias effects, we will
- use a 
+ use the 
 \emph on
-sample correlation coefficient
+Pearson correlation coefficient
 \emph default
  
 \begin_inset CommandInset citation
@@ -3688,7 +3688,7 @@ Visualization
 \end_layout
 
 \begin_layout Standard
-Plots are generated using Python's matplotlib package 
+Plots are generated with Python's matplotlib package 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Hunter:2007:Matplotlib"
@@ -3765,13 +3765,17 @@ name "chap:SourcesOfBias"
 Modern microprocessors are extremely complex in design and functionality.
  Some features of recent Intel processors includes several layers of cache
  to camouflage slow memory, multiple prefetchers, speculative out-of-order
- execution and complicated branch prediction, just to name a few.
- Hardware features and optimizations interact with memory addresses of program
+ execution and branch prediction, just to name a few.
+ Hardware features and optimizations interact with memory layout of program
  code and data in various ways.
- In this chapter, we will unveil characteristics about two specific architectura
-l features in Ivy Bridge, and show how they can bias performance towards
+ In this chapter, we will unveil characteristics about two different architectur
+al features in Ivy Bridge, and show how they can bias performance towards
  certain memory contexts.
- First we will look at an 
+ 
+\end_layout
+
+\begin_layout Standard
+First we will look at an 
 \emph on
 aliasing
 \emph default
@@ -3779,11 +3783,12 @@ aliasing
  in the out-of-order execution pipeline.
  This effect can be triggered for example by changing stack position, and
  can explain bias from altering environment variables.
- In previous work on measurement bias from link ordering, the 
+ Secondly, we will look at the 
 \emph on
 Loop Stream Detector
 \emph default
- has been suggested as a possible explanation.
+, which in previous work on measurement bias has been suggested as a possible
+ explanation.
  We therefore choose to study this particular opimization in detail, and
  show how measurement bias can occur from changing code layout.
 \end_layout
@@ -3815,12 +3820,12 @@ status open
 
 \begin_layout Plain Layout
 
-mov %r10, (%rax)
+mov %r10, (%rax)    /* store to address in %rax  */
 \end_layout
 
 \begin_layout Plain Layout
 
-mov (%rbx), %r11
+mov (%rbx), %r11    /* load from address in %rbx */
 \end_layout
 
 \end_inset
@@ -5571,11 +5576,8 @@ reference "fig:stack-alias-resource-plot"
 ).
  This can be explained by a default stack alignment of 16 byte in GCC, meaning
  addresses of stack variables will only change in multiples of 16.
- It is therefore impossible to have only 
-\emph on
-one
-\emph default
- aliasing pair of variables.
+ It is therefore impossible to have only one aliasing pair of variables
+ in this case.
  The next address suffixes of 
 \family typewriter
 g
@@ -5642,9 +5644,13 @@ key "Mytkowicz:2008:Easy"
 \begin_inset Quotes eld
 \end_inset
 
+
+\emph on
 The load and store have the same offset relative to the beginning of different
  4-KByte pages.
  This case is also called 4-KByte aliasing.
+\emph default
+
 \begin_inset Quotes erd
 \end_inset
 
@@ -5666,7 +5672,7 @@ It appears that effects of 4K aliasing emerge as a case of failed store
 \end_layout
 
 \begin_layout Subsubsection*
-Avoiding Aliasing at Runtime
+Avoiding Aliasing -- A Proof of Concept
 \end_layout
 
 \begin_layout Standard
@@ -5681,7 +5687,7 @@ if
  a collision is going to happen for a given environment, we can try to change
  the program to account for possible alias effects.
  The following strategy is a proof of concept of how alias-free code can
- be generated.
+ be generated in cases like this.
 \end_layout
 
 \begin_layout Enumerate
@@ -5747,7 +5753,12 @@ int main() {
 
 \begin_layout Plain Layout
 
-    if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) {
+    if ((((long)&inc) & 0xfff) == (((long)&j) & 0xfff)) 
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
 \end_layout
 
 \begin_layout Plain Layout
@@ -5787,7 +5798,42 @@ int main() {
 
 \begin_layout Plain Layout
 
-        goto skip;
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    else
+\end_layout
+
+\begin_layout Plain Layout
+
+    {
+\end_layout
+
+\begin_layout Plain Layout
+
+        for (; g < 65536; g++) {
+\end_layout
+
+\begin_layout Plain Layout
+
+            i += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+            j += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+            k += inc;
+\end_layout
+
+\begin_layout Plain Layout
+
+        }
 \end_layout
 
 \begin_layout Plain Layout
@@ -5797,40 +5843,6 @@ int main() {
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\begin_layout Plain Layout
-
-    for (; g < 65536; g++) {
-\end_layout
-
-\begin_layout Plain Layout
-
-        i += inc;
-\end_layout
-
-\begin_layout Plain Layout
-
-        j += inc;
-\end_layout
-
-\begin_layout Plain Layout
-
-        k += inc;
-\end_layout
-
-\begin_layout Plain Layout
-
-    }
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-skip:
 \end_layout
 
 \begin_layout Plain Layout
@@ -5954,9 +5966,10 @@ name "sub:heap-address-aliasing"
 
 \end_inset
 
-Address aliasing can occur from memory accesses to any section of memory.
- The previous section looked at an example of collision between stack variables
- and static data.
+Address aliasing can be caused by conflicting pairs of load/store operations
+ to any section of memory.
+ The previous section looked specifically at an example of collision between
+ stack variables and static data.
  Another important scenario to consider is collisions in dynamically allocated
  memory.
  In this section, we will look at how aliasing in heap allocated memory
@@ -5980,7 +5993,7 @@ sliding window
 
  fashion; reading some data from an input buffer, do some computation, and
  write the result to an output buffer.
- Some usages that fit this pattern include:
+ Sample usages that fit this pattern include:
 \end_layout
 
 \begin_layout Itemize
@@ -6329,11 +6342,7 @@ mmap
 .
  This system call creates a mapping between memory address space and the
  contents of a file.
- Memory allocators use 
-\family typewriter
-mmap
-\family default
- with the 
+ Memory allocators use mmap with the 
 \family typewriter
 MAP_ANONYMOUS
 \family default
@@ -6378,21 +6387,14 @@ reference "fig:brk-mmap"
 \end_layout
 
 \begin_layout Standard
-One of the properties of 
-\family typewriter
-mmap
-\family default
- is that it guarantees page-alignment.
+One of the properties of mmap is that it guarantees page-alignment.
  Because the page size is 4096 bytes, memory returned from larger requests
  will 
-\bar under
+\emph on
 always
-\bar default
- have alias on the last 12 bits -- at least in all cases where 
-\family typewriter
-mmap
-\family default
- is used internally.
+\emph default
+ have alias on the last 12 bits -- at least in all cases where mmap is used
+ internally.
  Note that this property of malloc is not affected by address randomization.
  Table 
 \begin_inset CommandInset ref
@@ -7007,7 +7009,7 @@ reference "fig:convolution-O3-graph"
  LLC misses, but they all have stable values.
  Most of the memory access operations hit the L1 cache, which suggests the
  hardware prefetcher is able to keep up.
- No cache related events show any correlation to cycle count.
+ No cache related events show any significant correlation to cycle count.
  We can therefore safely rule out cache as a contributing factor.
  
 \end_layout
@@ -7438,6 +7440,8 @@ M_MMAP_THRESHOLD
 , could have a huge impact on performance.
  In general, one must consider dynamic libraries as an important part of
  the execution context.
+ In this section, we will briefly study how some alternatives to the default
+ allocator in libc behaves.
  
 \end_layout
 
@@ -8087,15 +8091,15 @@ Properties of heap allocators
 Any change to virtual memory layout of data can potentially introduce bias
  effects from address aliasing.
  We find that compilers, even when provided with architecture specific optimizat
-ion flags, can not generate code that does not suffer from aliasing.
+ion flags, still generates code that suffers from aliasing.
  Typical heap allocators are found to often use page-aligned memory, which
  is the worst case with respect to aliasing for many algorithms.
  Despite recommendations from Intel, we are not aware of any allocators
  that specifically addresses this issue.
- This means that an understanding of 4K address aliasing is needed to achieve
- optimal performance.
  We show how manual padding of variables, and alternative alias-free code
  paths, can be used to avoid aliasing at run time.
+ This means that an understanding of 4K address aliasing is sometimes needed
+ to achieve optimal performance.
  
 \end_layout
 
