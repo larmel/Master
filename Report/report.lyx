@@ -19,6 +19,7 @@
 \definecolor{deepgreen}{rgb}{0.25,0.5,0.35}
 \definecolor{javared}{rgb}{0.6,0,0} % for strings
 \definecolor{commentgray}{rgb}{0.4,0.4,0.4} % for comments
+\usepackage[labelfont=bf]{caption}
 \end_preamble
 \options openright
 \use_default_options true
@@ -12851,7 +12852,6 @@ Potential for Bias
 \begin_layout Standard
 Within a full BLAS implementation there are three levels of functionality,
  each containing a plethora of different functionality.
- Looking for potential bias effects, we have to choose somewhere to start.
  The idea is to reproduce similar scenarios to what we saw in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -12861,11 +12861,9 @@ reference "sub:heap-address-aliasing"
 
 , where aliasing was caused by linear accesses to pairs of aligned heap
  allocated data.
- Functions operating on vectors, from BLAS Level 1 or 2, are most likely
+ Functions operating on vectors, from BLAS Level 1 or 2, seems most likely
  to have potential for similar characteristics.
- Level 3 matrix operations will have more write operations and less linear
- data access.
- In the following sections we will study aliasing in the Level 2 function
+ In the following sections, we will study aliasing in the Level 2 function
  gemv specifically, which computes matrix-vector multiplication.
  
 \end_layout
@@ -13133,6 +13131,42 @@ placement h
 wide false
 sideways false
 status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:dgemv"
+
+\end_inset
+
+Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
+ with matrix size 
+\begin_inset Formula $8192\times8192$
+\end_inset
+
+.
+ Cycle count and aliasing varies with different heap addresses for 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 \align center
@@ -13454,42 +13488,6 @@ Alias (r0107:u)
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:dgemv"
-
-\end_inset
-
-Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
- with matrix size 
-\begin_inset Formula $8192\times8192$
-\end_inset
-
-.
- Cycle count and aliasing varies with different heap addresses for 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -13507,7 +13505,7 @@ reference "alg:blas-gemv"
 
 \end_inset
 
- to make two benchmarks, one with 
+ to make two benchmarks, one with iteration count 
 \begin_inset Formula $K=1$
 \end_inset
 
@@ -14528,7 +14526,7 @@ Our results show that address aliasing between matrix and vector heap buffers
 \end_layout
 
 \begin_layout Subsection
-Dealing With Bias
+Dealing With Aliasing
 \end_layout
 
 \begin_layout Standard
@@ -14656,8 +14654,8 @@ likely
 \emph default
  that similar problems are prevailent for linear algebra implementations
  in general.
- There is probably a huge potential for speedup in many BLAS implementations
- by actively avoiding bad address alignment.
+ There is probably a significant potential for speedup in many BLAS implementati
+ons by actively avoiding bad address alignment.
  Our results should motivate further work to address these issues.
  
 \end_layout
