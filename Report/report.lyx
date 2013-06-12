@@ -10602,16 +10602,16 @@ name "chap:Case Studies"
 
 \end_inset
 
-In this chapter, we show instances of how bias effects illustrated in the
- previous chapter affects real software.
- The goal is to identify possible instances of bias, and also discuss how
- to take bias into account for optimization purposes.
+In this chapter, we show how bias effects discussed in the previous chapter
+ can affect real software.
+ The goal is to identify possible instances of bias, and also investigate
+ how to apply new knowledge of these effects for optimization purposes.
  We choose to focus on already highly optimized numerical applications for
- our case studies, because the real world impact of bias effects is most
- relevant for performance critical applications.
+ our case studies, because the real world impact of bias is most relevant
+ for performance critical applications.
  If only a minor improvement can be mady by avoiding some memory alignment
- issue, the cost of implementing an architecture specific optimization will
- probably be worth it.
+ issue, the cost of implementing an architecture specific optimization in
+ a high performance numerical library will probably be worth it.
 \end_layout
 
 \begin_layout Standard
@@ -10622,8 +10622,14 @@ reference "sec:FFTW"
 
 \end_inset
 
- we will look at FFTW, which is a widely used library for computing discrete
- Fourier transforms.
+ we will look at FFTW 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Frigo:2005:FFTW3"
+
+\end_inset
+
+, a widely used library for computing discrete Fourier transforms.
  We show that for smaller input sizes, there is potential for bias towards
  certain stack positions.
  In Section 
@@ -10633,8 +10639,21 @@ reference "sec:BLAS"
 
 \end_inset
 
- we look at ATLAS, which is an implementation of the BLAS API for linear
- algebra routines.
+ we look at ATLAS 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Whaley:1998:ATLAS"
+
+\end_inset
+
+, which is an implementation of the BLAS API 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Blackford:2002:UpdatedBLAS"
+
+\end_inset
+
+ for linear algebra routines.
  We find that matrix-vector multiplication is sensitive to address aliasing,
  and show how to significantly improve worst case performance by padding
  data.
@@ -11038,8 +11057,8 @@ Environment Bias in Small Transforms
 \end_layout
 
 \begin_layout Standard
-We search through configurations manually, by specifying different values
- for iteration count and transform size.
+A quick search through possible configurations is done manually, by specifying
+ different values for iteration count and transform size.
  We find that computing transforms of size 16 have noticeable bias.
  Figure 
 \begin_inset CommandInset ref
@@ -11050,7 +11069,7 @@ reference "fig:fftw-stack-bias"
 
  shows the relation between address alias and cycle count for repeated benchmark
 s under increasing environment size.
- The effect is amplified by iterating 
+ The effect is amplified by executing the same plan 
 \begin_inset Formula $X=$
 \end_inset
 
@@ -11412,8 +11431,11 @@ Assuming aliasing occurs from conflicts between stack and heap, bias can
  of stack allocated variables.
  Our solution idea is to programmatically adjust the stack in such a way
  that accesses do not collide (alias) with heap memory.
- With heap allocated input and output buffers having address suffixes close
- to 0x000, a reasonable placement of stack is in the other side of the spectrum,
+ We outline a naive solution, which exploits the fact that heap addresses
+ are fixed with ASLR disabled.
+ In our case, both heap allocated input and output buffers have address
+ suffixes close to 0x000.
+ A reasonable placement of stack is then on the other side of the spectrum,
  close to 0xfff and expanding towards lower addresses.
  The concept is illustrated in Figure 
 \begin_inset CommandInset ref
@@ -11479,9 +11501,13 @@ reference "fig:call-graph"
  on a suitable address.
  In order to be transparent to the user, the adjustments must happen in
  either fftw_execute, fftw_dft_solve, apply_extra_iter or n1fv_16.
- In the end, we found that modifying apply_extra_iter made the most sense,
- and also provided a slight improvement to performance compared to doing
- it within the kernel itself.
+ Modifying fftw_execute or fftw_dft_solve will affect execution of 
+\emph on
+all
+\emph default
+ DFT plans, while we only want to target aliasing within a single kernel.
+ A fix could be applied to n1fv_16 directly, but we choose to modify apply_extra
+_iter instead.
  As the name suggests, this function actually calls the kernel twice.
  
 \begin_inset Float algorithm
@@ -11678,23 +11704,43 @@ reference "tab:fftw-kernel-fix-numbers"
 
 \begin_layout Standard
 \begin_inset Float table
-placement b
 wide false
 sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:fftw-kernel-fix-numbers"
+
+\end_inset
+
+Cycle count statistics over 512 runs, sampling uniformly over two 4 KiB
+ environment size periods.
+ Mean and maximum is improved with forced alignment, while the constant
+ overhead impacts expected (median) performance.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="3" columns="5">
-<features tabularvalignment="middle">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="left" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
-<cell alignment="left" valignment="top" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11703,7 +11749,7 @@ status open
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -11841,27 +11887,6 @@ Kernel modification
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:fftw-kernel-fix-numbers"
-
-\end_inset
-
-Cycle count statistics over 512 runs, sampling uniformly over two 4 KiB
- environment size periods.
- Mean and maximum is improved with forced alignment, while the constant
- overhead impacts average performance.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -11883,8 +11908,8 @@ Evaluating the Worst Case Scenario
 \begin_layout Standard
 With address randomization disabled, both stack and heap locations will
  be fixed for all environment sizes.
- This is exploited in the naive stack alignment fix we have outlined, which
- only works when input and output buffers are close to 0x000.
+ This is exploited in the kernel-level stack alignment fix we have outlined,
+ which only works when input and output buffers are close to 0x000.
  If however heap buffers happen to reside on the opposite end of a 4 KiB
  segment, both stack and heap addresses will be close considering the last
  12 bits.
@@ -12069,13 +12094,6 @@ reference "fig:fftw-worstcase-4k"
  quickly cancel out any speedup we might get.
 \end_layout
 
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
 \begin_layout Subsection
 Eliminating Bias at the User Level
 \end_layout
@@ -12087,15 +12105,18 @@ name "sub:fftw-user-level"
 
 \end_inset
 
-When trying to do anything about aliasing within FFTW itself, we found that
- too many dynamic instructions are added in the process.
- The problem is of course that the stack correction is implemented inside
+The ideal solution to aliasing would be a transparent one, where library
+ users do not need to worry about optimal stack alignment.
+ However, when trying to account for aliasing within FFTW itself in the
+ previous section, we found that too many dynamic instructions are added
+ in the process.
+ The reason for this is that the stack correction is implemented inside
  the hot loop, where fftw_execute is called repeatedly.
- However, we can also align stack 
+ A possible user level modification would be to align stack 
 \emph on
 before
 \emph default
- the loop, adding only a negligible overhead.
+ the loop, which should add only a negligible overhead.
  The relevant parts of a modified main function is shown in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -12196,8 +12217,6 @@ name "alg:fftw-stackfix-main"
 Modified test program with forced stack alignment in main.
  Stack pointer is saved to a temporary variable before aligned to a 4 KiB
  boundary, then restored once we are done.
- Only a couple additional instructions are executed, with a significant
- performance increase on average over all environment sizes.
 \end_layout
 
 \end_inset
@@ -12238,17 +12257,38 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:fftw-stackfix-main"
+
+\end_inset
+
+Cycle count statistics over 512 runs, sampling uniformly over two 4KiB environme
+nt size periods.
+ With stack alignment in main, the program performs equally well for all
+ environment sizes.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="5">
-<features tabularvalignment="middle">
-<column alignment="left" valignment="top" width="0">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="left" valignment="top" width="0pt">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0pt">
 <row>
-<cell alignment="left" valignment="top" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -12450,27 +12490,6 @@ User modification
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:fftw-stackfix-main"
-
-\end_inset
-
-Cycle count statistics over 512 runs, sampling uniformly over two 4KiB environme
-nt size periods.
- With stack alignment in main, the program performs equally well for all
- environment sizes.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -12562,8 +12581,8 @@ In this section we have shown how bias from environment size can affect
  small kernels in FFTW.
  The n1fv_16 kernel was studied in detail, showing how aliasing occur from
  collisions between stack and heap areas.
- There is clearly a potential for speedup by accounting for aliasing in
- some way, and we show how manually aligning stack can be a possible solution.
+ There is clearly a potential for speedup by accounting for aliasing, and
+ we show how manually aligning stack can be a possible solution.
  With the modification to kernel invocation, we were able to remove almost
  all of the bias effects.
  Unfortunately, our solution suffers from overhead of additional dynamic
@@ -12571,7 +12590,7 @@ In this section we have shown how bias from environment size can affect
  Having library users consider bias is shown to be feasible, and we prove
  that there is at least a possibility of 2 % improvement on average for
  the n1fv_16 kernel.
- However, requiring users of the library to fiddle with the stack before
+ However, requiring users of the library to manually adjusting stack before
  calling fftw_execute is not a satisfactory solution.
  A more reasonable approach would be to incorporate these ideas in the steps
  performed 
@@ -12627,15 +12646,18 @@ Multiple alternative kernels with varying alias characteristics exists.
 \end_layout
 
 \begin_layout Enumerate
-The call chain are the same during benchmarking in the planner as when the
+The call chain is the same during benchmarking in the planner as when the
  plan is later executed.
  Stack addresses during planning must be the same.
 \end_layout
 
 \begin_layout Standard
-Unfortunately, the planner can not know the stack depth of which a user
- calls fftw_execute with a given plan.
- 
+The planner can not know the stack depth of which a user calls fftw_execute
+ with a given plan.
+ Bias could however be handled, if the plan considered stack alignment at
+ the time of execution.
+ Alternative code paths after calling fftw_execute could be chosen depending
+ on the current stack position.
 \end_layout
 
 \begin_layout Paragraph
@@ -12659,16 +12681,16 @@ Compiler Code Generation
 \end_layout
 
 \begin_layout Standard
-Our attempts at aligning stack at the kernel level failed because of overhead
- from adding inline assembly.
+Our attempts at aligning stack at the kernel level introduced overhead from
+ adding inline assembly.
  The compiler already does some stack alignment operations, which we more
  or less discard by overwriting the stack pointer.
  An alternative solution could be to give the responsibility to the compiler.
  All the information necessary is available at compile time; the compiler
  knows every instruction and memory access, and can in principle predict
  where aliasing might occur.
- The compiler could then implement some sort of stack alignment based on
- considering both heap buffers and current stack pointer -- like the 
+ The compiler could then implement dynamic stack alignment based on considering
+ both heap buffers and current stack pointer -- like the 
 \begin_inset Quotes eld
 \end_inset
 
@@ -12676,7 +12698,7 @@ generic solution
 \begin_inset Quotes erd
 \end_inset
 
- hinted to previously.
+ that was previously discussed.
  
 \end_layout
 
@@ -12729,10 +12751,24 @@ target "http://math-atlas.sourceforge.net/"
 
 \end_inset
 
- (Automatically Tuned Linear Algebra Software).
- ATLAS is an implementation of the BLAS API for linear algebra routines,
- and similarly to FFTW uses automatic tuning to optimize for the underlying
- hardware.
+ (Automatically Tuned Linear Algebra Software) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Whaley:1998:ATLAS"
+
+\end_inset
+
+.
+ ATLAS is an implementation of the BLAS API
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Blackford:2002:UpdatedBLAS"
+
+\end_inset
+
+ for linear algebra routines, and a critical component in many high performance
+ applications.
+ 
 \end_layout
 
 \begin_layout Paragraph
@@ -12850,9 +12886,7 @@ Potential for Bias
 \end_layout
 
 \begin_layout Standard
-Within a full BLAS implementation there are three levels of functionality,
- each containing a plethora of different functionality.
- The idea is to reproduce similar scenarios to what we saw in Section 
+The idea is to reproduce similar scenarios to what we saw in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:heap-address-aliasing"
@@ -12863,8 +12897,13 @@ reference "sub:heap-address-aliasing"
  allocated data.
  Functions operating on vectors, from BLAS Level 1 or 2, seems most likely
  to have potential for similar characteristics.
- In the following sections, we will study aliasing in the Level 2 function
- gemv specifically, which computes matrix-vector multiplication.
+ Using heap allocated memory, address aliasing is an artifact of the allocator
+ used.
+ With different versions or configurations of memory allocators, any performance
+ impact from aliasing can qualify as measurement bias.
+ In the following sections, we will study bias from address aliasing in
+ the Level 2 function gemv specifically, which computes matrix-vector multiplica
+tion.
  
 \end_layout
 
@@ -13087,9 +13126,7 @@ cblas_dgemv
 \end_layout
 
 \begin_layout Standard
-We find that ATLAS is vulnerable to aliasing in matrix-vector multiplication
- with column-major ordering.
- Benchmarking the previous program with matrix dimensions 
+Benchmarking the previous program with matrix dimensions 
 \begin_inset Formula $N=M=8192$
 \end_inset
 
@@ -13121,7 +13158,7 @@ reference "tab:dgemv"
 
 .
  As might be suspected, the worst case seems to be when all memory buffers
- align closely on the same 12 bit suffix.
+ align closely on the same 12 address bit suffix.
  
 \end_layout
 
@@ -13172,7 +13209,7 @@ Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="6">
-<features booktabs="true" tabularvalignment="middle">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
@@ -13219,7 +13256,7 @@ Performance counter statistics for a simple program invoking ATLAS' cblas_dgemv
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -13494,8 +13531,8 @@ Alias (r0107:u)
 \end_layout
 
 \begin_layout Standard
-These measurements does not represent the true cost of aliasing in dgemv,
- as overhead from things like memory allocation is also counted.
+Because of overhead from calls to malloc making large heap allocations,
+ these measurements does not represent the true cost of aliasing in dgemv.
  To better be able to assess the effects of aliasing, the call to gemv needs
  to be isolated.
  We use the program from Listing 
@@ -13553,6 +13590,47 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:gemv-estimate"
+
+\end_inset
+
+Estimated cost of a single invocation of 
+\family typewriter
+cblas_dgemv
+\family default
+ with matrix size 
+\begin_inset Formula $8192\times8192$
+\end_inset
+
+ in ATLAS.
+ Each column shows statistics for different heap addresses.
+ The 12 bit address suffixes for 
+\begin_inset Formula $A$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{y}$
+\end_inset
+
+ in each case is (0x010, 0x010, 0x020) for column a, (0x010, 0x010, 0xb0)
+ for b and (0x010, 0x3d0, 0x3e0) for c.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
 \align center
 \begin_inset ERT
 status open
@@ -13569,13 +13647,13 @@ begin{small}
 
 \begin_inset Tabular
 <lyxtabular version="3" rows="12" columns="4">
-<features booktabs="true" tabularvalignment="middle">
-<column alignment="left" valignment="top" width="0">
+<features booktabs="true" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="left" valignment="top" width="0pt">
 <column alignment="right" valignment="top" width="0pt">
 <column alignment="right" valignment="top" width="0">
 <column alignment="right" valignment="top" width="0">
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -13613,7 +13691,7 @@ begin{small}
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -14448,47 +14526,6 @@ end{small}
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:gemv-estimate"
-
-\end_inset
-
-Estimated cost of a single invocation of 
-\family typewriter
-cblas_dgemv
-\family default
- with matrix size 
-\begin_inset Formula $8192\times8192$
-\end_inset
-
- in ATLAS.
- Each column shows statistics for different heap addresses.
- The 12 bit address suffixes for 
-\begin_inset Formula $A$
-\end_inset
-
-, 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- and 
-\begin_inset Formula $\boldsymbol{y}$
-\end_inset
-
- in each case is (0x010, 0x010, 0x020) for column a, (0x010, 0x010, 0xb0)
- for b and (0x010, 0x3d0, 0x3e0) for c.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -14553,12 +14590,7 @@ far apart
 \end_layout
 
 \begin_layout Standard
-Using heap allocated memory, address aliasing is an artifact of the allocator
- used.
- In cases where different versions or configurations of memory allocators
- are used, the performance differences we have illustrated could be an instance
- of measurement bias.
- As described in Section 
+As described in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:heap-address-aliasing"
@@ -14629,8 +14661,8 @@ Discussion
 
 \begin_layout Standard
 We briefly looked at potential bias effects in linear algebra routines,
- and found that matrix-vector multiplication in ATLAS suffered from alias
- effects.
+ and found that matrix-vector multiplication in ATLAS suffered from heap
+ address aliasing.
  Close alignment within a 4K segment of address suffixes can have a significant
  performance penalty, with more than 31 % difference between the worst and
  best case.
