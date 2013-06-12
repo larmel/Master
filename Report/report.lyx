@@ -14697,8 +14697,8 @@ Conclusions and Future Work
 \end_layout
 
 \begin_layout Standard
-In this thesis we have studied effects of contextual bias on the Intel Core
- 
+In this thesis, we have studied effects of contextual bias on the Intel
+ Core 
 \begin_inset Quotes eld
 \end_inset
 
@@ -14751,13 +14751,13 @@ reference "chap:SourcesOfBias"
 
 \begin_layout Standard
 With an understanding of the possible performance penalties incurred from
- aliasing, we explore what other use cases might be affected by this.
+ aliasing, we explored what other use cases might be affected by this.
  The fact that malloc often allocates on page boundary by default proved
  to be troubling, essentially guaranteeing bad performance from aliasing
  in many cases.
  The convolution example exploits this synergy between heap allocation and
  4K aliasing, showing that some knowledge of the hardware could provide
- massive speedup in real world applications.
+ massive speedup.
  
 \end_layout
 
@@ -14780,12 +14780,18 @@ The Loop Stream Detector had been previously mentioned as a possible cause
 \begin_layout Standard
 In our case studies, we chose to concentrate on highly optimized numerical
  libraries.
- Applications like these are more likely to incorporate extremely processor
- specific optimizations, in order to achieve the maximum possible performance.
+ The reasoning behind this was that these kind of applications are more
+ likely to incorporate extremely processor specific optimizations in order
+ to achieve the maximum possible performance.
+ We chose to focus on address aliasing effects as opposed to the Loop Stream
+ Detector when looking for instances of bias.
+ Compared to altering code layout by changing link order, it was more convenient
+ to experiment with changes to the environment size or heap alignment for
+ large applications.
  We were able to identify bias towards certain stack positions for small
  kernels in FFTW, caused by 4K aliasing.
  Attempts were made to align stack dynamically in the kernels, but the added
- dynamic instructions quickly incur too large of an overhead to be worth
+ dynamic instructions quickly incurred too large of an overhead to be worth
  it.
  
 \end_layout
@@ -14805,7 +14811,7 @@ reference "chap:SourcesOfBias"
  The impact of address aliasing in matrix-vector multiplication proved to
  be huge, even for an automatically tuned ATLAS installation.
  By manually adjusting alignment of matrix and vector buffers, speedups
- of more than 31 % can be achieved for invocations of dgemv.
+ of more than 31 % could be achieved for invocations of dgemv.
  
 \end_layout
 
