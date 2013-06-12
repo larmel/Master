@@ -8174,35 +8174,6 @@ This optimization is affecting both performance and power efficiency.
 \end_layout
 
 \begin_layout Standard
-We choose to study this hardware feature specifically, because it has been
- suggested in previous work as a potential source of measurement bias 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-.
- The Loop Stream Detector is dependent on code layout, which can change
- with external factors such as variations in link ordering.
- Some effort has been made to model properties of the LSD on previous Intel
- architectures 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Hundt:2011:MAO"
-
-\end_inset
-
-, as an aid in low-level optimization.
- In this section we will uncover important characteristics of the Loop Stream
- Detector on Ivy Bridge.
- With an understanding of its limitations, we show an example of how measurement
- bias from link ordering can be explained.
- We also discuss other external factors that can alter code layout, possibly
- causing measurement bias.
-\end_layout
-
-\begin_layout Standard
 In the documentation, we find two hardware performance counters that can
  measure the utilization of the LSD 
 \begin_inset CommandInset citation
@@ -8233,21 +8204,67 @@ Note that none of these are listed in the non-architectural counters supported
  in this case.
 \end_layout
 
+\begin_layout Standard
+We choose to study this hardware feature specifically, because it has been
+ suggested in previous work as a potential source of measurement bias 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ The Loop Stream Detector is dependent on code layout, which can change
+ with external factors such as variations in link ordering.
+ Interacting with the alignment and position of instructions in memory,
+ the LSD can cause performance differences for programs with otherwise 
+\emph on
+identical
+\emph default
+ instruction sequences.
+\end_layout
+
+\begin_layout Standard
+Some effort has been made to model properties of the LSD on previous Intel
+ architectures 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Hundt:2011:MAO"
+
+\end_inset
+
+, as an aid in low-level optimization.
+ In this section we will uncover important characteristics of the Loop Stream
+ Detector on Ivy Bridge.
+ With an understanding of its limitations, we show an example of how measurement
+ bias from link ordering can be explained.
+ We also discuss other external factors that can alter code layout, possibly
+ triggering performance variations from interacting with the LSD.
+\end_layout
+
 \begin_layout Subsection
 Properties of the Loop Stream Detector
 \end_layout
 
 \begin_layout Standard
-A set of restrictions is given on what loops can be recognized by the loop
- stream detector.
- The Architectures Optimization Reference Manual 
+Loops can only be recognized by the Loop Stream Detector under certain condition
+s.
+ The Optimization Manual lists the following restrictions for the 
+\begin_inset Quotes eld
+\end_inset
+
+Sandy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+ Loop Stream Detector 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Intel:2012:OptimizationManual"
 
 \end_inset
 
- states the following requirements for a loop to be recognized by the LSD:
+:
 \end_layout
 
 \begin_layout Enumerate
@@ -8283,22 +8300,27 @@ key "Ramesh:i7PerformanceMonitoring,Intel:OnlinePCReference"
 \end_inset
 
 .
+ An increase in the limit of micro-ops, from 28 to 56, is listed as an enhanceme
+nt to the Ivy Bridge front-end over Sandy Bridge 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2012:OptimizationManual"
+
+\end_inset
+
+.
  It is 
 \emph on
 not clear
 \emph default
- whether all the stated limitations are valid for the Ivy Bridge, as it
- is not explicitly stated in the manual.
- Information is also contradictory; the limitation to number of micro-ops
- is mentioned as 56 for the Ivy Bridge.
- We create a series of micro benchmarks to manually verify what the actual
- limitations are.
+ whether the remaining limitations from Sandy Bridge are valid for the Ivy
+ Bridge, as it is not explicitly stated in the manual.
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float table
-placement H
+placement h
 wide false
 sideways false
 status open
@@ -8438,6 +8460,12 @@ Taken branches
 \begin_inset Caption
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:lsd-properties"
+
+\end_inset
+
 Properties of the Ivy Bridge Loop Stream Detector, determined empirically
  by a series of micro benchmarks
 \end_layout
@@ -8452,13 +8480,52 @@ Properties of the Ivy Bridge Loop Stream Detector, determined empirically
 
 \end_layout
 
+\begin_layout Standard
+We create a series of micro benchmarks to manually verify what the actual
+ limitations are.
+ The updated Loop Stream Detector limitations for Ivy Bridge is summarized
+ in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:lsd-properties"
+
+\end_inset
+
+.
+ We find that the limitation to chunk fetches, as well as taken branches,
+ has increased from previous generations.
+\end_layout
+
 \begin_layout Subsubsection*
 Chunk fetches
 \end_layout
 
 \begin_layout Standard
+The documentation states that a maximum number of eight 32 byte 
+\begin_inset Quotes eld
+\end_inset
+
+chunks
+\begin_inset Quotes erd
+\end_inset
+
+ of instruction data can be fetched in each loop.
+ Our interpretation of this is that instruction data is somehow organized
+ into blocks of 32 bytes, aligned to multiples of 0x20 in virtual address
+ space.
+ To test this limit, we need loops that execute instructions spanning a
+ variable amount of chunks.
+ The micro kernel we used is shown in Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-chunks"
+
+\end_inset
+
+, written in GNU x86-64 assembly.
+ 
 \begin_inset Float algorithm
-placement t
+placement h
 wide false
 sideways false
 status open
@@ -8622,33 +8689,7 @@ lsd.uops
 \end_layout
 
 \begin_layout Standard
-The documentation states that a maximum number of eight 32 byte 
-\begin_inset Quotes eld
-\end_inset
-
-chunks
-\begin_inset Quotes erd
-\end_inset
-
- of instruction data can be fetched in each loop.
- Our interpretation of this is that instruction data is somehow organized
- into blocks of 32 bytes, aligned to multiples of 0x20 in virtual address
- space.
- 
-\end_layout
-
-\begin_layout Standard
-To test this limit, we need loops that execute instructions spanning a variable
- amount of chunks.
- The micro kernel we used is shown in Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:lsd-chunks"
-
-\end_inset
-
-, written in GNU x86-64 assembly.
- The idea is to execute a minimal amount of instructions at the start of
+The idea is to execute a minimal amount of instructions at the start of
  each block, and immediately jump on to the next.
  Blocks are labeled 
 \family typewriter
@@ -8721,7 +8762,11 @@ status open
 
 \end_inset
 
- We see that the first compare instruction starts on address 0x400500, aligned
+
+\end_layout
+
+\begin_layout Standard
+We see that the first compare instruction starts on address 0x400500, aligned
  to 32 byte.
  Because 
 \family typewriter
