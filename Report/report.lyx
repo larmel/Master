@@ -3212,7 +3212,18 @@ Measurement bias is by definition a product of variations in the execution
  environment.
  To produce reliable results, we need to properly control every variable
  that can affect measurements.
- We make the following configuration to our experimental setup:
+ Previous work on measurement bias and observer effect describes a set of
+ best practices for how the measurement infrastructure should be configured
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:OE&MB,Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ Based on this, we make the following configuration to our experimental
+ setup:
 \end_layout
 
 \begin_layout Itemize
@@ -3245,6 +3256,24 @@ Automatic CPU frequency scaling is disabled, keeping the clock speed constant.
 wide false
 sideways false
 status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:machine"
+
+\end_inset
+
+Experimental setup
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 \align center
@@ -3406,24 +3435,6 @@ GCC 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5)
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:machine"
-
-\end_inset
-
-Experimental setup
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -3475,11 +3486,13 @@ reference "chap:Background"
 \end_inset
 
 ).
- We use a small test script to encapsulate repeated invocations of 
+ We use a Python script to encapsulate repeated invocations of 
 \family typewriter
 perf stat
 \family default
 .
+ Being only a thin wrapper around invocations of perf, this script does
+ not affect program execution or introduce any bias by itself.
  Measurements are aggregated over several runs, enabling us to collect all
  of the about 200 performance counters available on our architecture 
 \begin_inset CommandInset citation
@@ -3516,7 +3529,7 @@ Environment Size
 \begin_layout Standard
 Previous work points to changes in environment variable size as a cause
  of bias, and we will study this effect in detail.
- Unless otherwise specified, we use an empty environment for all out benchmarks
+ Unless otherwise specified, we use a minimal environment for all our benchmarks
 \begin_inset Foot
 status open
 
@@ -3525,14 +3538,14 @@ A completely emtpy environment is not possible, because
 \family typewriter
 perf stat
 \family default
- itself adds some variables to the environment
+ itself adds some variables to the environment.
 \end_layout
 
 \end_inset
 
 .
- A simple script is used for collecting performance counters under varying
- environment sizes.
+ A script is used for collecting performance counters under varying environment
+ sizes.
  To measure statistics with 
 \begin_inset Formula $n$
 \end_inset
@@ -3600,8 +3613,8 @@ key "Walpole:2011:Statistics"
  With multiple series of performance counter measurements, a linear correlation
  coefficient serves as a crude indication of possible relationships between
  counter values.
- A particular useful metric in many cases is correlation between cycle count
- and other event counts.
+ To filter out indicators of bias, we will look at correlation between cycle
+ count and other counter values in particular.
 \end_layout
 
 \begin_layout Paragraph
