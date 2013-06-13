@@ -2555,17 +2555,7 @@ Organization of virtual memory of a running process on a typical 64 bit
 \end_layout
 
 \begin_layout Standard
-On 64-bit machines, addresses range from 
-\begin_inset Formula $0$
-\end_inset
-
- to 
-\begin_inset Formula $2^{64}$
-\end_inset
-
-.
- A running process is divided into several sections within the virtual address
- space, the most important being stack, heap, bss, data and text, as illustrated
+The memory image of a running process in virtual address space is illustrated
  in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -2574,6 +2564,8 @@ reference "fig:virtual-address-space"
 \end_inset
 
 .
+ Code and data of executable programs are divided into several sections,
+ the most important being stack, heap, bss, data and text.
 \end_layout
 
 \begin_layout Description
@@ -2590,33 +2582,41 @@ heap Dynamically allocated area.
 \family typewriter
 malloc
 \family default
- and related functions can be used to request heap memory.
+ and related functions can be used to request heap memory from the operating
+ system.
 \end_layout
 
 \begin_layout Description
-bss Uninitialized data, containing variables with no value specified.
- This area is implicitly initialized to zero, thus only the size needs to
- be stored in the executable file.
+bss Uninitialized data, containing program variables with no value specified.
+ This area is implicitly initialized to zero once the program is loaded.
  
 \end_layout
 
 \begin_layout Description
-data Initialized data, variables that have some assigned value at compile
- time.
- This section is read from the executable file and copied to virtual memory.
+data Initialized data, containing program variables that have some assigned
+ value at compile time.
+ 
 \end_layout
 
 \begin_layout Description
 text Executable binary code, located at the lower end of the virtual address
  space.
- This section is also stored in the executable.
 \end_layout
 
 \begin_layout Standard
-Note that effectively only 48 out of 64 available bits are used for addressing.
+On 64-bit machines, addresses range from 
+\begin_inset Formula $0$
+\end_inset
+
+ to 
+\begin_inset Formula $2^{64}$
+\end_inset
+
+.
+ Note that effectively only 48 out of 64 available bits are used for addressing.
  The lower 0x0 through 0x7fff'ffffffff is addressable to user programs,
- while the upper segment of addresses from 0xffff8000'00000000 through 0xfffffff
-f'ffffffff is reserved for the operating system.
+ while the upper segment of addresses from 0xffff8000' 00000000 through
+ 0xffffffff'ffffffff is reserved for the operating system.
  This leaves a large gap of addresses that are not used, as current hardware
  does not actually support addressing the whole 64 bit range 
 \begin_inset CommandInset citation
@@ -2626,6 +2626,28 @@ key "Lomont:2012:x64Assembly"
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Subsubsection*
+Environment Variables
+\end_layout
+
+\begin_layout Standard
+As discussed in previous work on measurement bias 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, the size of a user's Unix environment variable can affect the placement
+ of stack.
+ Environment variables are allocated above the stack, pushing the initial
+ stack address downwards.
+ Because of this, the position of stack can be manipulated by manually changing
+ environment variables.
+ Note that program arguments are also located above the stack, thus providing
+ different arguments can potentially lead to similar effects.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -2805,11 +2827,7 @@ Before a program can be executed, it needs to be loaded into virtual memory
  that is responsible for loading code and data, setting up a stack, and
  loading any dependencies.
  Files compiled for execution on a 64 bit Linux platform will typically
- point to a loader in 
-\family typewriter
-/lib64/ld-linux-x86-64.so.2
-\family default
-.
+ point to a loader in /lib64/ld-linux-x86-64.so.2.
  This file can be a symbolic link to the actual program.
  
 \end_layout
@@ -2835,8 +2853,8 @@ Address Space Layout Randomization (ASLR)
 \end_layout
 
 \begin_layout Standard
-The process of mapping sections to virtual memory is in most cases not determini
-stic.
+The process of mapping sections to virtual memory is not necessarily determinist
+ic.
  If addresses can be known a priori, programs will be more vulnerable to
  buffer overflow attacks 
 \begin_inset CommandInset citation
@@ -2915,48 +2933,28 @@ target "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
  
 \end_layout
 
-\begin_layout Subsubsection*
-Environment Variables
-\end_layout
-
-\begin_layout Standard
-As discussed in previous work on measurement bias 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mytkowicz:2009:WrongData"
-
-\end_inset
-
-, the size of a user's Unix environment variable can affect the placement
- of stack.
- Environment variables are allocated above the stack, pushing the initial
- stack address downwards.
- Because of this, the position of stack can be manipulated by manually changing
- environment variables.
-\end_layout
-
 \begin_layout Subsection
 Memory Context of C Programs
 \end_layout
 
 \begin_layout Standard
-C will be the programming language of choice throughout the remainder of
- the thesis, as it is both widely known and provides only a thin layer of
- abstraction over virtual memory.
- The program in Listing 
+The C programming language will be used for code examples throughout the
+ remainder of the thesis, as it is both widely known and provides only a
+ thin layer of abstraction over virtual memory.
+ We use the program in Listing 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "alg:c-context"
 
 \end_inset
 
- contains four variables, utilizing both initialized and uninitialized data,
- dynamically allocated data on heap, and stack allocated variables.
+ to illustrate how variables in C programs map to different memory segments.
+ The program contains four variables, utilizing both initialized and uninitializ
+ed data, dynamically allocated data on heap, and stack allocated variables.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float algorithm
-placement h
 wide false
 sideways false
 status open
