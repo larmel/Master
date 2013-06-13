@@ -8178,7 +8178,7 @@ Most allocators seem focus mostly on efficiency in a multi-threaded environment,
 \end_layout
 
 \begin_layout Subsection
-Summary of Address Aliasing
+Summary
 \end_layout
 
 \begin_layout Standard
@@ -8427,7 +8427,7 @@ Cannot have mismatched stack operations.
 \begin_layout Standard
 The capabilities of the LSD is changing between processor generations.
  In particular, the limits to chunk fetches, maximum number of micro-ops
- and taken branches seems to continuously increase 
+ and taken branches seem to continuously increase 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Ramesh:i7PerformanceMonitoring,Intel:OnlinePCReference"
@@ -9017,6 +9017,26 @@ lsd.uops
 \end_layout
 
 \begin_layout Subsubsection*
+Taken branches
+\end_layout
+
+\begin_layout Standard
+The fourth requirement states that a loop can contain no more than eight
+ taken branches.
+ The chunk fetch limit example already uses 12 branches, so we can immediately
+ conclude that at least 12 taken branches is supported.
+ We experiment with more than one branch target in each chunk, but are not
+ able to increase the number any further.
+ All of our example programs with more than 12 taken branches results in
+ low values for 
+\shape smallcaps
+lsd.uops
+\shape default
+.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
 Micro-operations
 \end_layout
 
@@ -9027,8 +9047,8 @@ The second requirement states that each loop can only contain a maximum
  Queue.
  In previous generation(s), the micro-op queue was statically partitioned
  with 28 entries for each logical core.
- One of the Front-end enhancement in Ivy Bridge is that all 56 entries in
- the queue can be used when only a single logical core is active, i.e.
+ One of the Front-end enhancements in Ivy Bridge is that all 56 entries
+ in the queue can be used when only a single logical core is active, i.e.
  hyper-threading is disabled 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -9206,22 +9226,6 @@ jne
  With hyper-threading enabled, the number is cut in half to 28, as expected.
 \end_layout
 
-\begin_layout Subsubsection*
-Taken branches
-\end_layout
-
-\begin_layout Standard
-The fourth requirement states that a loop can contain no more than eight
- taken branches.
- The chunk fetch limit example already uses 12 branches, so we can immediately
- conclude that at least 12 taken branches is supported.
- We experiment with more than one branch targets in each chunk, but are
- not able to increase the number any further.
- All of our example programs with more than 12 taken branches results in
- low values for LSD.UOPS.
- 
-\end_layout
-
 \begin_layout Subsection
 Hitting the Chunk Fetch Limit
 \end_layout
@@ -9290,13 +9294,19 @@ Depending on alignment, code can span either 12 or 13 chunks of 32 byte
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-\noindent
+Even though we are within the limit, a quick test with 
+\family typewriter
+perf
+\family default
+ reveals that the Loop Stream Detector is not enabled.
+ Only a negligible amount of micro-ops are delivered by the LSD, as reported
+ by 
+\shape smallcaps
+lsd.uops
+\shape default
+.
+ 
 \begin_inset Float algorithm
-placement h
 wide false
 sideways false
 status open
@@ -9433,23 +9443,8 @@ Loop spanning 13 chunks of 32 bytes when compiled with gcc, but only 12
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Even though we are within the limit, a quick test with 
-\family typewriter
-perf
-\family default
- reveals that the Loop Stream Detector is not enabled.
- Only a negligible amount of micro-ops are delivered by the LSD, as reported
- by 
-\shape smallcaps
-lsd.uops
-\shape default
-.
- Inspecting the compiled binary, we see that the loop instructions span
- virtual addresses 0x4004d3 through 0x400648.
+Inspecting the compiled binary, we see that the loop instructions span virtual
+ addresses 0x4004d3 through 0x400648.
  The first byte in a chunk have address ending in 0x00, 0x20, 0x40, 0x60,
  0x80, 0xa0, 0xc0 or 0xe0, meaning the first instruction belongs to the
  0x4004
@@ -9468,26 +9463,7 @@ c0
  byte of instruction addresses, this specific alignment causes the code
  to span not 12 but 13 chunks, exceeding the limitation.
  
-\end_layout
-
-\begin_layout Standard
-We can create a different alignment by inserting some code before the loop.
- By uncommenting the printf statement, we see that the LSD is able to deliver
- micro-ops, giving a huge speedup.
- The performance counter statistics for each of these programs is shown
- in Table 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "tab:chunk-limit-stats"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float table
-placement h
 wide false
 sideways false
 status open
@@ -9502,7 +9478,8 @@ name "tab:chunk-limit-stats"
 
 \end_inset
 
-Performance counter statistics for program hitting the chunk fetch limit.
+Performance counter statistics for loop spanning 12 or 13 chunks of instruction
+ memory.
  
 \end_layout
 
@@ -9652,7 +9629,18 @@ Instructions, instruction:u
 \end_layout
 
 \begin_layout Standard
-Looking at the binary again, we find that the loop now only covers 12 chunks,
+We can create a different alignment by inserting some code before the loop.
+ By uncommenting the printf statement, we see that the LSD is able to deliver
+ micro-ops, giving a huge speedup.
+ The performance counter statistics for each of these programs is shown
+ in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:chunk-limit-stats"
+
+\end_inset
+
+.Looking at the binary again, we find that the loop now only covers 12 chunks,
  spanning addresses 0x400529 through 0x40069e.
  The difference between the two configurations is illustrated in Figure
  
@@ -9676,8 +9664,8 @@ Bias from Link Order
 \end_layout
 
 \begin_layout Standard
-Different link orders affects determines the relative position of code and
- static data within the final compiled binary file.
+Different link orders affects the relative position of code and static data
+ within the final compiled binary file.
  Interacting with limitations of the Loop Stream Detector, variations in
  instruction addresses can 
 \emph on
@@ -10084,7 +10072,7 @@ target "http://tigcc.ticalc.org/doc/gnuasm.html"
 
 .
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
+lstparams "basicstyle={\ttfamily}"
 inline false
 status open
 
@@ -10118,8 +10106,8 @@ The first directive tries to align to four address bits, inserting at most
  bytes that can maximally fit in the LSD.
  Out of the four possible alignments, only zero offset into a chunk will
  work in our case.
- Performance counter statistics for two different link order are shown in
- Table 
+ Performance counter statistics for two different link orders are shown
+ in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:link-order-stats"
@@ -10350,7 +10338,14 @@ key "Intel:2012:OptimizationManual"
 \end_inset
 
 .
- 
+ Consider the C program from Listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:lsd-color"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -10470,15 +10465,7 @@ Loop using LSD only for certain alignments when compiled with GCC and no
 \end_layout
 
 \begin_layout Standard
-Consider the small C program from Listing 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "alg:lsd-color"
-
-\end_inset
-
-.
- Compiling with 
+Compiling with 
 \family typewriter
 cc -std=c99
 \family default
