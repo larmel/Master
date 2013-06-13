@@ -681,7 +681,7 @@ Outline
 \end_layout
 
 \begin_layout Standard
-The remaining parts of this thesis structured as follows
+The remaining parts of this thesis structured as follows:
 \end_layout
 
 \begin_layout Description
@@ -689,7 +689,14 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-2 presents some of the previous work done on measurement bias, showing its
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Background"
+
+\end_inset
+
+ presents some of the previous work done on measurement bias, showing its
  severity as well as proposed solutions to mitigate or compensate for it.
  A brief overview to the Ivy Bridge microarchitecture and use of hardware
  performance monitoring is given as background material.
@@ -702,8 +709,15 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-3 discusses the experimental setup and methodology used throughout the remainder
- of the thesis.
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Methodology"
+
+\end_inset
+
+ discusses the experimental setup and methodology used in the following
+ chapters.
  
 \end_layout
 
@@ -712,7 +726,14 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-4 investigates several potential causes of bias, showing how certain hardware
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+ investigates several potential causes of bias, showing how certain hardware
  features are sensitive to changes in virtual memory layout.
  Specifically, we show how 4K address aliasing and the Loop Stream Detector
  can explain effects observed by increasing environment size or changing
@@ -724,7 +745,14 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-5 applies knowledge of bias effects from the previous chapter, looking at
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Case Studies"
+
+\end_inset
+
+ applies knowledge of bias effects from the previous chapter, looking at
  how they apply to real world applications.
  We take an in-depth look at FFTW, showing how even this highly optimized
  Fourier transform library can be affected by memory layout.
@@ -737,8 +765,51 @@ Chapter
 \begin_inset space ~
 \end_inset
 
-6 summarizes results from previous chapters, and provides directions for
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Conclusions"
+
+\end_inset
+
+ summarizes results from previous chapters, and provides directions for
  future work.
+ 
+\end_layout
+
+\begin_layout Standard
+The appendices contain supplementary material for reference:
+\end_layout
+
+\begin_layout Description
+Appendix
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:list-of-performance-counters"
+
+\end_inset
+
+ lists a subset of the available performance counters that are relevant
+ to our discussion.
+\end_layout
+
+\begin_layout Description
+Appendix
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:lperf"
+
+\end_inset
+
+ lists the script that we use for collecting performance metrics.
  
 \end_layout
 
@@ -1615,6 +1686,8 @@ Cache Hierarchy
 \begin_layout Standard
 Each processor core has an L1 data and instruction cache of 32 KiB each,
  and a unified L2 cache of 256 KiB holding both data and instructions.
+ The Line Fill Buffer (LFB) is a component of the L1 data cache, serving
+ as a buffer for pending loads between L1 and L2.
  An L3 cache of 8 MiB, also known as last level cache (LLC), is shared among
  all cores via a ring connection.
  
@@ -2254,19 +2327,8 @@ general-purpose
 \emph default
  counter registers, for a maximum of 11 performance events monitored simultaneou
 sly on each core.
- The fixed counters are set to count 
-\shape smallcaps
-instr_retired.any
-\shape default
-, 
-\shape smallcaps
-cpu_clk_unhalted.core
-\shape default
- and 
-\shape smallcaps
-cpu_clk_unhalted.ref
-\shape default
-.
+ The fixed counters are set to count retired instructions, CPU cycles and
+ reference cycles.
  With some restrictions, the remaining general-purpose registers can be
  programmed to count arbitrary events.
  The official documentation of available performance counters and their
@@ -14710,6 +14772,12 @@ Conclusions and Future Work
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:Conclusions"
+
+\end_inset
+
 In this thesis, we have studied effects of contextual bias on the Intel
  Core 
 \begin_inset Quotes eld
