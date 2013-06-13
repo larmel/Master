@@ -414,7 +414,14 @@ measurement bias
 
 \begin_layout Standard
 Previous work has studied parameters such as the size of Unix environment
- variables and program link order.
+ variables and program link order 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:OE&MB,Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
  Both are found to potentially have a significant effect on performance,
  even in standardized benchmarks.
  Unfortunately, the effects also appear to be unpredictable, and therefore
@@ -450,9 +457,9 @@ Ivy Bridge
  architecture specifically.
  The goal is to identify specific hardware features that causes measurement
  bias, and model how they interact with software programs.
- With a better understanding of intricate properties of the CPU, we will
- be able to not only predict, but also explicitly optimize for beneficial
- memory layouts.
+ With a better understanding of intricate properties of the CPU, we show
+ how one is able to not only predict, but also explicitly optimize for beneficia
+l memory layouts.
  
 \end_layout
 
@@ -469,6 +476,8 @@ Producing Wrong Data Without Doing Anything Obviously Wrong
 \begin_inset Quotes erd
 \end_inset
 
+ by T.
+ Mytkowicz et al.
  
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -618,7 +627,15 @@ name "fig:motivation"
 \end_inset
 
 A simple C program with significant performance variations under different
- Unix environment sizes
+ Unix environment sizes.
+ The example is adapted from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+, with performance measurements updated for the Ivy Bridge processor.
 \end_layout
 
 \end_inset
@@ -632,8 +649,8 @@ A simple C program with significant performance variations under different
 \end_layout
 
 \begin_layout Standard
-This paper is particularly interesting because of an intriguing little C
- program, which is reproduced here in Figure 
+This article is particularly interesting because of an intriguing little
+ C program, which is reproduced here in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:motivation"
@@ -670,7 +687,14 @@ correct
  This illustrates how external properties can bias performance towards certain
  environments.
  Previous work focuses mostly on how to mitigate effects of bias, and avoid
- drawing the wrong conclusions based on misleading measurements.
+ drawing the wrong conclusions based on misleading measurements 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2008:Easy,Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
  Our goal is to gain a better understanding of exactly what mechanisms of
  the processor causes these effects.
  With more accurate models of how bias occur, we will be able to actively
@@ -833,7 +857,7 @@ name "chap:Background"
 
 \end_inset
 
-We begin by presenting some of the previous work done on measurement bias
+This chapter presents some of the previous work done on measurement bias
  in performance analysis.
  A brief overview of the Intel Core 
 \begin_inset Quotes eld
@@ -3238,12 +3262,26 @@ name "chap:Methodology"
 
 \end_inset
 
-This chapter presents the test setup and experimental methodology used throughou
-t the rest of this thesis.
+This chapter presents the test setup and experimental methodology used to
+ identify sources of bias in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:SourcesOfBias"
+
+\end_inset
+
+, and case studies in Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:Case Studies"
+
+\end_inset
+
+.
  When studying bias effects, carefully controlling all relevant properties
  of the environment is crucial.
- We first describe how our test machine is configured with respect to operating
- system settings, and use of 
+ We first describe how our experimental setup is configured with respect
+ to operating system settings, and use of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4161,7 +4199,14 @@ name "sub:bias-from-stack-alignment"
 \end_inset
 
 As shown in previous work, changing the Unix environment variables can sometimes
- significantly affect program performance.
+ significantly affect program performance 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
  It is typically not the content of environment variables that are important,
  but rather the effect their size has on stack position.
  Environment variables are allocated before the stack when programs are
@@ -5642,8 +5687,8 @@ name "fig:stack-aliasing"
 
 \end_inset
 
-With just the right environment size, stack allocated variables end up with
- the same address suffixes as static variables
+Stack allocated variables end up with the same address suffixes as static
+ variables as a result of environment size.
 \end_layout
 
 \end_inset
@@ -12661,7 +12706,7 @@ Discussion
 \end_layout
 
 \begin_layout Standard
-In this section we have shown how bias from environment size can affect
+In this section, we have shown how bias from environment size can affect
  small kernels in FFTW.
  The n1fv_16 kernel was studied in detail, showing how aliasing occur from
  collisions between stack and heap areas.
