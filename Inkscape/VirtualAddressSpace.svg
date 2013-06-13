@@ -68,7 +68,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="383.15303"
+     inkscape:cx="320.29589"
      inkscape:cy="557.27801"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -92,7 +92,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -162,7 +162,7 @@
          x="424.53125"
          y="467.09851">0x7fff'ffffe02c</tspan></text>
     <rect
-       style="fill:#e4e5d2;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#e1eef7;fill-opacity:1;stroke:#000000;stroke-width:0.50000000000000000;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect4386"
        width="110"
        height="35"
@@ -191,7 +191,7 @@
          x="399.63086"
          y="467.22742">inc</tspan></text>
     <rect
-       style="fill:#e4e5d2;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#e1eef7;fill-opacity:1;stroke:#000000;stroke-width:0.50000000000000000;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect4386-4"
        width="110"
        height="50"
@@ -230,20 +230,6 @@
          id="tspan3328"
          x="409.63086"
          y="602.36218">i</tspan></text>
-    <rect
-       style="fill:#f5f5f5;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-       id="rect4914"
-       width="110"
-       height="55"
-       x="310"
-       y="382.36218" />
-    <rect
-       style="fill:#f5f5f5;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-       id="rect4916"
-       width="110"
-       height="25"
-       x="310"
-       y="607.36218" />
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:cmr10;-inkscape-font-specification:cmr10"
@@ -293,12 +279,5 @@
          id="tspan3198"
          x="313.99219"
          y="572.22742">.bss</tspan></text>
-    <rect
-       style="fill:#f5f5f5;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-       id="rect4916-4"
-       width="110"
-       height="15"
-       x="310"
-       y="542.36218" />
   </g>
 </svg>
