@@ -3709,7 +3709,7 @@ key "Hunter:2007:Matplotlib"
 
 \end_inset
 
-, using the csv exported data from our test script.
+, using the csv exported data from our benchmark script.
 \end_layout
 
 \begin_layout Section
@@ -3717,13 +3717,19 @@ Approach
 \end_layout
 
 \begin_layout Standard
-The purpose of this work is to investigate possible 
+Our goal is to investigate possible 
 \emph on
 causes
 \emph default
  of measurement bias, and if possible how this can be used for optimization.
- We have chosen to approach this problem from two sides.
- In Chapter 
+ We have chosen to approach this problem from two angles; firsth through
+ low-level analysis of smaller examples, and then later with more high-level
+ case studies of real applications.
+ 
+\end_layout
+
+\begin_layout Standard
+In Chapter 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "chap:SourcesOfBias"
@@ -3734,14 +3740,23 @@ reference "chap:SourcesOfBias"
 \emph on
 experimental
 \emph default
- work on smaller synthetic code examples.
- Simple examples are easier to analyze, allowing us to more accurately describe
- specific hardware mechanisms that results in bias.
- In previous work describing the effects of measurement bias, larger benchmark
- suites such as SPEC is often used.
- With large and complicated programs, it seems less likely that one will
- be able to identify why bias occurs.
- 
+ work, trying to identify hardware and software mechanisms that can lead
+ to bias.
+ Smaller synthetic code examples are used, which are easy to analyze.
+ Bias triggers identified in previous work will be used as a starting point,
+ in particular environment size and link order 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mytkowicz:2009:WrongData"
+
+\end_inset
+
+.
+ Extensive measurements using hardware performance counters are performed.
+ Using correlation techniques, we can filter out events that are likely
+ to explain bias.
+ The goal is to develop a solid understanding of the underlying hardware
+ mechanisms that can trigger bias.
 \end_layout
 
 \begin_layout Standard
@@ -3757,11 +3772,13 @@ reference "chap:Case Studies"
 \end_inset
 
 .
- We choose to specifically look at already highly optimized numerical libraries,
- where any additional speedup from considering bias effects is more likely
- to be considered.
  With a detailed understanding of architectural features causing bias, we
  can look for specific effects in larger applications.
+ We choose to focus on already highly optimized numerical libraries.
+ Performance critical applications are more likely to already have considered
+ architecture specific optimizations to account for bias effects.
+ If we can find any additional opportunity for improvement, there will probably
+ be incentive to update or enhance these libraries.
  
 \end_layout
 
