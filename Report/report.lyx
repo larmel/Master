@@ -10719,8 +10719,8 @@ name "chap:Case Studies"
 
 \end_inset
 
-In this chapter, we show how bias effects discussed in the previous chapter
- can affect real software.
+In this chapter, we show how bias effects discussed previously can affect
+ real software.
  The goal is to identify possible instances of bias, and also investigate
  how to apply new knowledge of these effects for optimization purposes.
  We choose to focus on already highly optimized numerical applications for
@@ -10940,8 +10940,15 @@ name "alg:fft-alias-program"
 
 \end_inset
 
-C program snippet for computing the Fourier transform of N double precision
- complex numbers X times.
+C program snippet for computing the Fourier transform of 
+\begin_inset Formula $N$
+\end_inset
+
+ double precision complex numbers 
+\begin_inset Formula $X$
+\end_inset
+
+ times.
 \end_layout
 
 \end_inset
@@ -11018,14 +11025,21 @@ reference "alg:fft-alias-program"
 
 \end_inset
 
-, with two parameters; the number of elements to transform, and the number
- of times to repeat the transform.
+, with two parameters; 
+\begin_inset Formula $N$
+\end_inset
+
+, the number of elements to transform, and 
+\begin_inset Formula $X$
+\end_inset
+
+, the number of times to repeat the transform.
  The iteration count is used to amplify any bias for smaller input sizes.
  The API calls made in the example are explained below.
 \end_layout
 
 \begin_layout Description
-fftw_malloc A wrapper around the standard malloc, returning heap-allocated
+fftw_malloc is a wrapper around the standard malloc, returning heap-allocated
  data.
  This is supposed to provide a stronger alignment guarantee than malloc
  does, needed for vectorized code.
@@ -11034,7 +11048,7 @@ fftw_malloc A wrapper around the standard malloc, returning heap-allocated
 \end_layout
 
 \begin_layout Description
-fftw_plan_dft_1d This creates a 
+fftw_plan_dft_1d creates a 
 \emph on
 plan
 \emph default
@@ -11068,7 +11082,7 @@ wisdom
 \end_layout
 
 \begin_layout Description
-fftw_execute Perform the computations specified by the given plan, calculating
+fftw_execute performs the computations specified by the given plan, calculating
  the Fourier transform of 
 \begin_inset Quotes eld
 \end_inset
@@ -11225,7 +11239,7 @@ reference "sub:fftw-user-level"
  itself, while the second option is to account for aliasing at the user
  level.
  Bias is not exclusively a problem for this particular input size, and we
- show how similar patterns also occur in other scenarios.
+ show how similar patterns also occur in other kernels.
  
 \end_layout
 
@@ -11721,17 +11735,9 @@ name "alg:apply-extra-iter"
 
 \end_inset
 
-Modified 
-\family typewriter
-apply_extra_iter
-\family default
-, aligning stack to a 4K boundary.
+Modified apply_extra_iter, aligning stack to a 4K boundary.
  The hidden function body makes two calls to the n1fv_16 kernel.
- Implementation is located in the file 
-\family typewriter
-dft/direct.c
-\family default
-.
+ Implementation is located in the file dft/direct.c.
 \end_layout
 
 \end_inset
@@ -11757,11 +11763,11 @@ reference "alg:apply-extra-iter"
 \family typewriter
 andq
 \family default
- instruction from will zero out the last 12 bits of the stack pointer (%rsp
- register), effectively subtracting some number between 0 and 4096.
+ instruction will zero out the last 12 bits of the stack pointer (%rsp register)
+, effectively subtracting some number between 0 and 4096.
  The stack grows downwards, thus subtracting any (reasonably small) amount
  will not overwrite other data.
- We run the same benchmark again, results shown in Figure 
+ We run the same benchmark again, with the results shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:fftw-modified"
@@ -12670,7 +12676,7 @@ name "fig:fftw-kernels"
 Cycle and alias counts for four additional kernels, for 8, 15, 20 and 32
  element complex DFTs respectively.
  Plot shows 
-\begin_inset Formula $N=200{,}000$
+\begin_inset Formula $X=200{,}000$
 \end_inset
 
  iterations of the kernel, incrementing environment size (horizontal axis)
@@ -12707,7 +12713,7 @@ In this section, we have shown how bias from environment size can affect
  Having library users consider bias is shown to be feasible, and we prove
  that there is at least a possibility of 2 % improvement on average for
  the n1fv_16 kernel.
- However, requiring users of the library to manually adjusting stack before
+ However, requiring users of the library to manually adjust stack before
  calling fftw_execute is not a satisfactory solution.
  A more reasonable approach would be to incorporate these ideas in the steps
  performed 
@@ -12731,7 +12737,7 @@ A realistic solution for handling bias is to give this responsibility to
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\small\ttfamily},language=C"
+lstparams "basicstyle={\ttfamily},language=C"
 inline false
 status open
 
