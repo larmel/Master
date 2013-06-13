@@ -12838,13 +12838,6 @@ Despite being higly optimized and automatically tuned, kernels in FFTW still
  improvements.
 \end_layout
 
-\begin_layout Subsubsection*
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
 \begin_layout Section
 ATLAS
 \end_layout
@@ -12900,7 +12893,7 @@ BLAS
 
 \begin_layout Standard
 Basic Linear Algebra Subroutines (BLAS), is the de facto standard API for
- high performance linear algebra routines 
+ high performance linear algebra routines
 \begin_inset Foot
 status open
 
@@ -12977,7 +12970,7 @@ Installation and Configuration
 \begin_layout Standard
 We use the currently latest version 3.10.1 of ATLAS, built as a shared library
  from source.
- The automatic tuning happens automatically during the build process.
+ The automatic tuning happens during the build process.
  A series of test programs are run to determine cache edges and other properties
  of the hardware, which in turn affects the resulting binary.
  
@@ -12996,8 +12989,6 @@ reference "chap:Methodology"
 \end_inset
 
  is applied.
- Again, we will concentrate on cycle count and address alias (r0107:u) performan
-ce metrics.
  Carefully monitoring cache is particularly important in this case study,
  as BLAS performance heavily relies on cache efficiency.
  Relevant performance statistics for cache hit ratios will be considered
@@ -13249,7 +13240,7 @@ cblas_dgemv
 \end_layout
 
 \begin_layout Standard
-Benchmarking the previous program with matrix dimensions 
+Benchmarking this program with matrix dimensions 
 \begin_inset Formula $N=M=8192$
 \end_inset
 
@@ -13271,7 +13262,7 @@ Benchmarking the previous program with matrix dimensions
 \end_inset
 
 .
- The performance counter statistics for three different heap configurations
+ The performance counter statistics for three different address configurations
  is shown in Table 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -13287,7 +13278,6 @@ reference "tab:dgemv"
 
 \begin_layout Standard
 \begin_inset Float table
-placement h
 wide false
 sideways false
 status open
@@ -13655,7 +13645,7 @@ Alias (r0107:u)
 
 \begin_layout Standard
 Because of overhead from calls to malloc making large heap allocations,
- these measurements does not represent the true cost of aliasing in dgemv.
+ these measurements do not represent the true cost of aliasing in dgemv.
  To better be able to assess the effects of aliasing, the call to gemv needs
  to be isolated.
  We use the program from Listing 
@@ -14655,6 +14645,13 @@ end{small}
 \end_layout
 
 \begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 Estimated performance counter statistics for each of the three heap address
  configurations are shown in Table 
 \begin_inset CommandInset ref
@@ -14668,7 +14665,7 @@ reference "tab:gemv-estimate"
  related to cache activity are also included.
  Notice that almost all load micro-ops are served by either the line fill
  buffer or L1 cache in all cases.
- Only a small amount of loads comes from L2, and almost none from L3.
+ Only a small amount of loads come from L2, and almost none from L3.
  The hit rate for L1 actually decreases somewhat (considering LFB as well)
  with better execution time.
  This could be explained by less time for prefetchers to feed the L1 cache
