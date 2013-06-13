@@ -239,7 +239,7 @@ bias
 \emph default
 .
  Den egentlige årsaken viser seg ofte å være endringer i organiseringen
- av minne.
+ av programkode og data minne.
  Restriksjoner ved den underliggende maskinvaren introduserer 
 \begin_inset Quotes eld
 \end_inset
@@ -248,7 +248,7 @@ hopp
 \begin_inset Quotes erd
 \end_inset
 
- i ytelse; på en maskin kan en kodesnutt få plass i én linje i hurtigminnet,
+ i ytelse; på en maskin kan en kodesnutt få plass i én linje i hurtigminne,
  mens på en annen kan den bli fragmentert i flere.
  Slike effekter kan være signifikante, men er også funnet å være vanskelige
  å forutse eller motvirke.
@@ -295,7 +295,8 @@ Loop Stream Detector
 \end_inset
 
  studeres i detalj.
- 
+ Vi viser at bias ikke nødvendigvis er uforutsigbart, og illustrerer metoder
+ for å unngå slike effekter.
 \end_layout
 
 \begin_layout Abstract
@@ -307,6 +308,8 @@ Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
  Både FFTW og ATLAS viser seg å være sårbare mot bias.
  For eksempel kan riktig plassering av data i minne gi over 30 % forbedring
  av allerede høyt optimaliserte rutiner for matrise-vektor-multiplikasjon.
+ Å ta høyde for plassering av kode og data i minnet er viktig, for både
+ utviklere og brukere av programvare hvor ytelse står sentralt.
 \end_layout
 
 \begin_layout Standard
