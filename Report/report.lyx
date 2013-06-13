@@ -6328,7 +6328,6 @@ M_MMAP_THRESHOLD
 status open
 
 \begin_layout Plain Layout
-Malloc Tunable Parameters, 
 \begin_inset CommandInset href
 LatexCommand href
 name "http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Parameters.html"
