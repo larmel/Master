@@ -378,8 +378,20 @@ pagenumbering{arabic}
 
 \end_inset
 
-Performance of computer programs is not just a function of the collection
- of machine instructions executed.
+Optimizing for performance is an important topic in computer science, and
+ high performance computing (HPC) in particular.
+ A great amount of research and effort is put into designing better algorithms
+ and compiler optimizations, in order to produce an 
+\begin_inset Quotes eld
+\end_inset
+
+optimal
+\begin_inset Quotes erd
+\end_inset
+
+ executable.
+ However, performance of computer programs is not just a function of the
+ collection of machine instructions executed.
  Various external properties, such as the operating system, or even room
  temperature, can have have an impact on how fast programs execute: Modern
  microchips can be sensitive to temperature, possibly operating on higher
@@ -749,8 +761,7 @@ reference "chap:Methodology"
 
 \end_inset
 
- discusses the experimental setup and methodology used in the following
- chapters.
+ discusses the experimental setup and methodology used in the next chapters.
  
 \end_layout
 
@@ -826,7 +837,7 @@ reference "chap:list-of-performance-counters"
 
 \end_inset
 
- lists a subset of the available performance counters that are relevant
+ lists the subset of the available performance counters that are relevant
  to our discussion.
 \end_layout
 
@@ -842,7 +853,8 @@ reference "chap:lperf"
 
 \end_inset
 
- lists the script that we use for collecting performance metrics.
+ lists the script that is used for collecting performance metrics under
+ varying environments.
  
 \end_layout
 
