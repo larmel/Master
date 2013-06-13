@@ -77,6 +77,46 @@ First Chapter
 \end_layout
 
 \begin_layout Standard
+We will in some cases be using the output format directly when presenting
+ measurements.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\small\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+ Performance counter stats for 'ls':
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+         1,748,096 cycles
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       0.000731187 seconds time elapsed
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 The exact stack pointer at kernel invocation is difficult to observe without
  introducing observer effects.
 \end_layout

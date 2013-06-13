@@ -1621,6 +1621,26 @@ Each processor core has an L1 data and instruction cache of 32 KiB each,
 \end_layout
 
 \begin_layout Paragraph
+Prefetching
+\end_layout
+
+\begin_layout Standard
+Cache lines are loaded speculatively by 
+\emph on
+prefetching
+\emph default
+, based on a prediction of what data the program will request in the future.
+ There are several prefetchers, operating between different cache levels.
+ Prefetching is particularly helpful for streaming applications, where contiguou
+s data is accesses linearly.
+ With prefetching, the next cache lines can be loaded before the program
+ requests them, improving performance by masking memory latency.
+ There is also a software mechanism for prefetching, allowing programmers
+ to give hints to what data should be preloaded into cache.
+ 
+\end_layout
+
+\begin_layout Paragraph
 Store Forwarding
 \end_layout
 
@@ -1674,27 +1694,65 @@ Performance Counters
 \end_layout
 
 \begin_layout Standard
-Hardware performance counters are special-purpose registers that can be
- configured to 
+Modern CPUs have build-in support for performance monitoring in hardware.
+ Performance counters are special-purpose registers that can be configured
+ to 
 \emph on
 count
 \emph default
  various hardware events.
- Dedicated Performance Monitoring Unit (PMU) hardware can be programmed
- to count things like cycle count, number of branch misses, or retired micro-ope
-rations.
+ The processor contains a dedicated Performance Monitoring Unit (PMU), which
+ can be programmed to count things like cycle count, number of branch misses,
+ or retired micro-operations.
+ Intel CPUs have had this functionality for many generations.
  Performance counter metrics are commonly used for detailed tuning and profiling
  of software.
- 
+ There are many benefits of using hardware support for performance monitoring,
+ including accuracy and minimal overhead.
+ Problems with observer effects and bias are avoided, because performance
+ monitoring does not interfere with software.
 \end_layout
 
 \begin_layout Standard
 \noindent
 \begin_inset Float table
-placement H
 wide false
 sideways false
 status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:example-performance-counters"
+
+\end_inset
+
+Examples of performance counters available on Ivy Bridge.
+ The official reference can be found in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Intel:2013:Volume3B"
+
+\end_inset
+
+, and a collection of the most relevant events for this thesis is included
+ in Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "chap:list-of-performance-counters"
+
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 \align center
@@ -1723,7 +1781,7 @@ begin{small}
 <column alignment="left" valignment="top" width="34text%">
 <column alignment="left" valignment="top" width="42text%">
 <row>
-<cell alignment="center" valignment="bottom" bottomline="true" usebox="none">
+<cell alignment="center" valignment="bottom" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1734,7 +1792,7 @@ Event
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="bottom" bottomline="true" usebox="none">
+<cell alignment="center" valignment="bottom" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1745,7 +1803,7 @@ Umask
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="bottom" bottomline="true" usebox="none">
+<cell alignment="left" valignment="bottom" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1756,7 +1814,7 @@ Mnemonic
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" bottomline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -2025,40 +2083,6 @@ endgroup
 
 \end_layout
 
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:example-performance-counters"
-
-\end_inset
-
-Examples of performance counters available on Ivy Bridge.
- The official reference can be found in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Intel:2013:Volume3B"
-
-\end_inset
-
-, and a collection of the most relevant events for this thesis is included
- in Appendix 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "chap:list-of-performance-counters"
-
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \end_inset
 
 
@@ -2229,7 +2253,7 @@ fixed
 general-purpose
 \emph default
  counter registers, for a maximum of 11 performance events monitored simultaneou
-sly.
+sly on each core.
  The fixed counters are set to count 
 \shape smallcaps
 instr_retired.any
@@ -2351,46 +2375,6 @@ status open
 \begin_layout Plain Layout
 
 perf stat -e cycles ls
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We will in some cases be using the output format directly when presenting
- measurements.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\small\ttfamily}"
-inline false
-status open
-
-\begin_layout Plain Layout
-
- Performance counter stats for 'ls':
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-         1,748,096 cycles
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-       0.000731187 seconds time elapsed
 \end_layout
 
 \end_inset
