@@ -172,11 +172,11 @@ Performance analysis of software is subject to measurement bias.
 \end_layout
 
 \begin_layout Abstract
-This thesis focused on bias effects that can be experienced by changing
- the Unix environment variables or altering the program link order.
- Both of these factors lead to different virtual memory layouts for code
- and data, which in turn interacts with various hardware mechanisms.
- Through experimentation and careful measurement using hardware performance
+This thesis focuses on bias effects that can be experienced by things like
+ changing the Unix environment variables, or altering program link order.
+ Both of these factors can lead to different virtual memory layouts for
+ code or data, which in turn interacts with various hardware mechanisms.
+ Through experimentation and careful measurements using hardware performance
  counters, we identify several potential sources of bias on the Intel Core
  i7 
 \begin_inset Quotes eld
@@ -199,8 +199,8 @@ Our case studies show that even highly optimized Fourier transform and linear
  We find that stack alignment significantly affects the performance of FFTW,
  and that in some cases more than 30 % performance gain can be made by avoiding
  address aliasing in ATLAS' matrix-vector multiplication.
- An increased awareness of memory layout of code and data is important to
- both users and developers of performance critical software.
+ Our results show that an awareness of program layout in memory is important,
+ especially for users and developers of performance critical software.
 \end_layout
 
 \begin_layout Standard
@@ -231,7 +231,7 @@ status open
 \lang norsk
 Ytelsesvurdering av programvare er påvirket av mange forskjellige, og tilsynelat
 ende uviktige, egenskaper ved maskinen man gjør målinger på.
- For eksempel kan innholdet i miljøvariabler, eller rekkefølgen man linker
+ For eksempel kan innholdet i miljøvariabler, eller rekkefølgen man lenker
  programfiler på, være signifikant.
  Variasjoner som følge av slike eksterne egenskaper klassifiseres som 
 \emph on
@@ -258,7 +258,8 @@ hopp
 
 \lang norsk
 Denne oppgaven dreier seg om å studere underliggende årsaker til ytelsesforskjel
-ler som kan forekomme av å endre minneaddresser for programkode og data.
+ler som kan forekomme av å endre ting som miljøvariabler eller rekkefølgen
+ på lenking.
  Hovedfokus vil være på Intel Core i7 
 \begin_inset Quotes eld
 \end_inset
@@ -308,7 +309,7 @@ Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
  Både FFTW og ATLAS viser seg å være sårbare mot bias.
  For eksempel kan riktig plassering av data i minne gi over 30 % forbedring
  av allerede høyt optimaliserte rutiner for matrise-vektor-multiplikasjon.
- Å ta høyde for plassering av kode og data i minnet er viktig, for både
+ Å ta høyde for plassering av kode og data i minnet er viktig, særlig for
  utviklere og brukere av programvare hvor ytelse står sentralt.
 \end_layout
 
@@ -822,7 +823,7 @@ reference "chap:Conclusions"
 \end_layout
 
 \begin_layout Standard
-The appendices contain supplementary material for reference:
+The appendices contain supplementary and reference material:
 \end_layout
 
 \begin_layout Description
@@ -14867,11 +14868,11 @@ reference "chap:SourcesOfBias"
 
 \end_inset
 
-, we present an in-depth study of what was causing bias for that particular
+, we presented an in-depth study of what was causing bias for that particular
  program.
- Through careful measurements using hardware performance counters, we find
- that address aliasing between local and static variables can explain what
- is happening.
+ Through careful measurements using hardware performance counters, we found
+ that address aliasing between local and static variables could explain
+ what was happening.
  
 \end_layout
 
@@ -14881,9 +14882,9 @@ With an understanding of the possible performance penalties incurred from
  The fact that malloc often allocates on page boundary by default proved
  to be troubling, essentially guaranteeing bad performance from aliasing
  in many cases.
- The convolution example exploits this synergy between heap allocation and
- 4K aliasing, showing that some knowledge of the hardware could provide
- massive speedup.
+ The convolution example exploited this synergy between heap allocation
+ and 4K aliasing, showing that some knowledge of the hardware could provide
+ massive speedups.
  
 \end_layout
 
@@ -14946,7 +14947,7 @@ Contributions
 \end_layout
 
 \begin_layout Standard
-Previous work identifies 
+Previous work identified 
 \emph on
 environment variables
 \emph default
@@ -14973,7 +14974,7 @@ Ivy Bridge
 \begin_inset Quotes erd
 \end_inset
 
-;
+:
 \end_layout
 
 \begin_layout Itemize
@@ -15015,7 +15016,7 @@ s to the concept of measurement bias.
 \end_layout
 
 \begin_layout Standard
-Unlike stated in previous work, we find that bias is in fact 
+Unlike stated in previous work, we found that bias is in fact 
 \emph on
 not
 \emph default
@@ -15032,7 +15033,7 @@ Directions for Future Work
 
 \begin_layout Standard
 Studying sources of bias effects proved to be complicated and challenging.
- One of the main problems is lack of accurate documentation, making the
+ One of the main problems was lack of accurate documentation, making the
  processor a kind of 
 \begin_inset Quotes eld
 \end_inset
@@ -15142,7 +15143,7 @@ all
 \emph default
  cases, because heap memory is often page aligned.
  As far as we know, there are no malloc implementations that specifically
- addresses aliasing issues.
+ handles aliasing issues.
  Developing good heuristics on the optimal heap addresses to return from
  malloc would be an interesting topic for further research.
  An obvious improvement would be to perturb addresses of allocations done
@@ -15208,8 +15209,8 @@ Ivy Bridge
 \end_inset
 
  from Intel.
- An interesting question is whether effects from Loop Stream Detector limitation
-s and 4K aliasing translate to other CPU architectures.
+ An interesting question is how effects from Loop Stream Detector limitations
+ and 4K aliasing translate to other CPU architectures.
  Effects from 4K aliasing are documented in architectures as far back as
  the first Core processors 
 \begin_inset CommandInset citation
@@ -15222,7 +15223,7 @@ key "Intel:2012:OptimizationManual"
  Limitations of the LSD have changed throughout the last several generations,
  suggesting that the particular examples we present might not behave similarly
  on other Intel processors.
- Processor architectures changes at a rapid pace, and by the time this thesis
+ Processor architectures change at a rapid pace, and by the time this thesis
  is published the 
 \begin_inset Quotes eld
 \end_inset
