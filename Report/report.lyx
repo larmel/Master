@@ -92,7 +92,11 @@
 
 \begin_body
 
-\begin_layout Quotation
+\begin_layout Section*
+Problem Description
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -105,14 +109,6 @@ pagenumbering{roman}
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Section*
-Problem Description
-\end_layout
-
-\begin_layout Standard
 Variations in execution context has been shown to affect performance of
  programs on recent CPUs.
  Previous work has looked at offsetting the stack and changing link order
@@ -883,7 +879,7 @@ Observer Effect and Measurement Bias
 
 \begin_layout Standard
 Several papers dealing with bias in performance analysis have been published.
- Mytkowitcz et.
+ Mytkowicz et.
  al.
  provide an excellent introduction to measurement bias, together with the
  closely related phenomenon of observer effect, in the paper 
@@ -953,7 +949,7 @@ istics.
  In other cases, we need to add instrumentation to the program being measured,
  for example in the form of incrementing counter variables for every function
  call.
- Mytkowitcz et al.
+ Mytkowicz et al.
  
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -1324,7 +1320,7 @@ chunks
 \end_inset
 
 , which are 16 B on the Intel Core 2.
- In previous work on measurement bias by Mytkowitcz et al, the Loop Stream
+ In previous work on measurement bias by Mytkowicz et al, the Loop Stream
  Detector is suggested as a potential cause of bias.
  The authors identifies that this hardware optimization depends on 16 byte
  instruction alignment on the Core 2 architecture.
@@ -2335,8 +2331,8 @@ The remaining bits can be toggled to impose various constraints on what
  is counted.
  We will typically toggle OS mode and user mode such that statistics is
  reported from code executing in user mode only.
- Counters are updated each cycle, adding the number of event occuring to
- a cumulative value.
+ Counters are updated each cycle, adding the number of events occurring
+ to a cumulative value.
  An 
 \emph on
 invert
@@ -3299,7 +3295,7 @@ best practices
 \end_inset
 
  in performance analysis.
- Methods used for aquiring and analyzing performance counter measurements
+ Methods used for acquiring and analyzing performance counter measurements
  is also described.
 \end_layout
 
@@ -3634,7 +3630,7 @@ Previous work points to changes in environment variable size as a cause
 status open
 
 \begin_layout Plain Layout
-A completely emtpy environment is not possible, because 
+A completely empty environment is not possible, because 
 \family typewriter
 perf stat
 \family default
@@ -3920,7 +3916,7 @@ Loop Stream Detector
 \emph default
 , which in previous work on measurement bias has been suggested as a possible
  explanation.
- We therefore choose to study this particular opimization in detail, and
+ We therefore choose to study this particular optimization in detail, and
  show how measurement bias can occur from changing link order.
 \end_layout
 
@@ -4102,7 +4098,7 @@ reference "sub:dynamic-library-bias"
 \end_layout
 
 \begin_layout Standard
-The second rule concering address aliasing introduces the concept of 
+The second rule concerning address aliasing introduces the concept of 
 \emph on
 padding
 \emph default
@@ -5920,7 +5916,7 @@ reference "fig:loop-fixed"
  of offset.
  This covers a whole period of 12 bit address suffixes, showing that the
  aliasing is not merely moved to another offset.
- With only neglectable overhead from additional code size and instructions
+ With only negligible overhead from additional code size and instructions
  executed, we are able to completely remove negative bias effects caused
  by stack position for this program.
  
@@ -6717,7 +6713,7 @@ This function is sensitive to aliasing between heap areas.
 \begin_inset Formula $N$
 \end_inset
 
-, both input and ouput will alias in cases where mmap is used internally.
+, both input and output will alias in cases where mmap is used internally.
  For sufficiently large values of 
 \begin_inset Formula $N$
 \end_inset
@@ -7515,7 +7511,7 @@ target "http://software.intel.com/en-us/intel-compilers/"
 \end_inset
 
  version 13.
- The behaviour of Clang is similar to GCC with respect to offsets to minimize
+ The behavior of Clang is similar to GCC with respect to offsets to minimize
  alias.
  Only 16 padding elements is needed to get rid of aliasing, but the change
  in cycle count is not as clear.
@@ -10715,7 +10711,7 @@ In this chapter, we show how bias effects discussed previously can affect
  We choose to focus on already highly optimized numerical applications for
  our case studies, because the real world impact of bias is most relevant
  for performance critical applications.
- If only a minor improvement can be mady by avoiding some memory alignment
+ If only a minor improvement can be made by avoiding some memory alignment
  issue, the cost of implementing an architecture specific optimization in
  a high performance numerical library will probably be worth it.
 \end_layout
@@ -12819,8 +12815,8 @@ Conclusions
 \end_layout
 
 \begin_layout Standard
-Despite being higly optimized and automatically tuned, kernels in FFTW still
- suffers from bias effects.
+Despite being highly optimized and automatically tuned, kernels in FFTW
+ still suffers from bias effects.
  The auto tuning mechanism is designed to deal with architecture specific
  optimizations, but it fails to account for aliasing stack accesses.
  Further work on address aliasing issues in FFTW could lead to real performance
@@ -14793,7 +14789,7 @@ The extent of aliasing issues within other function in ATLAS, or among other
 \emph on
 likely
 \emph default
- that similar problems are prevailent for linear algebra implementations
+ that similar problems are prevalent for linear algebra implementations
  in general.
  There is probably a significant potential for speedup in many BLAS implementati
 ons by actively avoiding bad address alignment.
@@ -15114,7 +15110,7 @@ profiling
  information could be another way of identifying potential bias related
  issues.
  GCC has support for two-stage compilation, using profiling information
- from an intrumented version of the program to aid in optimization of the
+ from an instrumented version of the program to aid in optimization of the
  final compilation.
  Encoding knowledge of for example 4K aliasing in a profiling step seems
  feasible.
