@@ -156,29 +156,26 @@ real
 \end_layout
 
 \begin_layout Abstract
-Performance analysis of software is subject to measurement bias.
- Seemingly innocuous properties of the environment, such as the contents
- of system environment variables, can impact the performance of computer
- programs.
- Features and restrictions of the underlying hardware introduces performance
- cliffs; on one machine a piece of code might fit within a single line in
- some hardware buffer, while on another the alignment in memory fragments
- it in two.
- Effects like these have been shown to be significant, but unpredictable
- and difficult to deal with.
- This makes it challenging to obtain accurate and reliable results when
- conducting empirical research, but also introduces potential for architecture
- specific optimization.
+Seemingly innocuous properties of the environment, such as the contents
+ of system environment variables, or different link orders, can impact the
+ performance of computer programs.
+ Variations in external properties like these can 
+\emph on
+bias
+\emph default
+ programs towards certain configurations.
+ These effects have been shown to be a significant issue in performance
+ analysis, but unpredictable and difficult to deal with.
 \end_layout
 
 \begin_layout Abstract
-This thesis focuses on bias effects that can be experienced by things like
- changing the Unix environment variables, or altering program link order.
- Both of these factors can lead to different virtual memory layouts for
+This thesis focuses on the underlying reasons for bias effects that can
+ be experienced for example by changing environment variables, or using
+ different link orders.
+ Both of these factors can lead to differences in memory layout of either
  code or data, which in turn interacts with various hardware mechanisms.
- Through experimentation and careful measurements using hardware performance
- counters, we identify several potential sources of bias on the Intel Core
- i7 
+ Through experimentation and careful measurements using performance counters,
+ we identify several potential sources of bias on the Intel Core i7 
 \begin_inset Quotes eld
 \end_inset
 
@@ -187,15 +184,15 @@ Ivy Bridge
 \end_inset
 
  architecture.
- Limitations imposed by the Loop Stream Detector hardware optimization is
- revealed, along with effects from 4K address aliasing.
+ Limitations imposed by the Loop Stream Detector is revealed, along with
+ effects from 4K address aliasing.
  We show that bias is in fact not completely unpredictable, and discuss
  measures for avoiding it.
 \end_layout
 
 \begin_layout Abstract
 Our case studies show that even highly optimized Fourier transform and linear
- algebra libraries are prone to such bias.
+ algebra libraries are prone to bias.
  We find that stack alignment significantly affects the performance of FFTW,
  and that in some cases more than 30 % performance gain can be made by avoiding
  address aliasing in ATLAS' matrix-vector multiplication.
@@ -231,25 +228,14 @@ status open
 \lang norsk
 Ytelsesvurdering av programvare er påvirket av mange forskjellige, og tilsynelat
 ende uviktige, egenskaper ved maskinen man gjør målinger på.
- For eksempel kan innholdet i miljøvariabler, eller rekkefølgen man lenker
- programfiler på, være signifikant.
- Variasjoner som følge av slike eksterne egenskaper klassifiseres som 
+ For eksempel kan innholdet i miljøvariabler, eller rekkefølgen programfiler
+ lenkes, være signifikant.
+ Variasjoner i ytelse som følge av eksterne egenskaper som dette introduserer
+ 
 \emph on
 bias
 \emph default
 .
- Den egentlige årsaken viser seg ofte å være endringer i organiseringen
- av programkode og data minne.
- Restriksjoner ved den underliggende maskinvaren introduserer 
-\begin_inset Quotes eld
-\end_inset
-
-hopp
-\begin_inset Quotes erd
-\end_inset
-
- i ytelse; på en maskin kan en kodesnutt få plass i én linje i hurtigminne,
- mens på en annen kan den bli fragmentert i flere.
  Slike effekter kan være signifikante, men er også funnet å være vanskelige
  å forutse eller motvirke.
 \end_layout
@@ -258,17 +244,10 @@ hopp
 
 \lang norsk
 Denne oppgaven dreier seg om å studere underliggende årsaker til ytelsesforskjel
-ler som kan forekomme av å endre ting som miljøvariabler eller rekkefølgen
- på lenking.
- Hovedfokus vil være på Intel Core i7 
-\begin_inset Quotes eld
-\end_inset
-
-Ivy Bridge
-\begin_inset Quotes erd
-\end_inset
-
--arkitekturen.
+ler som kan forekomme for eksempel av å endre miljøvariabler, eller rekkefølgen
+ på lenking av programfiler.
+ Den egentlige årsaken til endringer i ytelse viser seg å være forskjeller
+ i organiseringen av programkode og data minne.
  Gjennom eksperimenter og nøyaktig måling ved bruk av 
 \begin_inset Quotes eld
 \end_inset
@@ -279,6 +258,15 @@ performance counters
 
 , kan vi identifisere konkrete arkitekturspesifikke egenskaper ved prosessoren
  som fører til bias.
+ Vi ser spesifikt på Intel Core i7 
+\begin_inset Quotes eld
+\end_inset
+
+Ivy Bridge
+\begin_inset Quotes erd
+\end_inset
+
+-arkitekturen.
  Begrensninger i 
 \begin_inset Quotes eld
 \end_inset
@@ -297,13 +285,13 @@ Loop Stream Detector
 
  studeres i detalj.
  Vi viser at bias ikke nødvendigvis er uforutsigbart, og illustrerer metoder
- for å unngå slike effekter.
+ for å unngå dårlig ytelse som følge av slike effekter.
 \end_layout
 
 \begin_layout Abstract
 
 \lang norsk
-Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra
+Undersøkelser av programvare for Fourier-transformasjoner og lineær algebra,
  viser at særlig alias-effekter ofte kan gi signifikante ytelsesforskjeller
  i praksis.
  Både FFTW og ATLAS viser seg å være sårbare mot bias.

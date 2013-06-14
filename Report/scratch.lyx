@@ -69,7 +69,19 @@ Ideas and Leftovers from Thesis
 \end_layout
 
 \begin_layout Abstract
-This is the abstract
+Performance analysis of software is subject to measurement bias.
+ This makes it challenging to obtain accurate and reliable results when
+ conducting empirical research, but also introduces potential for architecture
+ specific optimization.
+\end_layout
+
+\begin_layout Abstract
+Features and restrictions of the underlying hardware introduces performance
+ cliffs; on one machine a piece of code might fit within a single line in
+ some hardware buffer, while on another the alignment in memory fragments
+ it in two.
+ Effects like these have been shown to be significant but unpredictable
+ and difficult to deal with.
 \end_layout
 
 \begin_layout Chapter
